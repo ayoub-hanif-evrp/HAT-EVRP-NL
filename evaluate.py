@@ -258,6 +258,156 @@ def _append_method_row(
     )
 
 
+def _refine_best_once(
+    instance,
+    customer_routes: list[tuple[int, ...]],
+    plans: list,
+    local_passes: int,
+    local_budget: int,
+):
+    """Apply identical one-shot local search used by H0_strong after best-of-N."""
+    from charging import FixedRouteOracle
+    from solver import local_search
+
+    oracle = FixedRouteOracle(instance)
+    refined_routes, refined_plans, improvements = local_search(
+        list(customer_routes),
+        list(plans),
+        oracle,
+        max_passes=local_passes,
+        evaluation_budget=local_budget,
+    )
+    return refined_routes, refined_plans, improvements, oracle.calls
+
+
+def _classical_until_time(
+    instance,
+    seed: int,
+    time_budget_s: float,
+    local_passes: int,
+    local_budget: int,
+):
+    """Spend a measured wall-clock budget on classical search.
+
+    Protocol mirrors fair neural LS: generate constructions WITHOUT local
+    search until the budget is exhausted (or nearly), keep the best, then
+    apply one shared local-search if ``local_passes>0``. Remaining time after
+    constructions is used for that single refinement when possible.
+    """
+    import time
+    from dataclasses import replace
+
+    from charging import FixedRouteOracle, check_solution
+    from solver import local_search
+
+    start = time.perf_counter()
+    best_routes = None
+    best_plans = None
+    best_obj = float("inf")
+    restarts = 0
+    oracle_calls = 0
+    last_fail = ""
+
+    # Reserve a fraction of the measured neural budget for one final LS.
+    construct_deadline = (
+        start + time_budget_s * 0.8 if local_passes > 0 else start + time_budget_s
+    )
+    while time.perf_counter() < construct_deadline and restarts < 5000:
+        result = randomized_greedy(
+            instance,
+            restarts=1,
+            seed=seed + restarts,
+            local_search_passes=0,
+            local_search_budget=0,
+        )
+        restarts += 1
+        oracle_calls += result.oracle_calls
+        if result.feasible and result.objective_hours < best_obj:
+            best_obj = result.objective_hours
+            best_routes = list(result.customer_routes)
+            best_plans = list(result.plans)
+        elif not result.feasible:
+            last_fail = result.reason
+        # Ensure at least one restart even for tiny budgets.
+        if restarts == 1 and time.perf_counter() >= construct_deadline:
+            break
+
+    if best_routes is None:
+        elapsed = time.perf_counter() - start
+        failed = randomized_greedy(
+            instance, restarts=1, seed=seed, local_search_passes=0, local_search_budget=0
+        )
+        return (
+            replace(
+                failed,
+                feasible=False,
+                reason=last_fail or failed.reason,
+                runtime_seconds=elapsed,
+                oracle_calls=oracle_calls,
+            ),
+            restarts,
+            elapsed,
+        )
+
+    improvements = 0
+    if local_passes > 0:
+        oracle = FixedRouteOracle(instance)
+        best_routes, best_plans, improvements = local_search(
+            best_routes,
+            best_plans,
+            oracle,
+            max_passes=local_passes,
+            evaluation_budget=local_budget,
+        )
+        oracle_calls += oracle.calls
+
+    elapsed = time.perf_counter() - start
+    valid, reason = check_solution(instance, best_plans)
+    if not valid:
+        failed = randomized_greedy(
+            instance, restarts=1, seed=seed, local_search_passes=0, local_search_budget=0
+        )
+        return (
+            replace(
+                failed,
+                feasible=False,
+                reason=reason,
+                runtime_seconds=elapsed,
+                oracle_calls=oracle_calls,
+            ),
+            restarts,
+            elapsed,
+        )
+    charging_stops = charging_hours = 0
+    for plan in best_plans:
+        check = check_route(instance, plan.stops)
+        charging_stops += check.charging_stops
+        charging_hours += check.charging_hours
+    objective = sum(plan.duration_hours for plan in best_plans)
+    template = randomized_greedy(
+        instance, restarts=1, seed=seed, local_search_passes=0, local_search_budget=0
+    )
+    return (
+        replace(
+            template,
+            feasible=True,
+            objective_hours=objective,
+            customer_routes=tuple(best_routes),
+            plans=tuple(best_plans),
+            routes=len(best_routes),
+            charging_stops=charging_stops,
+            charging_hours=charging_hours,
+            oracle_calls=oracle_calls,
+            runtime_seconds=elapsed,
+            local_search_seconds=0.0,
+            local_improvements=improvements,
+            reason="",
+        ),
+        restarts,
+        elapsed,
+    )
+
+
 def run_compare(
     data_dir: Path,
     results_dir: Path,
@@ -274,9 +424,21 @@ def run_compare(
     neural_local_budget: int = 0,
     wallclock: bool = False,
     tag: str = "",
+    fair_ls: bool = False,
 ) -> None:
-    """Evaluate H0-H4 with equal construction budgets and a strong H0."""
+    """Evaluate H0-H4 with equal construction budgets and optional fair one-shot LS.
+
+    Fair LS protocol (``fair_ls=True``):
+    1. Generate ``samples`` constructions for every method WITHOUT local search.
+    2. Keep the best feasible construction.
+    3. Apply identical ``local_search`` once with the same passes/budget.
+    Previous Cycle-3 ``eqls`` runs applied LS to every neural sample and must
+    not be treated as equal-effort comparisons.
+    """
+    import time
+
     import torch
+    from charging import check_solution
     from train import decode, load_policy
 
     selected = [
@@ -289,61 +451,136 @@ def run_compare(
     for method in ("H1", "H2", "H3", "H4"):
         path = checkpoints_dir / f"{method}_n{trained_size}_seed{seed}_{version}.pt"
         if not path.exists():
-            # Fall back to Cycle 2 when final checkpoints are not yet ready.
             path = checkpoints_dir / f"{method}_n{trained_size}_seed{seed}_c2.pt"
         if not path.exists():
             path = checkpoints_dir / f"{method}_n{trained_size}_seed{seed}.pt"
         policies[method] = load_policy(path)
+
+    # Fair LS always uses the H0_strong budget; ignore per-sample neural LS.
+    refine_passes = h0_local_passes if fair_ls else 0
+    refine_budget = h0_local_budget if fair_ls else 0
+    if neural_local_passes > 0 and not fair_ls:
+        # Preserve legacy (unfair) per-sample LS only when explicitly requested
+        # without --fair-ls; tag keeps those CSVs separate.
+        pass
+
     rows = []
     for path in selected:
         instance = parse_instance(path)
-        neural_attempts = {}
+        neural_raw: dict[str, list] = {}
         with torch.no_grad():
             for method, policy in policies.items():
                 attempts = []
                 for sample_index in range(samples):
+                    # Construction only — never LS inside each sample for fair_ls.
                     attempts.append(
                         decode(
                             policy,
                             instance,
                             sample=sample_index > 0,
                             seed=seed * 1000 + sample_index,
-                            local_passes=neural_local_passes,
-                            local_budget=neural_local_budget,
+                            local_passes=0 if fair_ls else neural_local_passes,
+                            local_budget=0 if fair_ls else neural_local_budget,
                         )
                     )
-                neural_attempts[method] = attempts
-        neural_time = max(
-            sum(attempt["runtime"] for attempt in attempts)
-            for attempts in neural_attempts.values()
-        )
-        h0_restarts = samples
+                neural_raw[method] = attempts
+
+        neural_results = {}
+        for method, attempts in neural_raw.items():
+            construct_time = sum(attempt["runtime"] for attempt in attempts)
+            construct_oracle = sum(attempt["oracle_calls"] for attempt in attempts)
+            feasible = [attempt for attempt in attempts if attempt["feasible"]]
+            if not feasible:
+                neural_results[method] = {
+                    "feasible": False,
+                    "objective": "",
+                    "routes": "",
+                    "charging_stops": "",
+                    "charging_h": "",
+                    "runtime": construct_time,
+                    "oracle_calls": construct_oracle,
+                    "reason": attempts[-1]["reason"],
+                    "samples": samples,
+                }
+                continue
+            best = min(feasible, key=lambda attempt: attempt["objective"])
+            routes = list(best["routes"])
+            plans = list(best["plans"])
+            refine_oracle = 0
+            refine_time = 0.0
+            if fair_ls and refine_passes > 0:
+                refine_start = time.perf_counter()
+                routes, plans, _, refine_oracle = _refine_best_once(
+                    instance, routes, plans, refine_passes, refine_budget
+                )
+                refine_time = time.perf_counter() - refine_start
+                valid, reason = check_solution(instance, plans)
+                objective = (
+                    sum(plan.duration_hours for plan in plans) if valid else float("inf")
+                )
+                feasible_flag = valid
+                fail_reason = "" if valid else reason
+            else:
+                objective = best["objective"]
+                feasible_flag = True
+                fail_reason = ""
+            charging_stops = charging_hours = 0
+            if feasible_flag:
+                for plan in plans:
+                    check = check_route(instance, plan.stops)
+                    charging_stops += check.charging_stops
+                    charging_hours += check.charging_hours
+            neural_results[method] = {
+                "feasible": feasible_flag,
+                "objective": objective if feasible_flag else "",
+                "routes": len(routes) if feasible_flag else "",
+                "charging_stops": charging_stops if feasible_flag else "",
+                "charging_h": charging_hours if feasible_flag else "",
+                "runtime": construct_time + refine_time,
+                "oracle_calls": construct_oracle + refine_oracle,
+                "reason": fail_reason,
+                "samples": samples,
+            }
+
+        neural_time = max(result["runtime"] for result in neural_results.values())
+
         if wallclock:
-            # Match the slowest neural wall-clock budget with classical restarts.
-            probe = randomized_greedy(
+            # Match measured neural wall time with classical measured wall time.
+            h0_equal, h0_restarts, _ = _classical_until_time(
+                instance, seed, neural_time, local_passes=0, local_budget=0
+            )
+            h0_strong, strong_restarts, _ = _classical_until_time(
                 instance,
-                restarts=1,
+                seed,
+                neural_time,
+                local_passes=h0_local_passes,
+                local_budget=h0_local_budget,
+            )
+            h0_samples = h0_restarts
+            strong_samples = strong_restarts
+        else:
+            h0_equal = randomized_greedy(
+                instance,
+                restarts=samples,
                 seed=seed,
                 local_search_passes=0,
                 local_search_budget=0,
             )
-            per = max(probe.runtime_seconds, 1e-4)
-            h0_restarts = max(samples, int(math.ceil(neural_time / per)))
-        h0_equal = randomized_greedy(
-            instance,
-            restarts=h0_restarts,
-            seed=seed,
-            local_search_passes=0,
-            local_search_budget=0,
-        )
-        h0_strong = randomized_greedy(
-            instance,
-            restarts=h0_restarts if wallclock else samples,
-            seed=seed,
-            local_search_passes=h0_local_passes,
-            local_search_budget=h0_local_budget,
-        )
-        for label, h0 in (("H0", h0_equal), ("H0_strong", h0_strong)):
+            # H0_strong: best-of-N constructions, then ONE local-search pass.
+            h0_strong = randomized_greedy(
+                instance,
+                restarts=samples,
+                seed=seed,
+                local_search_passes=h0_local_passes,
+                local_search_budget=h0_local_budget,
+            )
+            h0_samples = samples
+            strong_samples = samples
+
+        for label, h0, n_samples in (
+            ("H0", h0_equal, h0_samples),
+            ("H0_strong", h0_strong, strong_samples),
+        ):
             _append_method_row(
                 rows,
                 instance,
@@ -351,7 +588,7 @@ def run_compare(
                 label,
                 seed,
                 version,
-                h0_restarts if label == "H0" else samples,
+                n_samples,
                 h0.feasible,
                 h0.objective_hours,
                 h0.routes,
@@ -361,19 +598,7 @@ def run_compare(
                 h0.oracle_calls,
                 h0.reason,
             )
-        for method, attempts in neural_attempts.items():
-            feasible = [attempt for attempt in attempts if attempt["feasible"]]
-            best = (
-                min(feasible, key=lambda attempt: attempt["objective"])
-                if feasible
-                else None
-            )
-            charging_stops = charging_hours = 0
-            if best is not None:
-                for plan in best["plans"]:
-                    check = check_route(instance, plan.stops)
-                    charging_stops += check.charging_stops
-                    charging_hours += check.charging_hours
+        for method, result in neural_results.items():
             _append_method_row(
                 rows,
                 instance,
@@ -381,23 +606,31 @@ def run_compare(
                 method,
                 seed,
                 version,
-                samples,
-                best is not None,
-                best["objective"] if best else "",
-                len(best["routes"]) if best else "",
-                charging_stops,
-                charging_hours,
-                sum(attempt["runtime"] for attempt in attempts),
-                sum(attempt["oracle_calls"] for attempt in attempts),
-                "" if best else attempts[-1]["reason"],
+                result["samples"],
+                result["feasible"],
+                result["objective"],
+                result["routes"],
+                result["charging_stops"],
+                result["charging_h"],
+                result["runtime"],
+                result["oracle_calls"],
+                result["reason"],
             )
-        print(f"evaluated {instance.name}")
+        print(
+            f"evaluated {instance.name}"
+            + (f" neural_wall={neural_time:.3f}s" if wallclock else "")
+        )
 
     results_dir.mkdir(parents=True, exist_ok=True)
     suffix = f"_from{trained_size}" if trained_size != size else ""
-    extra = tag or ("wallclock" if wallclock else "")
-    if neural_local_passes > 0 and not extra:
-        extra = "eqls"
+    extra = tag
+    if not extra:
+        if wallclock:
+            extra = "wallclock_fair"
+        elif fair_ls:
+            extra = "fairls"
+        elif neural_local_passes > 0:
+            extra = "eqls_legacy"
     suffix = f"{suffix}_{extra}" if extra else suffix
     output = results_dir / f"compare_size{size}{suffix}_seed{seed}_{version}.csv"
     with output.open("w", newline="", encoding="utf-8") as handle:
@@ -408,11 +641,13 @@ def run_compare(
         method_rows = [row for row in rows if row["method"] == method]
         feasible = [row for row in method_rows if row["feasible"]]
         objectives = [float(row["objective_h"]) for row in feasible]
+        oracle_mean = statistics.mean(float(row["oracle_calls"]) for row in method_rows)
         print(
             f"{method}: feasible={len(feasible)}/{len(method_rows)}, "
             f"mean={statistics.mean(objectives):.6f}, "
             f"median={statistics.median(objectives):.6f}, "
-            f"time={sum(float(row['runtime_s']) for row in method_rows):.3f}s"
+            f"time={sum(float(row['runtime_s']) for row in method_rows):.3f}s, "
+            f"oracle/inst={oracle_mean:.1f}"
             if objectives
             else f"{method}: feasible=0/{len(method_rows)}"
         )
@@ -665,6 +900,11 @@ def main() -> None:
     parser.add_argument("--neural-local-passes", type=int, default=0)
     parser.add_argument("--neural-local-budget", type=int, default=0)
     parser.add_argument("--wallclock", action="store_true")
+    parser.add_argument(
+        "--fair-ls",
+        action="store_true",
+        help="Best-of-N constructions then one shared local-search for every method",
+    )
     parser.add_argument("--tag", type=str, default="")
     args = parser.parse_args()
 
@@ -700,6 +940,7 @@ def main() -> None:
             args.neural_local_budget,
             args.wallclock,
             args.tag,
+            args.fair_ls,
         )
     elif args.mode == "direct":
         run_direct_comparison(

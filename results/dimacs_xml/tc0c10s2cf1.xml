@@ -1,0 +1,47 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<solution instance="tc0c10s2cf1" solver="HAT-EVRP-NL hybrid H4" optimal="false">
+	<route id="0">
+		<depot id="0" />
+		<customer id="7" />
+		<customer id="9" />
+		<customer id="5" />
+		<customer id="2" />
+		<depot id="0" />
+	</route>
+	<route id="1">
+		<depot id="0" />
+		<customer id="8" />
+		<customer id="4" />
+		<station id="11">
+			<wait>0</wait>
+			<charge>10321.6230053218</charge>
+		</station>
+		<customer id="3" />
+		<station id="12">
+			<wait>0</wait>
+			<charge>11094.6999837366</charge>
+		</station>
+		<customer id="1" />
+		<depot id="0" />
+	</route>
+	<route id="2">
+		<depot id="0" />
+		<station id="12">
+			<wait>0</wait>
+			<charge>11918.8115460577</charge>
+		</station>
+		<customer id="10" />
+		<customer id="6" />
+		<station id="12">
+			<wait>0</wait>
+			<charge>12026.6845233838</charge>
+		</station>
+		<depot id="0" />
+	</route>
+	<runtime>
+		<machine>
+			<language>Python</language>
+		</machine>
+		<cputime>0</cputime>
+	</runtime>
+</solution>

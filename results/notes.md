@@ -275,10 +275,29 @@ Still 4/20 feasible; hybrid 20/20. Retained as negative ablation.
 `results/summary.md`, `paper_draft.md`, aggregate CSVs/figures `*_c3*`,
 `example_solution_H4_c3_tc0c10s2cf1.json`, checkpoints `*_c3.pt`.
 
+## Fairness correction (post Cycle 3 review)
+
+Issue: legacy `eqls` applied LS to every neural sample (~2704 oracle/inst for
+H4) while H0_strong used one LS after best-of-10 (~528). That comparison is
+invalid for equal-effort claims.
+
+Fix: `--fair-ls` = best-of-N constructions without LS, then one shared
+`local_search` with identical passes/budget for all methods. Wall-clock uses
+measured neural time per instance.
+
+Fair n=10 pooled (60): H0_strong 20.142 / 528 oracle; H2 19.813 / 747;
+H4 19.886 / 753. H2 and H4 beat H0_strong on 60% of pairs; H4 does not beat H2.
+Fair wall-clock seed 42: H2 19.586 vs H0_strong 20.889 at ~0.48 s mean.
+n=20/40 fairls: H2/H4 beat H0_strong with similar oracle counts (~1.1–1.2×).
+
+Literature BKS (Froger 2021 Table 13): n=10 mean gap ≈41% (H2), 43% (H4).
+DIMACS checker cloned; Java unavailable; sample MIP XML verified internally.
+
+Legacy `eqls` CSVs retained but must not be cited as equal LS.
+
 ## Final conclusion
 
-History-aware hybrid routing is useful. With equal LS, neural H2/H4 beat strong
-H0 on n=10–40 in these runs. DeepSets does not reliably improve over history
-alone. Learned nonlinear charging remains unreliable; `frvcpy` hybrid charging
-is required for validated feasibility. Wall-clock equalization still favors
-classical search.
+After correcting search effort, history-aware hybrid construction + one-shot LS
+still improves on strong classical greedy+LS on n=10–40 in these runs, while
+DeepSets shows no consistent benefit over history alone. Methods remain far from
+published BKS. Direct learned charging remains a negative ablation.
