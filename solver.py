@@ -25,6 +25,7 @@ class BaselineResult:
     local_search_seconds: float
     local_improvements: int
     reason: str = ""
+    unique_constructions: int = 0
 
 
 def local_search(
@@ -147,12 +148,21 @@ def randomized_greedy(
     rcl_size: int = 3,
     local_search_passes: int = 2,
     local_search_budget: int = 2000,
+    deterministic_first: bool = True,
 ) -> BaselineResult:
-    """Append customers by least feasible duration increase, with an RCL."""
+    """Append customers by least feasible duration increase, with an RCL.
+
+    When ``deterministic_first`` is True, only the first restart of *this call*
+    is pure greedy. All other restarts sample an RCL with an independent RNG
+    seeded by ``seed + restart``. Wall-clock single-trial loops must pass
+    ``deterministic_first=False`` (or call once with True, then False) so that
+    changing the seed actually changes constructions.
+    """
     start = time.perf_counter()
     oracle = FixedRouteOracle(instance)
     best: tuple[float, list[tuple[int, ...]], list[RoutePlan]] | None = None
     failure_reason = ""
+    unique_constructions: set[tuple[tuple[int, ...], ...]] = set()
 
     for restart in range(restarts):
         rng = random.Random(seed + restart)
@@ -176,7 +186,8 @@ def randomized_greedy(
                 if not options:
                     break
                 options.sort(key=lambda option: (option[0], option[1]))
-                if restart == 0:
+                use_deterministic = deterministic_first and restart == 0
+                if use_deterministic:
                     selected = options[0]
                 else:
                     selected = rng.choice(options[: min(rcl_size, len(options))])
@@ -199,6 +210,7 @@ def randomized_greedy(
         if not valid:
             failure_reason = reason
             continue
+        unique_constructions.add(tuple(routes))
         objective = sum(plan.duration_hours for plan in plans)
         if best is None or objective < best[0]:
             best = objective, routes, plans
@@ -218,6 +230,7 @@ def randomized_greedy(
             0.0,
             0,
             failure_reason or "all restarts failed",
+            len(unique_constructions),
         )
 
     objective, routes, plans = best
@@ -245,6 +258,7 @@ def randomized_greedy(
             local_seconds,
             improvements,
             f"local-search result invalid: {reason}",
+            len(unique_constructions),
         )
     objective = sum(plan.duration_hours for plan in plans)
     charging_stops = 0
@@ -265,4 +279,6 @@ def randomized_greedy(
         time.perf_counter() - start,
         local_seconds,
         improvements,
+        "",
+        len(unique_constructions),
     )

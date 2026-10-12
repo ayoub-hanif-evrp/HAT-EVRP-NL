@@ -237,6 +237,7 @@ def _append_method_row(
     runtime_s,
     oracle_calls,
     reason: str,
+    unique_constructions: int | str = "",
 ) -> None:
     rows.append(
         {
@@ -253,6 +254,7 @@ def _append_method_row(
             "charging_h": charging_hours if feasible else "",
             "runtime_s": runtime_s,
             "oracle_calls": oracle_calls,
+            "unique_constructions": unique_constructions,
             "reason": reason,
         }
     )
@@ -289,10 +291,9 @@ def _classical_until_time(
 ):
     """Spend a measured wall-clock budget on classical search.
 
-    Protocol mirrors fair neural LS: generate constructions WITHOUT local
-    search until the budget is exhausted (or nearly), keep the best, then
-    apply one shared local-search if ``local_passes>0``. Remaining time after
-    constructions is used for that single refinement when possible.
+    Generates genuinely seeded randomized constructions (only the first trial
+    may be deterministic). Tracks unique customer-route constructions so that
+    duplicated identical trials are not silently treated as independent search.
     """
     import time
     from dataclasses import replace
@@ -307,35 +308,45 @@ def _classical_until_time(
     restarts = 0
     oracle_calls = 0
     last_fail = ""
+    unique_constructions: set[tuple[tuple[int, ...], ...]] = set()
 
     # Reserve a fraction of the measured neural budget for one final LS.
     construct_deadline = (
         start + time_budget_s * 0.8 if local_passes > 0 else start + time_budget_s
     )
     while time.perf_counter() < construct_deadline and restarts < 5000:
+        # Trial 0: one optional deterministic greedy. Later trials: RCL sampling
+        # with independent seeds so seed changes actually change actions.
         result = randomized_greedy(
             instance,
             restarts=1,
-            seed=seed + restarts,
+            seed=seed + 1009 * restarts + 17,
             local_search_passes=0,
             local_search_budget=0,
+            deterministic_first=(restarts == 0),
         )
         restarts += 1
         oracle_calls += result.oracle_calls
-        if result.feasible and result.objective_hours < best_obj:
-            best_obj = result.objective_hours
-            best_routes = list(result.customer_routes)
-            best_plans = list(result.plans)
-        elif not result.feasible:
+        if result.feasible:
+            unique_constructions.add(result.customer_routes)
+            if result.objective_hours < best_obj:
+                best_obj = result.objective_hours
+                best_routes = list(result.customer_routes)
+                best_plans = list(result.plans)
+        else:
             last_fail = result.reason
-        # Ensure at least one restart even for tiny budgets.
         if restarts == 1 and time.perf_counter() >= construct_deadline:
             break
 
     if best_routes is None:
         elapsed = time.perf_counter() - start
         failed = randomized_greedy(
-            instance, restarts=1, seed=seed, local_search_passes=0, local_search_budget=0
+            instance,
+            restarts=1,
+            seed=seed,
+            local_search_passes=0,
+            local_search_budget=0,
+            deterministic_first=True,
         )
         return (
             replace(
@@ -344,9 +355,11 @@ def _classical_until_time(
                 reason=last_fail or failed.reason,
                 runtime_seconds=elapsed,
                 oracle_calls=oracle_calls,
+                unique_constructions=len(unique_constructions),
             ),
             restarts,
             elapsed,
+            len(unique_constructions),
         )
 
     improvements = 0
@@ -365,7 +378,12 @@ def _classical_until_time(
     valid, reason = check_solution(instance, best_plans)
     if not valid:
         failed = randomized_greedy(
-            instance, restarts=1, seed=seed, local_search_passes=0, local_search_budget=0
+            instance,
+            restarts=1,
+            seed=seed,
+            local_search_passes=0,
+            local_search_budget=0,
+            deterministic_first=True,
         )
         return (
             replace(
@@ -374,9 +392,11 @@ def _classical_until_time(
                 reason=reason,
                 runtime_seconds=elapsed,
                 oracle_calls=oracle_calls,
+                unique_constructions=len(unique_constructions),
             ),
             restarts,
             elapsed,
+            len(unique_constructions),
         )
     charging_stops = charging_hours = 0
     for plan in best_plans:
@@ -385,7 +405,12 @@ def _classical_until_time(
         charging_hours += check.charging_hours
     objective = sum(plan.duration_hours for plan in best_plans)
     template = randomized_greedy(
-        instance, restarts=1, seed=seed, local_search_passes=0, local_search_budget=0
+        instance,
+        restarts=1,
+        seed=seed,
+        local_search_passes=0,
+        local_search_budget=0,
+        deterministic_first=True,
     )
     return (
         replace(
@@ -402,9 +427,11 @@ def _classical_until_time(
             local_search_seconds=0.0,
             local_improvements=improvements,
             reason="",
+            unique_constructions=len(unique_constructions),
         ),
         restarts,
         elapsed,
+        len(unique_constructions),
     )
 
 
@@ -544,12 +571,13 @@ def run_compare(
 
         neural_time = max(result["runtime"] for result in neural_results.values())
 
+        h0_unique = strong_unique = ""
         if wallclock:
             # Match measured neural wall time with classical measured wall time.
-            h0_equal, h0_restarts, _ = _classical_until_time(
+            h0_equal, h0_restarts, _, h0_unique = _classical_until_time(
                 instance, seed, neural_time, local_passes=0, local_budget=0
             )
-            h0_strong, strong_restarts, _ = _classical_until_time(
+            h0_strong, strong_restarts, _, strong_unique = _classical_until_time(
                 instance,
                 seed,
                 neural_time,
@@ -565,6 +593,7 @@ def run_compare(
                 seed=seed,
                 local_search_passes=0,
                 local_search_budget=0,
+                deterministic_first=True,
             )
             # H0_strong: best-of-N constructions, then ONE local-search pass.
             h0_strong = randomized_greedy(
@@ -573,13 +602,16 @@ def run_compare(
                 seed=seed,
                 local_search_passes=h0_local_passes,
                 local_search_budget=h0_local_budget,
+                deterministic_first=True,
             )
             h0_samples = samples
             strong_samples = samples
+            h0_unique = h0_equal.unique_constructions
+            strong_unique = h0_strong.unique_constructions
 
-        for label, h0, n_samples in (
-            ("H0", h0_equal, h0_samples),
-            ("H0_strong", h0_strong, strong_samples),
+        for label, h0, n_samples, n_unique in (
+            ("H0", h0_equal, h0_samples, h0_unique),
+            ("H0_strong", h0_strong, strong_samples, strong_unique),
         ):
             _append_method_row(
                 rows,
@@ -597,6 +629,7 @@ def run_compare(
                 h0.runtime_seconds,
                 h0.oracle_calls,
                 h0.reason,
+                n_unique,
             )
         for method, result in neural_results.items():
             _append_method_row(
@@ -615,10 +648,16 @@ def run_compare(
                 result["runtime"],
                 result["oracle_calls"],
                 result["reason"],
+                "",
             )
         print(
             f"evaluated {instance.name}"
-            + (f" neural_wall={neural_time:.3f}s" if wallclock else "")
+            + (
+                f" neural_wall={neural_time:.3f}s"
+                f" H0_unique={h0_unique} H0s_unique={strong_unique}"
+                if wallclock
+                else ""
+            )
         )
 
     results_dir.mkdir(parents=True, exist_ok=True)
@@ -626,7 +665,7 @@ def run_compare(
     extra = tag
     if not extra:
         if wallclock:
-            extra = "wallclock_fair"
+            extra = "wallclock_final"
         elif fair_ls:
             extra = "fairls"
         elif neural_local_passes > 0:

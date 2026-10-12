@@ -2,91 +2,104 @@
 
 ## Abstract
 
-We study whether a shared causal visit-history Transformer combined with a
-DeepSets fleet representation improves customer sequencing for the Montoya
-E-VRP-NL when charging is optimized by an exact nonlinear fixed-route solver.
-After correcting an unequal local-search protocol that previously overstated
-neural effort, fair one-shot local search on existing checkpoints shows that
-history-aware hybrid policies (H2/H4) improve on a strong classical
-greedy+LS baseline on official n=10–40 instances, while DeepSets does not
-reliably beat history alone. Direct learned charging remains largely
-infeasible. Gaps to published Froger et al. (2021) BKS values remain large
-(~41% for H2 on n=10), so these methods are not competitive with specialized
-metaheuristics.
+We study Montoya’s electric vehicle routing problem with nonlinear charging
+(E-VRP-NL) using a hybrid architecture: a shared causal visit-history
+Transformer, optional DeepSets fleet aggregation, hierarchical customer
+routing, and exact nonlinear charging via `frvcpy`. After correcting an
+evaluation bug that made wall-clock classical restarts non-randomized, and
+using equal construction and one-shot local-search protocols, we find that
+history helps routing quality, but DeepSets does not consistently improve over
+history alone. With fair one-shot local search, history-aware policies can
+beat a strong classical greedy+LS baseline on official n=10–40 instances, yet
+remain far from published Froger et al. (2021) best-known solutions
+(~43% mean gap on n=10). A fully learned charging policy is largely
+infeasible (4/20). The DeepSets coordination hypothesis is not supported.
 
 ## 1. Introduction
 
-Electric vehicle routing with nonlinear charging requires feasible battery and
-duration decisions under piecewise-linear charging curves. We ask whether
-history-aware multi-route neural construction, coordinated by DeepSets, helps
-when charging is handled by `frvcpy`.
+E-VRP-NL requires customer sequencing under battery and duration limits with
+piecewise-linear concave charging curves (Montoya et al., 2017). Neural
+construction heuristics have succeeded on classical VRP variants
+(e.g., attention models), but nonlinear EV charging is usually handled by
+specialized oracles. We ask whether sharing causal EV visit histories and
+aggregating open routes with DeepSets (Zaheer et al., 2017) improves
+coordination on Montoya’s static offline benchmark when charging is optimized
+exactly.
 
-## 2. Problem
+## 2. Related work
 
-Montoya et al. (2017) E-VRP-NL (VRP-REP 2016-0020): unlimited homogeneous EVs,
-exact customer coverage, \(T_{\max}=10\) h, partial nonlinear charging, no time
-windows, cargo limits, or station queues. Objective: total route duration.
+Montoya et al. (2017) introduced E-VRP-NL and an ILS+HC matheuristic. Froger
+et al. (2019, 2021) strengthened formulations and reported improved best-known
+solutions (BKS) for the uncapacitated set. Fixed-route charging can be solved
+by labeling (`frvcpy`). Deep Sets provide permutation-invariant set functions.
+We do not claim novelty over these lines; we test one hybrid design under fair
+computation.
 
-## 3. Method
+## 3. Benchmark formulation
 
-HAT-EVRP-NL: shared causal Transformer over visit tokens (SOC, time, energy,
-charging, node type) → state fusion → DeepSets fleet summary → hierarchical
-EV/customer decoder → `frvcpy` charging → independent checker. Ablations H1–H4
-isolate history and DeepSets.
+Instances: VRP-REP 2016-0020. Unlimited homogeneous EVs; full battery at
+departure; serve each customer once; \(T_{\max}=10\) h; station-specific
+piecewise-linear charging; partial recharge allowed; no time windows, cargo
+limits, or station queues. Objective: total route duration (travel + service +
+charging).
 
-## 4. Fair evaluation protocol
+## 4. HAT-EVRP-NL architecture
 
-**Construction-only:** N sampled solutions without local search; report best.
+Visit tokens encode node features, arrival/departure time and SOC, travel
+energy, and charging amount/duration. A shared causal Transformer yields a
+route-history vector fused with explicit state. DeepSets forms
+\(g=\rho(\sum_i\phi(v_i))\). A hierarchical decoder selects an open EV or a new
+route, then a customer or close action. `frvcpy` inserts charging; an
+independent checker validates physics. Ablations: H1 state-only; H2 history;
+H3 DeepSets only; H4 history+DeepSets.
 
-**Fair local search (corrected):** N constructions without LS for every method;
-keep the best; apply identical one-shot 2-opt/relocate LS with the same
-evaluation budget. Prior Cycle-3 “eqls” runs applied LS to every neural sample
-and are **not** equal-effort; they are retained only as legacy files.
+## 5. Training
 
-**Fair wall-clock:** measure neural wall time per instance; spend the same
-measured time on classical constructions, then one shared LS.
+Synthetic teachers only (official instances held out). Interleaved multi-open
+imitation, optional REINFORCE, best validation checkpoint. Cycle-3 checkpoints
+(`*_c3.pt`) are used throughout this final evaluation; no closure retraining.
 
-## 5. Results
+## 6. Experimental protocol
 
-### 5.1 Official n=10 (60 instance-seed evaluations)
+**A.** Equal constructions (N samples, no LS).  
+**B.** Fair one-shot LS: best-of-N then identical local search.  
+**C.** Fair wall-clock: match measured neural time; classical uses genuinely
+seeded RCL trials (`deterministic_first` only once).  
 
-Construction-only: H0_strong 20.142; H2 20.966; H4 20.975 (all 60/60 feasible).
-History helps vs H1/H3; DeepSets does not beat H2; H0_strong remains best.
+Seeds 42/43/44 on all 20 n=10 instances; seed 42 on all 20 n=20 and n=40; 3
+n=80 instances (sample). BKS from Froger et al. (2021) Table 13. External Java
+DIMACS checker not executed; Python validation only.
 
-Fair one-shot LS: H0_strong 20.142 (528 oracle/inst); H2 19.813 (747);
-H4 19.886 (753). H2 and H4 beat H0_strong on 60% of pairs. H4 does not beat H2
-(mean delta +0.074 h; win rate 18%).
+## 7. Results
 
-Fair wall-clock (seed 42): mean runtimes ≈0.44–0.49 s; H2 19.586; H4 19.840;
-H0_strong 20.889.
+Equal constructions (n=10): H0_strong 20.142; H2 20.966; H4 20.975.  
+Fair LS: H2 19.813; H4 19.886; H0_strong 20.142 (oracle ~747 vs 528).  
+Instance-paired H4−H2: mean +0.074 h; H4 better 30%, tie 60%, H2 better 20%.  
+Wall-clock (seed 42): H2 19.586; H4 19.840; H0_strong 19.895; ~40+ unique
+classical constructions per instance.  
+n=20/40 fair LS: H2/H4 beat H0_strong; H4 does not dominate H2.  
+n=10 BKS gaps ≈43% (H2/H4). Direct CHARGE: 4/20 feasible.
 
-### 5.2 Scale (seed 42, fair LS)
+## 8. Limitations
 
-n=20: H0_strong 34.420; H2 32.332; H4 32.322 (20/20).
-n=40: H0_strong 60.195; H2 57.173; H4 57.506 (20/20).
+CPU-only; incomplete 160/320 evaluation; no external Java checker; large BKS
+gaps; neural methods use more oracle/runtime than H0_strong under fair LS.
 
-### 5.3 Literature BKS
+## 9. Conclusion
 
-Using Froger et al. (2021) Table 13 BKS, seed-42 fair-LS mean gaps on n=10 are
-47.1% (H0_strong), 41.0% (H2), 42.7% (H4). Specialized ILS/LNS methods remain
-substantially stronger.
+History-aware hybrid routing is useful. DeepSets fleet coordination does not
+meaningfully improve Montoya E-VRP-NL under our fair tests. Exact nonlinear
+charging remains necessary. Authoritative numbers: `results/FINAL_REPORT.md`.
 
-### 5.4 Charging ablation
+## References
 
-Direct hierarchical CHARGE policy: 4/20 feasible. Hybrid neural routing with
-`frvcpy` charging: 20/20. Repair with `frvcpy` is not credited to learning.
-
-## 6. Limitations
-
-No Java runtime for the DIMACS checker in this environment (checker cloned;
-sample MIP XML verified internally; H4 XML exported). CPU-only training.
-DeepSets coordination not supported by paired tests. Large gaps to published
-BKS. Incomplete 160/320 evaluation.
-
-## 7. Conclusion
-
-With a corrected equal-effort local-search protocol, history-aware Transformer
-construction plus one shared nonlinear-aware LS improves on a strong classical
-baseline on the tested Montoya sizes, but DeepSets adds no consistent gain, and
-performance remains far from literature BKS. Learned nonlinear charging is not
-yet reliable; exact charging optimization remains essential.
+- Montoya, J.A., Guéret, C., Mendoza, J.E., Villegas, J.G. (2017). The electric
+  vehicle routing problem with nonlinear charging function. *Transportation
+  Research Part B*, 103, 87–110.
+- Froger, A., Jabali, O., Mendoza, J.E., Laporte, G. (2021). The electric
+  vehicle routing problem with capacitated charging stations. Working paper /
+  HAL; BKS Table 13 used for uncapacitated E-VRP-NL.
+- Froger, A., Mendoza, J.E., Jabali, O., Laporte, G. (2019). Improved
+  formulations for E-VRP-NL. *Computers & Operations Research*.
+- Zaheer, M., et al. (2017). Deep Sets. *NeurIPS*.
+- Kullman, N., et al. `frvcpy`: fixed-route vehicle charging problem solver.
