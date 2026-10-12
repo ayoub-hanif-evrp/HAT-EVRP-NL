@@ -58,20 +58,18 @@ def to_frvcpy(instance: Instance) -> dict:
 
     frvcpy requires every fixed-route node (including the destination depot) to
     have a reachable CS after it. Its stock translator makes the depot a normal
-    CS, which also permits mid-route depot charging. Instead, the helper below
-    is reachable only from the depot. It sets the terminal bound to zero but
-    cannot be inserted after a customer.
+    CS, which also permits mid-route depot charging. The helper below is a depot
+    copy used only for lower bounds; FixedRouteOracle removes it from the
+    insertable-CS list before solving.
     """
     helper = len(instance.nodes)
-    unreachable_time = 1e9
-    unreachable_energy = 1e15
     time_matrix = [
-        [*row, 0.0 if node == instance.depot else unreachable_time]
+        [*row, instance.travel_hours[node][instance.depot]]
         for node, row in enumerate(instance.travel_hours)
     ]
     time_matrix.append([*instance.travel_hours[instance.depot], 0.0])
     energy_matrix = [
-        [*row, 0.0 if node == instance.depot else unreachable_energy]
+        [*row, instance.energy_wh[node][instance.depot]]
         for node, row in enumerate(instance.energy_wh)
     ]
     energy_matrix.append([*instance.energy_wh[instance.depot], 0.0])
@@ -116,10 +114,12 @@ class FixedRouteOracle:
 
     def __init__(self, instance: Instance):
         try:
+            from frvcpy.core import NodeType
             from frvcpy.solver import Solver
         except ImportError as exc:
             raise RuntimeError("Phase 1 requires the installed frvcpy package") from exc
         self._solver_class = Solver
+        self._customer_node_type = NodeType.CUSTOMER
         self.instance = instance
         self._oracle_instance = to_frvcpy(instance)
         self._terminal_helper = len(instance.nodes)
@@ -140,20 +140,35 @@ class FixedRouteOracle:
 
         route = [self.instance.depot, *customer_sequence, self.instance.depot]
         self.calls += 1
-        duration, stops = self._solver_class(
+        frvcp_solver = self._solver_class(
             self._oracle_instance,
             route,
             self.instance.battery_wh,
             multi_insert=True,
-        ).solve()
+        )
+        # Retain the helper in cs_id_to_type for get_min_energy_to_cs(), but
+        # prevent it from becoming an actual charging stop in graph G'.
+        frvcp_solver.instance.cs_details = [
+            cs
+            for cs in frvcp_solver.instance.cs_details
+            if cs["node_id"] != self._terminal_helper
+        ]
+        frvcp_solver.instance.n_cs = len(frvcp_solver.instance.cs_details)
+        frvcp_solver.instance.nodes_g[
+            self._terminal_helper
+        ].type = self._customer_node_type
+        duration, stops = frvcp_solver.solve()
         if stops is None or not math.isfinite(duration):
             plan = RoutePlan(False, math.inf, None, "frvcpy found no feasible plan")
         else:
             concrete = tuple(
                 (int(node), None if amount is None else float(amount))
                 for node, amount in stops
-                if int(node) != self._terminal_helper
             )
+            if any(node == self._terminal_helper for node, _ in concrete):
+                plan = RoutePlan(False, math.inf, concrete, "terminal helper was inserted")
+                self._cache[customer_sequence] = plan
+                return plan
             check = check_route(self.instance, concrete, customer_sequence)
             objective_error = abs(check.duration_hours - float(duration))
             if not check.feasible:

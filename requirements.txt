@@ -1,1 +1,3 @@
 frvcpy==0.1.1
+torch>=2.0
+matplotlib>=3.7

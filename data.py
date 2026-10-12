@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 import math
+import random
 import xml.etree.ElementTree as ET
 
 
@@ -158,3 +159,74 @@ def parse_instance(path: str | Path) -> Instance:
 
 def instance_files(data_dir: str | Path) -> list[Path]:
     return sorted(Path(data_dir).rglob("*.xml"))
+
+
+def generate_synthetic(size: int, seed: int, distribution: str | None = None) -> Instance:
+    """Generate an independent Montoya-like instance for policy training."""
+    rng = random.Random(seed)
+    distribution = distribution or ("random", "clustered", "mixed")[seed % 3]
+    depot_xy = (rng.uniform(10, 110), rng.uniform(10, 110))
+
+    if distribution == "random":
+        customer_xy = [(rng.uniform(0, 120), rng.uniform(0, 120)) for _ in range(size)]
+    else:
+        n_clusters = max(2, round(math.sqrt(size) / 1.5))
+        centers = [(rng.uniform(8, 112), rng.uniform(8, 112)) for _ in range(n_clusters)]
+        clustered = [
+            (
+                min(120, max(0, centers[k % n_clusters][0] + rng.gauss(0, 5))),
+                min(120, max(0, centers[k % n_clusters][1] + rng.gauss(0, 5))),
+            )
+            for k in range(size)
+        ]
+        if distribution == "mixed":
+            for k in range(size // 2):
+                clustered[k] = (rng.uniform(0, 120), rng.uniform(0, 120))
+        customer_xy = clustered
+
+    station_count = max(2, round(size * 0.15))
+    station_xy = [(rng.uniform(5, 115), rng.uniform(5, 115)) for _ in range(station_count)]
+    technologies = ("fast", "normal", "slow")
+    curve_times = {
+        "fast": (0.0, 0.31, 0.39, 0.51),
+        "normal": (0.0, 0.62, 0.77, 1.01),
+        "slow": (0.0, 1.26, 1.54, 2.04),
+    }
+    curves = {
+        technology: ChargingCurve(
+            technology, curve_times[technology], (0.0, 13600.0, 15200.0, 16000.0)
+        )
+        for technology in technologies[: min(3, station_count)]
+    }
+
+    nodes = [Node(0, 0, *depot_xy)]
+    nodes.extend(Node(k + 1, 1, *xy) for k, xy in enumerate(customer_xy))
+    for k, xy in enumerate(station_xy):
+        technology = tuple(curves)[k % len(curves)]
+        nodes.append(Node(size + 1 + k, 2, *xy, station_type=technology))
+    node_tuple = tuple(nodes)
+    service = tuple(0.5 if node.kind == 1 else 0.0 for node in node_tuple)
+    distances = tuple(
+        tuple(math.hypot(a.x - b.x, a.y - b.y) for b in node_tuple)
+        for a in node_tuple
+    )
+    travel = tuple(tuple(distance / 40.0 for distance in row) for row in distances)
+    energy = tuple(tuple(distance * 125.0 for distance in row) for row in distances)
+    return Instance(
+        name=f"syn_{distribution}_n{size}_s{seed}",
+        path=Path("<synthetic>"),
+        nodes=node_tuple,
+        depot=0,
+        customers=tuple(range(1, size + 1)),
+        stations=tuple(range(size + 1, len(node_tuple))),
+        service_times=service,
+        speed_kmph=40.0,
+        consumption_wh_per_km=125.0,
+        battery_wh=16000.0,
+        max_route_hours=10.0,
+        decimals=14,
+        curves=curves,
+        distances_km=distances,
+        travel_hours=travel,
+        energy_wh=energy,
+    )

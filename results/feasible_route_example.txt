@@ -1,0 +1,22 @@
+Instance: tc0c10s2ct1
+Method: H4, checkpoint H4_n10_seed42.pt, best of 10 decoded solutions
+Verified total objective: 19.224414264853575 h
+
+Customer routes:
+  (4, 7, 5, 2)
+  (8, 3, 1, 10, 6)
+  (9,)
+
+Concrete oracle-optimized routes (node, charge_added_Wh):
+  duration 8.256407839925611 h:
+    ((0, None), (4, None), (12, 13648.494776086916), (7, None),
+     (5, None), (2, None), (0, None))
+  duration 8.293676988067027 h:
+    ((0, None), (8, None), (3, None), (1, None),
+     (11, 11641.586481092927), (10, None), (6, None), (0, None))
+  duration 2.674329436860937 h:
+    ((0, None), (9, None), (0, None))
+
+All three routes were independently forward-simulated with full-battery depot
+departure, exact piecewise charging time, no negative/over-capacity SOC,
+service time at each customer, depot return, and the 10-hour route limit.

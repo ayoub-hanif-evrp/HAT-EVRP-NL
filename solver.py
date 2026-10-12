@@ -22,7 +22,122 @@ class BaselineResult:
     charging_hours: float
     oracle_calls: int
     runtime_seconds: float
+    local_search_seconds: float
+    local_improvements: int
     reason: str = ""
+
+
+def _local_search(
+    routes: list[tuple[int, ...]],
+    plans: list[RoutePlan],
+    oracle: FixedRouteOracle,
+    max_passes: int,
+    evaluation_budget: int,
+) -> tuple[list[tuple[int, ...]], list[RoutePlan], int]:
+    """Best-improvement 2-opt and relocate using exact charging evaluations."""
+    improvements = 0
+    evaluations = 0
+    tolerance = 1e-10
+
+    for _ in range(max_passes):
+        current_objective = sum(plan.duration_hours for plan in plans)
+        best_objective = current_objective
+        best_routes: list[tuple[int, ...]] | None = None
+        best_plans: list[RoutePlan] | None = None
+
+        # Intra-route 2-opt.
+        for route_index, route in enumerate(routes):
+            for begin in range(len(route) - 1):
+                for end in range(begin + 1, len(route)):
+                    if evaluations >= evaluation_budget:
+                        break
+                    candidate_route = (
+                        route[:begin] + tuple(reversed(route[begin : end + 1])) + route[end + 1 :]
+                    )
+                    if candidate_route == route:
+                        continue
+                    candidate_plan = oracle.solve(candidate_route)
+                    evaluations += 1
+                    if not candidate_plan.feasible:
+                        continue
+                    objective = (
+                        current_objective
+                        - plans[route_index].duration_hours
+                        + candidate_plan.duration_hours
+                    )
+                    if objective < best_objective - tolerance:
+                        candidate_routes = routes.copy()
+                        candidate_plans = plans.copy()
+                        candidate_routes[route_index] = candidate_route
+                        candidate_plans[route_index] = candidate_plan
+                        best_objective = objective
+                        best_routes, best_plans = candidate_routes, candidate_plans
+                if evaluations >= evaluation_budget:
+                    break
+            if evaluations >= evaluation_budget:
+                break
+
+        # Relocate one customer within or between routes; empty routes disappear.
+        if evaluations < evaluation_budget:
+            for source_index, source in enumerate(routes):
+                for customer_index, customer in enumerate(source):
+                    reduced = source[:customer_index] + source[customer_index + 1 :]
+                    for target_index, target in enumerate(routes):
+                        base_target = reduced if source_index == target_index else target
+                        for position in range(len(base_target) + 1):
+                            if evaluations >= evaluation_budget:
+                                break
+                            inserted = (
+                                base_target[:position] + (customer,) + base_target[position:]
+                            )
+                            if source_index == target_index:
+                                if inserted == source:
+                                    continue
+                                candidate_plan = oracle.solve(inserted)
+                                evaluations += 1
+                                if not candidate_plan.feasible:
+                                    continue
+                                candidate_routes = routes.copy()
+                                candidate_plans = plans.copy()
+                                candidate_routes[source_index] = inserted
+                                candidate_plans[source_index] = candidate_plan
+                            else:
+                                inserted_plan = oracle.solve(inserted)
+                                evaluations += 1
+                                if not inserted_plan.feasible:
+                                    continue
+                                reduced_plan = oracle.solve(reduced) if reduced else None
+                                evaluations += int(bool(reduced))
+                                if reduced and not reduced_plan.feasible:
+                                    continue
+                                candidate_routes = routes.copy()
+                                candidate_plans = plans.copy()
+                                candidate_routes[target_index] = inserted
+                                candidate_plans[target_index] = inserted_plan
+                                if reduced:
+                                    candidate_routes[source_index] = reduced
+                                    candidate_plans[source_index] = reduced_plan
+                                else:
+                                    del candidate_routes[source_index]
+                                    del candidate_plans[source_index]
+                            objective = sum(
+                                candidate.duration_hours for candidate in candidate_plans
+                            )
+                            if objective < best_objective - tolerance:
+                                best_objective = objective
+                                best_routes, best_plans = candidate_routes, candidate_plans
+                        if evaluations >= evaluation_budget:
+                            break
+                    if evaluations >= evaluation_budget:
+                        break
+                if evaluations >= evaluation_budget:
+                    break
+
+        if best_routes is None or best_plans is None:
+            break
+        routes, plans = best_routes, best_plans
+        improvements += 1
+    return routes, plans, improvements
 
 
 def randomized_greedy(
@@ -30,6 +145,8 @@ def randomized_greedy(
     restarts: int = 5,
     seed: int = 42,
     rcl_size: int = 3,
+    local_search_passes: int = 2,
+    local_search_budget: int = 2000,
 ) -> BaselineResult:
     """Append customers by least feasible duration increase, with an RCL."""
     start = time.perf_counter()
@@ -98,10 +215,38 @@ def randomized_greedy(
             0.0,
             oracle.calls,
             elapsed,
+            0.0,
+            0,
             failure_reason or "all restarts failed",
         )
 
     objective, routes, plans = best
+    local_start = time.perf_counter()
+    routes, plans, improvements = _local_search(
+        routes,
+        plans,
+        oracle,
+        max_passes=local_search_passes,
+        evaluation_budget=local_search_budget,
+    )
+    local_seconds = time.perf_counter() - local_start
+    valid, reason = check_solution(instance, plans)
+    if not valid:
+        return BaselineResult(
+            False,
+            math.inf,
+            (),
+            (),
+            0,
+            0,
+            0.0,
+            oracle.calls,
+            time.perf_counter() - start,
+            local_seconds,
+            improvements,
+            f"local-search result invalid: {reason}",
+        )
+    objective = sum(plan.duration_hours for plan in plans)
     charging_stops = 0
     charging_hours = 0.0
     for plan in plans:
@@ -117,5 +262,7 @@ def randomized_greedy(
         charging_stops,
         charging_hours,
         oracle.calls,
-        elapsed,
+        time.perf_counter() - start,
+        local_seconds,
+        improvements,
     )
