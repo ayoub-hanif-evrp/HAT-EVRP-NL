@@ -21,7 +21,12 @@ from charging import (
     check_solution,
 )
 from data import Instance, generate_synthetic
-from model import DirectChargePolicy, HATPolicy, PolicyConfig
+from model import (
+    DirectChargePolicy,
+    HATPolicy,
+    PolicyConfig,
+    physical_target_socs,
+)
 from solver import randomized_greedy
 
 
@@ -34,9 +39,15 @@ VARIANTS = {
 
 
 def _direct_features(
-    instance: Instance, current: int, next_customer: int, soc: float, remaining: int
+    instance: Instance,
+    current: int,
+    next_customer: int,
+    soc: float,
+    remaining: int,
+    elapsed: float,
 ) -> torch.Tensor:
     node, target = instance.nodes[current], instance.nodes[next_customer]
+    remaining_hours = max(0.0, instance.max_route_hours - elapsed)
     return torch.tensor(
         [
             node.x / 120.0,
@@ -47,6 +58,25 @@ def _direct_features(
             instance.energy_wh[current][next_customer] / instance.battery_wh,
             remaining / max(1, len(instance.customers)),
             float(node.kind == 2),
+            elapsed / instance.max_route_hours,
+            remaining_hours / instance.max_route_hours,
+        ],
+        dtype=torch.float32,
+    )
+
+
+def _target_features(
+    instance: Instance, arrival: float, station: int, target_soc: float
+) -> torch.Tensor:
+    duration = charging_time(
+        instance.curves[instance.nodes[station].station_type], arrival, target_soc
+    )
+    return torch.tensor(
+        [
+            target_soc / instance.battery_wh,
+            (target_soc - arrival) / instance.battery_wh,
+            duration / instance.max_route_hours,
+            float(instance.nodes[station].station_type == "fast"),
         ],
         dtype=torch.float32,
     )
@@ -74,17 +104,17 @@ def _station_features(instance: Instance, current: int) -> torch.Tensor:
 
 def direct_examples(
     instance: Instance, customer_routes: tuple[tuple[int, ...], ...]
-) -> list[tuple[torch.Tensor, torch.Tensor, int, int, int]]:
-    """Extract GO/CHARGE, station, and target-SOC labels from oracle plans."""
+) -> list[tuple]:
+    """Extract GO/CHARGE, station, and absolute target-SOC labels from oracle plans."""
     oracle = FixedRouteOracle(instance)
     examples = []
-    targets = DirectChargePolicy.targets
     for customers in customer_routes:
         plan = oracle.solve(customers)
         if not plan.feasible:
             continue
         current = instance.depot
         soc = instance.battery_wh
+        elapsed = 0.0
         customer_position = 0
         for node, amount in plan.stops[1:]:
             next_customer = (
@@ -98,21 +128,54 @@ def direct_examples(
                 next_customer,
                 soc,
                 len(customers) - customer_position,
+                elapsed,
             )
             stations = _station_features(instance, current)
+            travel = instance.travel_hours[current][node]
             if instance.nodes[node].kind == 2:
                 arrival = soc - instance.energy_wh[current][node]
                 target_soc = arrival + float(amount)
+                required_target = instance.energy_wh[node][next_customer] + (
+                    0.0
+                    if next_customer == instance.depot
+                    else min(
+                        instance.energy_wh[next_customer][other]
+                        for other in (instance.depot, *instance.stations)
+                    )
+                )
+                candidates = physical_target_socs(
+                    instance, arrival, node, required_target
+                )
                 quantity = min(
-                    range(len(targets)),
-                    key=lambda index: abs(targets[index] - target_soc / instance.battery_wh),
+                    range(len(candidates)),
+                    key=lambda index: abs(candidates[index] - target_soc),
+                )
+                target_feats = torch.stack(
+                    [
+                        _target_features(instance, arrival, node, candidate)
+                        for candidate in candidates
+                    ]
                 )
                 examples.append(
-                    (state, stations, 1, instance.stations.index(node), quantity)
+                    (
+                        state,
+                        stations,
+                        1,
+                        instance.stations.index(node),
+                        quantity,
+                        target_feats,
+                    )
                 )
+                charge_dur = charging_time(
+                    instance.curves[instance.nodes[node].station_type],
+                    arrival,
+                    target_soc,
+                )
+                elapsed += travel + charge_dur
                 soc = target_soc
             else:
-                examples.append((state, stations, 0, -1, -1))
+                examples.append((state, stations, 0, -1, -1, None))
+                elapsed += travel + instance.service_times[node]
                 soc -= instance.energy_wh[current][node]
                 if node != instance.depot:
                     customer_position += 1
@@ -126,6 +189,7 @@ def decode_direct(
     """Execute the learned CHARGE policy without post-optimization."""
     current = instance.depot
     soc = instance.battery_wh
+    elapsed = 0.0
     customer_position = 0
     stops: list[tuple[int, float | None]] = [(instance.depot, None)]
     max_decisions = 4 * (len(customers) + 1)
@@ -145,37 +209,92 @@ def decode_direct(
             next_customer,
             soc,
             len(customers) - customer_position,
+            elapsed,
         ).to(model.device)
         stations = _station_features(instance, current).to(model.device)
         state = model.encode(state_features)
         action_logits = model.action_head(state)
         energy_to_next = instance.energy_wh[current][next_customer]
+        travel_to_next = instance.travel_hours[current][next_customer]
+        service_next = instance.service_times[next_customer]
         arrival_at_next = soc - energy_to_next
+        remaining_hours = instance.max_route_hours - elapsed
         if next_customer == instance.depot:
             onward_safe = True
+            time_ok_go = travel_to_next <= remaining_hours + 1e-9
         else:
             onward_safe = arrival_at_next + 1e-7 >= min(
                 instance.energy_wh[next_customer][node]
                 for node in (instance.depot, *instance.stations)
             )
-        go_feasible = energy_to_next <= soc + 1e-7 and onward_safe
-        reachable = [
-            instance.energy_wh[current][station] <= soc + 1e-7
-            and station != current
-            and (
-                instance.energy_wh[station][next_customer]
-                + (
-                    0.0
-                    if next_customer == instance.depot
-                    else min(
-                        instance.energy_wh[next_customer][node]
-                        for node in (instance.depot, *instance.stations)
+            # Leave enough time to return to depot after serving the customer.
+            time_ok_go = (
+                travel_to_next
+                + service_next
+                + instance.travel_hours[next_customer][instance.depot]
+                <= remaining_hours + 1e-9
+            )
+        go_feasible = (
+            energy_to_next <= soc + 1e-7 and onward_safe and time_ok_go
+        )
+        reachable = []
+        for station in instance.stations:
+            energy_ok = (
+                instance.energy_wh[current][station] <= soc + 1e-7
+                and station != current
+                and (
+                    instance.energy_wh[station][next_customer]
+                    + (
+                        0.0
+                        if next_customer == instance.depot
+                        else min(
+                            instance.energy_wh[next_customer][node]
+                            for node in (instance.depot, *instance.stations)
+                        )
+                    )
+                    <= instance.battery_wh + 1e-7
+                )
+            )
+            if not energy_ok:
+                reachable.append(False)
+                continue
+            arrival = soc - instance.energy_wh[current][station]
+            required_target = instance.energy_wh[station][next_customer] + (
+                0.0
+                if next_customer == instance.depot
+                else min(
+                    instance.energy_wh[next_customer][node]
+                    for node in (instance.depot, *instance.stations)
+                )
+            )
+            candidates = physical_target_socs(
+                instance, arrival, station, required_target
+            )
+            travel_cs = instance.travel_hours[current][station]
+            time_feasible = False
+            for target_soc in candidates:
+                if target_soc + 1e-7 < required_target:
+                    continue
+                charge_dur = charging_time(
+                    instance.curves[instance.nodes[station].station_type],
+                    arrival,
+                    target_soc,
+                )
+                after = (
+                    travel_cs
+                    + charge_dur
+                    + instance.travel_hours[station][next_customer]
+                    + instance.service_times[next_customer]
+                    + (
+                        0.0
+                        if next_customer == instance.depot
+                        else instance.travel_hours[next_customer][instance.depot]
                     )
                 )
-                <= instance.battery_wh + 1e-7
-            )
-            for station in instance.stations
-        ]
+                if after <= remaining_hours + 1e-9:
+                    time_feasible = True
+                    break
+            reachable.append(time_feasible)
         action_mask = torch.tensor(
             [go_feasible, any(reachable)], dtype=torch.bool, device=model.device
         )
@@ -184,6 +303,7 @@ def decode_direct(
             break
         action = int(action_logits.masked_fill(~action_mask, float("-inf")).argmax())
         if action == 0:
+            elapsed += travel_to_next + service_next
             soc -= instance.energy_wh[current][next_customer]
             current = next_customer
             stops.append((current, None))
@@ -198,7 +318,6 @@ def decode_direct(
         )
         station = instance.stations[station_index]
         arrival = soc - instance.energy_wh[current][station]
-        quantity_logits = model.quantity_logits(state, stations[station_index])
         required_target = instance.energy_wh[station][next_customer] + (
             0.0
             if next_customer == instance.depot
@@ -207,27 +326,56 @@ def decode_direct(
                 for node in (instance.depot, *instance.stations)
             )
         )
-        quantity_mask = torch.tensor(
-            [
-                fraction * instance.battery_wh > arrival + 1e-7
-                and fraction * instance.battery_wh + 1e-7 >= required_target
-                for fraction in DirectChargePolicy.targets
-            ],
-            dtype=torch.bool,
-            device=model.device,
+        candidates = physical_target_socs(
+            instance, arrival, station, required_target
         )
-        if not bool(quantity_mask.any()):
+        target_feats = torch.stack(
+            [
+                _target_features(instance, arrival, station, candidate)
+                for candidate in candidates
+            ]
+        ).to(model.device)
+        quantity_logits = model.quantity_logits(
+            state, stations[station_index], target_feats
+        )
+        travel_cs = instance.travel_hours[current][station]
+        quantity_mask = []
+        for target_soc in candidates:
+            if target_soc + 1e-7 < required_target or target_soc <= arrival + 1e-7:
+                quantity_mask.append(False)
+                continue
+            charge_dur = charging_time(
+                instance.curves[instance.nodes[station].station_type],
+                arrival,
+                target_soc,
+            )
+            after = (
+                travel_cs
+                + charge_dur
+                + instance.travel_hours[station][next_customer]
+                + instance.service_times[next_customer]
+                + (
+                    0.0
+                    if next_customer == instance.depot
+                    else instance.travel_hours[next_customer][instance.depot]
+                )
+            )
+            quantity_mask.append(after <= remaining_hours + 1e-9)
+        quantity_mask_t = torch.tensor(
+            quantity_mask, dtype=torch.bool, device=model.device
+        )
+        if not bool(quantity_mask_t.any()):
             reason = "no positive target-SOC action"
             break
         quantity = int(
-            quantity_logits.masked_fill(~quantity_mask, float("-inf")).argmax()
+            quantity_logits.masked_fill(~quantity_mask_t, float("-inf")).argmax()
         )
-        target_soc = DirectChargePolicy.targets[quantity] * instance.battery_wh
+        target_soc = candidates[quantity]
         amount = target_soc - arrival
-        # Evaluate exact curve here; check_route independently recomputes it.
-        charging_time(
+        charge_dur = charging_time(
             instance.curves[instance.nodes[station].station_type], arrival, target_soc
         )
+        elapsed += travel_cs + charge_dur
         current, soc = station, target_soc
         stops.append((station, amount))
     concrete = tuple(stops)
@@ -258,9 +406,10 @@ def train_direct(args: argparse.Namespace) -> None:
     start = time.perf_counter()
     losses = []
     for step in range(1, args.steps + 1):
-        state_features, station_features, action, station, quantity = examples[
-            (step - 1) % len(examples)
-        ]
+        example = examples[(step - 1) % len(examples)]
+        state_features, station_features, action, station, quantity, target_feats = (
+            example
+        )
         state_features = state_features.to(device)
         station_features = station_features.to(device)
         state = model.encode(state_features)
@@ -274,7 +423,9 @@ def train_direct(args: argparse.Namespace) -> None:
                 torch.tensor([station], device=device),
             )
             loss = loss + F.cross_entropy(
-                model.quantity_logits(state, station_features[station]).unsqueeze(0),
+                model.quantity_logits(
+                    state, station_features[station], target_feats.to(device)
+                ).unsqueeze(0),
                 torch.tensor([quantity], device=device),
             )
         optimizer.zero_grad()
@@ -282,10 +433,18 @@ def train_direct(args: argparse.Namespace) -> None:
         optimizer.step()
         losses.append(float(loss.detach()))
     args.checkpoints.mkdir(parents=True, exist_ok=True)
-    checkpoint = args.checkpoints / f"CHARGE_n{args.size}_seed{args.seed}.pt"
-    torch.save({"state_dict": model.state_dict(), "size": args.size}, checkpoint)
+    version = getattr(args, "version", "c2")
+    checkpoint = (
+        args.checkpoints / f"CHARGE_n{args.size}_seed{args.seed}_{version}.pt"
+    )
+    torch.save(
+        {"state_dict": model.state_dict(), "size": args.size, "version": version},
+        checkpoint,
+    )
     args.results.mkdir(parents=True, exist_ok=True)
-    output = args.results / f"training_CHARGE_n{args.size}_seed{args.seed}.csv"
+    output = (
+        args.results / f"training_CHARGE_n{args.size}_seed{args.seed}_{version}.csv"
+    )
     with output.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=["step", "loss", "elapsed_s", "device"])
         writer.writeheader()
@@ -321,7 +480,7 @@ def make_teacher_data(
 ) -> list[tuple[Instance, tuple[tuple[int, ...], ...]]]:
     data = []
     candidate_seed = seed_start
-    while len(data) < count and candidate_seed < seed_start + count * 20:
+    while len(data) < count and candidate_seed < seed_start + count * 40:
         instance = generate_synthetic(size, candidate_seed)
         result = randomized_greedy(
             instance,
@@ -330,42 +489,98 @@ def make_teacher_data(
             local_search_passes=1,
             local_search_budget=800,
         )
-        if result.feasible:
+        if result.feasible and len(result.customer_routes) >= 1:
             data.append((instance, result.customer_routes))
         candidate_seed += 1
     if len(data) < count:
-        raise RuntimeError(f"Only generated {len(data)}/{count} feasible teacher instances")
+        raise RuntimeError(
+            f"Only generated {len(data)}/{count} feasible teacher instances"
+        )
     return data
+
+
+def interleaved_actions(
+    teacher_routes: tuple[tuple[int, ...], ...], rng: random.Random
+) -> list[tuple[str, int | None, int | None]]:
+    """Build a valid interleaved construction: preserve per-route order.
+
+    Actions are ('extend', route_id, customer), ('close', route_id, None),
+    or starting a route is implied by the first extend of an unstarted route.
+    Multiple routes stay open while they still have remaining customers.
+    """
+    remaining = [list(route) for route in teacher_routes]
+    started = [False] * len(teacher_routes)
+    open_ids = set()
+    actions: list[tuple[str, int | None, int | None]] = []
+    while any(remaining[i] for i in range(len(remaining))) or open_ids:
+        extendable = [
+            i for i in range(len(remaining)) if remaining[i] and (started[i] or True)
+        ]
+        closable = [i for i in open_ids if not remaining[i]]
+        choices: list[tuple[str, int]] = []
+        for route_id in extendable:
+            choices.append(("extend", route_id))
+        for route_id in closable:
+            choices.append(("close", route_id))
+        if not choices:
+            break
+        kind, route_id = rng.choice(choices)
+        if kind == "close":
+            actions.append(("close", route_id, None))
+            open_ids.remove(route_id)
+            continue
+        customer = remaining[route_id].pop(0)
+        actions.append(("extend", route_id, customer))
+        started[route_id] = True
+        open_ids.add(route_id)
+    for route_id in sorted(open_ids):
+        actions.append(("close", route_id, None))
+    return actions
 
 
 def teacher_loss(
     model: HATPolicy,
     instance: Instance,
     teacher_routes: tuple[tuple[int, ...], ...],
-) -> tuple[torch.Tensor, int]:
+    rng: random.Random | None = None,
+) -> tuple[torch.Tensor, int, dict]:
+    """Imitation loss on an interleaved multi-open-route trajectory."""
+    rng = rng or random.Random(0)
     oracle = FixedRouteOracle(instance)
     routes: list[dict] = []
+    # Map expert route id -> live route index once started.
+    live_index: dict[int, int] = {}
     unserved = set(instance.customers)
     losses = []
     decisions = 0
+    multi_open_states = 0
+    competing_states = 0
+    total_states = 0
 
-    for teacher_route in teacher_routes:
-        active_index: int | None = None
-        for customer in teacher_route:
-            nodes, route_vectors, open_indices, context = model.encode_state(
-                instance, routes, unserved
-            )
-            route_scores = model.route_logits(route_vectors, open_indices, context)
-            if active_index is None:
-                route_target = len(open_indices)
+    for kind, expert_id, customer in interleaved_actions(teacher_routes, rng):
+        nodes, route_vectors, open_indices, context = model.encode_state(
+            instance, routes, unserved
+        )
+        total_states += 1
+        if len(open_indices) >= 2:
+            multi_open_states += 1
+        route_scores = model.route_logits(route_vectors, open_indices, context)
+
+        if kind == "extend":
+            assert expert_id is not None and customer is not None
+            if expert_id not in live_index:
+                route_target = len(open_indices)  # NEW_ROUTE
                 selected_vector = None
                 last_node = instance.depot
                 prefix: tuple[int, ...] = ()
+                is_new = True
             else:
+                active_index = live_index[expert_id]
                 route_target = open_indices.index(active_index)
                 selected_vector = route_vectors[active_index]
                 prefix = routes[active_index]["customers"]
                 last_node = prefix[-1]
+                is_new = False
             losses.append(
                 F.cross_entropy(
                     route_scores.unsqueeze(0),
@@ -380,13 +595,15 @@ def teacher_loss(
                 last_node,
                 context,
                 order,
-                allow_close=active_index is not None,
+                allow_close=not is_new,
             )
             masks = [
                 oracle.solve((*prefix, candidate)).feasible for candidate in order
             ]
-            if active_index is not None:
+            if not is_new:
                 masks.append(True)
+            if sum(masks[: len(order)]) >= 2 and len(open_indices) >= 1:
+                competing_states += 1
             masked_scores = customer_scores.masked_fill(
                 ~torch.tensor(masks, dtype=torch.bool, device=model.device),
                 float("-inf"),
@@ -399,21 +616,20 @@ def teacher_loss(
                 )
             )
             plan = oracle.solve((*prefix, customer))
-            if active_index is None:
+            if is_new:
                 routes.append(route_state(instance, (customer,), plan))
-                active_index = len(routes) - 1
+                live_index[expert_id] = len(routes) - 1
             else:
-                routes[active_index] = route_state(
+                routes[live_index[expert_id]] = route_state(
                     instance, (*prefix, customer), plan
                 )
             unserved.remove(customer)
             decisions += 1
+            continue
 
-        # Explicit CLOSE decision for the completed teacher route.
-        nodes, route_vectors, open_indices, context = model.encode_state(
-            instance, routes, unserved
-        )
-        route_scores = model.route_logits(route_vectors, open_indices, context)
+        # CLOSE an expert route that has no remaining customers.
+        assert expert_id is not None
+        active_index = live_index[expert_id]
         route_target = open_indices.index(active_index)
         losses.append(
             F.cross_entropy(
@@ -427,7 +643,7 @@ def teacher_loss(
             instance,
             nodes,
             route_vectors[active_index],
-            prefix[-1],
+            prefix[-1] if prefix else instance.depot,
             context,
             order,
             allow_close=True,
@@ -446,7 +662,59 @@ def teacher_loss(
         )
         routes[active_index]["closed"] = True
         decisions += 1
-    return torch.stack(losses).mean(), decisions
+
+    stats = {
+        "multi_open_frac": multi_open_states / max(1, total_states),
+        "competing_frac": competing_states / max(1, total_states),
+        "total_states": total_states,
+    }
+    return torch.stack(losses).mean(), decisions, stats
+
+
+def diagnose_deepsets(model: HATPolicy, instance: Instance) -> dict:
+    """Compact checks that DeepSets is permutation-invariant and informative."""
+    if not model.config.deepsets:
+        return {"deepsets": False}
+    oracle = FixedRouteOracle(instance)
+    routes = []
+    for customer in instance.customers[:2]:
+        plan = oracle.solve((customer,))
+        if plan.feasible:
+            routes.append(route_state(instance, (customer,), plan))
+    if len(routes) < 2:
+        return {"deepsets": True, "skipped": True}
+    unserved = set(instance.customers) - {routes[0]["customers"][0], routes[1]["customers"][0]}
+    model.zero_grad(set_to_none=True)
+    _, route_vectors, open_indices, context = model.encode_state(
+        instance, routes, unserved
+    )
+    logits = model.route_logits(route_vectors, open_indices, context)
+    loss = logits.sum()
+    loss.backward()
+    phi_grad = 0.0
+    for parameter in model.fleet_phi.parameters():
+        if parameter.grad is not None:
+            phi_grad += float(parameter.grad.abs().sum())
+    with torch.no_grad():
+        _, route_perm, open_perm, context_perm = model.encode_state(
+            instance, list(reversed(routes)), unserved
+        )
+        fleet_a = model.fleet_rho(model.fleet_phi(route_vectors).sum(dim=0))
+        fleet_b = model.fleet_rho(model.fleet_phi(route_perm).sum(dim=0))
+        perm_error = float((fleet_a - fleet_b).abs().max())
+        routes_perturbed = copy.deepcopy(routes)
+        routes_perturbed[1]["duration"] = min(
+            instance.max_route_hours, routes_perturbed[1]["duration"] + 1.5
+        )
+        _, rv2, oi2, ctx2 = model.encode_state(instance, routes_perturbed, unserved)
+        logits2 = model.route_logits(rv2, oi2, ctx2)
+        active_delta = float((logits - logits2).abs().max())
+    return {
+        "deepsets": True,
+        "phi_grad": phi_grad,
+        "perm_error": perm_error,
+        "active_logit_delta": active_delta,
+    }
 
 
 def decode(
@@ -562,26 +830,39 @@ def train_model(args: argparse.Namespace) -> None:
     random.seed(args.seed)
     torch.manual_seed(args.seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    train_data = make_teacher_data(args.size, args.train_instances, 10000 + args.seed * 100)
-    validation = make_teacher_data(args.size, args.val_instances, 20000 + args.seed * 100)
+    version = getattr(args, "version", "c2")
+    train_data = make_teacher_data(
+        args.size, args.train_instances, 10000 + args.seed * 100
+    )
+    validation = make_teacher_data(
+        args.size, args.val_instances, 20000 + args.seed * 100
+    )
     model = HATPolicy(VARIANTS[args.model]).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     rows = []
     start = time.perf_counter()
     best_score = (-1.0, float("-inf"))
     best_state = copy.deepcopy(model.state_dict())
+    multi_open_sum = 0.0
+    train_rng = random.Random(args.seed + 17)
+
+    diag = diagnose_deepsets(model, train_data[0][0])
+    print({"diagnostics": diag})
 
     for step in range(1, args.steps + 1):
         instance, routes = train_data[(step - 1) % len(train_data)]
         optimizer.zero_grad()
-        loss, decisions = teacher_loss(model, instance, routes)
+        loss, decisions, stats = teacher_loss(
+            model, instance, routes, rng=train_rng
+        )
+        multi_open_sum += stats["multi_open_frac"]
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         optimizer.step()
         if step == 1 or step % args.eval_every == 0 or step == args.steps:
             model.eval()
             with torch.no_grad():
-                decoded = [decode(model, instance) for instance, _ in validation]
+                decoded = [decode(model, val_inst) for val_inst, _ in validation]
             feasible = [result for result in decoded if result["feasible"]]
             mean_objective = (
                 sum(result["objective"] for result in feasible) / len(feasible)
@@ -594,10 +875,13 @@ def train_model(args: argparse.Namespace) -> None:
                 "loss": float(loss.detach()),
                 "feasible_rate": len(feasible) / len(decoded),
                 "validation_objective": mean_objective,
-                "entropy": sum(result["entropy"] for result in decoded) / len(decoded),
+                "entropy": sum(result["entropy"] for result in decoded)
+                / len(decoded),
                 "elapsed_s": time.perf_counter() - start,
                 "device": str(device),
                 "decisions": decisions,
+                "multi_open_frac": multi_open_sum / step,
+                "competing_frac": stats["competing_frac"],
             }
             rows.append(row)
             print(row)
@@ -607,7 +891,6 @@ def train_model(args: argparse.Namespace) -> None:
                 best_state = copy.deepcopy(model.state_dict())
             model.train()
 
-    # Small self-critical REINFORCE fine-tune.
     for rl_step in range(1, args.rl_steps + 1):
         instance, _ = train_data[(rl_step - 1) % len(train_data)]
         model.eval()
@@ -629,7 +912,9 @@ def train_model(args: argparse.Namespace) -> None:
         if rl_step == args.rl_steps:
             model.eval()
             with torch.no_grad():
-                decoded = [decode(model, val_instance) for val_instance, _ in validation]
+                decoded = [
+                    decode(model, val_instance) for val_instance, _ in validation
+                ]
             feasible = [result for result in decoded if result["feasible"]]
             mean_objective = (
                 sum(result["objective"] for result in feasible) / len(feasible)
@@ -642,10 +927,13 @@ def train_model(args: argparse.Namespace) -> None:
                 "loss": float(rl_loss.detach()),
                 "feasible_rate": len(feasible) / len(decoded),
                 "validation_objective": mean_objective,
-                "entropy": sum(result["entropy"] for result in decoded) / len(decoded),
+                "entropy": sum(result["entropy"] for result in decoded)
+                / len(decoded),
                 "elapsed_s": time.perf_counter() - start,
                 "device": str(device),
                 "decisions": sampled["decisions"],
+                "multi_open_frac": multi_open_sum / max(1, args.steps),
+                "competing_frac": "",
             }
             rows.append(row)
             print(row)
@@ -655,8 +943,12 @@ def train_model(args: argparse.Namespace) -> None:
                 best_state = copy.deepcopy(model.state_dict())
 
     model.load_state_dict(best_state)
+    final_diag = diagnose_deepsets(model, validation[0][0])
+    print({"final_diagnostics": final_diag})
     args.checkpoints.mkdir(parents=True, exist_ok=True)
-    checkpoint = args.checkpoints / f"{args.model}_n{args.size}_seed{args.seed}.pt"
+    checkpoint = (
+        args.checkpoints / f"{args.model}_n{args.size}_seed{args.seed}_{version}.pt"
+    )
     torch.save(
         {
             "state_dict": model.state_dict(),
@@ -664,16 +956,23 @@ def train_model(args: argparse.Namespace) -> None:
             "model": args.model,
             "size": args.size,
             "seed": args.seed,
+            "version": version,
+            "diagnostics": final_diag,
         },
         checkpoint,
     )
     args.results.mkdir(parents=True, exist_ok=True)
-    log_path = args.results / f"training_{args.model}_n{args.size}_seed{args.seed}.csv"
+    log_path = (
+        args.results
+        / f"training_{args.model}_n{args.size}_seed{args.seed}_{version}.csv"
+    )
     with log_path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
         writer.writeheader()
         writer.writerows(rows)
-    print(f"saved {checkpoint} and {log_path}; total {time.perf_counter() - start:.2f}s")
+    print(
+        f"saved {checkpoint} and {log_path}; total {time.perf_counter() - start:.2f}s"
+    )
 
 
 def load_policy(path: str | Path, device: torch.device | None = None) -> HATPolicy:
@@ -707,6 +1006,7 @@ def main() -> None:
     parser.add_argument("--eval-every", type=int, default=10)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--version", type=str, default="c2")
     parser.add_argument("--results", type=Path, default=Path("results"))
     parser.add_argument("--checkpoints", type=Path, default=Path("checkpoints"))
     args = parser.parse_args()

@@ -1,4 +1,4 @@
-# Phase 1 research notes
+# Phase 1 + Cycle 2 research notes
 
 Date: 2026-10-12
 
@@ -53,13 +53,6 @@ Date: 2026-10-12
 - Limitation: these are absolute objectives from a small deterministic sample;
   no local verified BKS is available, so no optimality gaps are reported.
 
-## Next highest-value experiment
-
-Add a compact insertion/relocate improvement to H0 and evaluate all 20
-10-customer instances with the same seed and runtime accounting. This will
-produce a stronger stable teacher/reference baseline before any neural model is
-implemented.
-
 ## M2 strengthened — full H0 evaluation
 
 - Corrected a second adapter issue found on `tc0c40s5ct0`: making the terminal
@@ -76,7 +69,7 @@ implemented.
   - n=20: 20/20 feasible, mean/median 32.396377/31.160697 h, 10.821 s total.
   - n=40: 5/5 feasible, mean/median 59.954062/59.278753 h, 8.029 s total.
 
-## M3/M4 — H1-H4 training and controlled ablation
+## M3/M4 — Cycle 1 H1-H4 training and controlled ablation
 
 - CPU-only environment: PyTorch 2.14.0, no CUDA.
 - Architecture: d=128, two shared causal Transformer layers, four heads,
@@ -111,7 +104,7 @@ implemented.
   H0/H1/H2/H3/H4 means were 39.063000/36.159551/35.124563/36.179136/
   36.179136 h; every solution was feasible.
 
-## M5 — learned CHARGE experiment
+## M5 — Cycle 1 learned CHARGE experiment
 
 - Trained a secondary GO/CHARGE, station-pointer, target-SOC policy for 2,000
   updates on 463 oracle actions. Exact nonlinear curves are always used.
@@ -125,11 +118,116 @@ implemented.
 - Direct+repair: 20/20 feasible, mean 21.608789 h. This exactly reflects
   replacement by the charging optimizer, not quality of learned station heads.
 
-## Current conclusion and limitation
+## Cycle 2 — richer history, interleaved DeepSets training, larger data
 
-The causal history representation was beneficial across two seeds, while the
-DeepSets hypothesis is not supported. The direct learned charging policy is
-far less reliable than hybrid optimization. These are small CPU experiments
-without local BKS values; two training seeds are still insufficient for a
-strong statistical claim. The next justified experiment is a third seed and
-larger-instance training before architecture tuning.
+Architecture unchanged:
+Shared Causal EV History Transformer → current-state fusion → DeepSets
+`g = rho(sum(phi(EV_state_i + Transformer_hidden_i)))` → hierarchical
+route/customer decisions → frvcpy nonlinear charging + independent check.
+
+### Implementation changes
+
+1. Visit tokens now encode arrival/departure time, arrival/departure SOC,
+   travel energy since previous stop, charging amount/duration, node type,
+   and service. Features are rebuilt from the optimized plan whenever frvcpy
+   revises charging; customer-decision order stays separate.
+2. Imitation trajectories interleave multiple open expert routes while
+   preserving each route's customer order. Training logs show roughly
+   37–40% multi-open decisions and ~60–70% competing-customer decisions.
+3. Synthetic generator expanded (random/clustered/mixed customers;
+   random and p-median-like stations; density and technology variation).
+   Teachers: 80 train / 8 val feasible instances per run, independent seeds.
+4. DeepSets diagnostics on H4_c2: `perm_error≈3e-8`, nonzero `phi_grad`,
+   nonzero `active_logit_delta` when other EV states change.
+5. Checkpoints and CSVs are versioned `*_c2*` and do not overwrite Cycle 1.
+
+### Training (comparable across H1–H4)
+
+```
+python train.py --model H{k} --size 10 --steps 300 --rl-steps 30 \
+  --train-instances 80 --val-instances 8 --eval-every 30 --seed {42,43,44} --version c2
+```
+
+Best validation BC/RL checkpoints saved under `checkpoints/H*_n10_seed*_c2.pt`.
+
+### Official n=10 compare (20 instances, 10 samples; H0 equal-budget + H0_strong)
+
+```
+python evaluate.py --mode compare --size 10 --limit 20 --samples 10 \
+  --seed {42,43,44} --version c2 --local-passes 3 --local-budget 4000
+```
+
+Per-seed mean verified objective (all 20/20 feasible):
+
+| method     | seed 42   | seed 43   | seed 44   |
+|------------|-----------|-----------|-----------|
+| H0         | 22.157675 | 22.085038 | 21.945392 |
+| H0_strong  | 20.368819 | 20.131997 | 19.924086 |
+| H1         | 21.387641 | 20.541087 | 22.684219 |
+| H2         | 21.108485 | 21.295244 | 20.740739 |
+| H3         | 21.651773 | 20.651855 | 21.246115 |
+| H4         | 21.429569 | 20.746494 | 20.698503 |
+
+Pooled across three seeds (60 instance-seed rows), all 60/60 feasible:
+
+- H0 22.062702; H0_strong 20.141634; H1 21.537649; H2 21.048156;
+  H3 21.183247; H4 20.958189.
+- H4 − H2 mean delta −0.0900 h; H4 better on only 28.3% of paired rows.
+- H4 − H0 mean delta −1.1045 h; H4 better on 65.0% of paired rows.
+- H4 − H0_strong mean delta +0.8166 h; H4 better on only 16.7%.
+
+Interpretation: Cycle 2 reverses the Cycle 1 mean ranking of H4 vs H2 by a
+small margin, but paired wins remain minority. DeepSets is active and
+permutation-invariant, yet the coordination gain is weak on this static
+benchmark. Equal-budget H0 is beaten by history models; strong H0+LS is not.
+
+### Zero-shot scale
+
+```
+python evaluate.py --mode compare --size 20 --limit 20 --samples 5 \
+  --seed 42 --version c2 --checkpoint-size 10 --local-passes 2 --local-budget 3000
+```
+
+n=20 (20/20 feasible): H0 36.690980; H0_strong 34.420101; H1 34.658276;
+H2 34.594263; H3 34.658276; H4 34.579682. H4 is the best neural mean and
+nearly matches H0_strong (gap 0.16 h).
+
+```
+python evaluate.py --mode compare --size 40 --limit 5 --samples 3 \
+  --seed 42 --version c2 --checkpoint-size 10 --local-passes 2 --local-budget 3000
+```
+
+n=40 sample (5/5 feasible): H0 63.747925; H0_strong 60.168459; H1 62.057388;
+H2 61.469290; H3 62.218225; H4 61.921243. History (H2) remains the best neural
+mean; H4 is close but does not beat H2 or H0_strong.
+
+### Cycle 2 direct CHARGE
+
+- Physical absolute-Wh candidates from curve breakpoints, onward need, and
+  percentage anchors; time-aware GO/CHARGE masks using exact curves.
+- Retrained: `python train.py --model CHARGE --size 10 --steps 2000
+  --train-instances 80 --seed 42 --version c2` (1236 expert actions).
+- Eval: `python evaluate.py --mode direct --size 10 --limit 20 --samples 10
+  --seed 42 --version c2`
+- hybrid_H4: 20/20, mean 21.429569 h.
+- direct_CHARGE: 4/20 feasible (same rate as Cycle 1); failures are
+  stranded “no feasible GO or CHARGE” states after earlier decisions.
+- direct_plus_repair: 20/20, mean 21.429569 h — repair is frvcpy, not learned.
+
+### Artifacts
+
+- Compare CSVs: `results/compare_size10_seed{42,43,44}_c2.csv`,
+  `results/compare_size20_from10_seed42_c2.csv`
+- Training curves: `results/training_H*_n10_seed*_c2.csv`,
+  `results/learning_curves_c2.png`
+- Direct: `results/direct_charge_size10_seed42_c2.csv`
+- Checkpoints: `checkpoints/*_c2.pt` (Cycle 1 files preserved)
+
+## Current conclusion and remaining work
+
+Cycle 2 correctly feeds visit-level SOC/time/energy/charge history and trains
+DeepSets under genuine multi-open competition. Across three seeds, H4 edges
+H2 on pooled mean but not on paired win-rate; neither matches H0_strong.
+Direct learned charging remains unreliable; hybrid frvcpy charging is required
+for validated feasibility. Remaining: full n=40 evaluation, optional wall-clock
+equalization tables, and further CHARGE work only after stronger routing gains.

@@ -229,8 +229,11 @@ def run_compare(
     samples: int,
     seed: int,
     checkpoint_size: int | None,
+    version: str = "c2",
+    h0_local_passes: int = 3,
+    h0_local_budget: int = 4000,
 ) -> None:
-    """Evaluate H0-H4 with the same number of constructed solutions."""
+    """Evaluate H0-H4 with equal construction budgets and a strong H0."""
     import torch
     from train import decode, load_policy
 
@@ -240,37 +243,48 @@ def run_compare(
         if len(parse_instance(path).customers) == size
     ][:limit]
     trained_size = checkpoint_size or size
-    policies = {
-        method: load_policy(checkpoints_dir / f"{method}_n{trained_size}_seed{seed}.pt")
-        for method in ("H1", "H2", "H3", "H4")
-    }
+    policies = {}
+    for method in ("H1", "H2", "H3", "H4"):
+        path = checkpoints_dir / f"{method}_n{trained_size}_seed{seed}_{version}.pt"
+        if not path.exists():
+            path = checkpoints_dir / f"{method}_n{trained_size}_seed{seed}.pt"
+        policies[method] = load_policy(path)
     rows = []
     for path in selected:
         instance = parse_instance(path)
-        h0 = randomized_greedy(
+        h0_equal = randomized_greedy(
             instance,
             restarts=samples,
             seed=seed,
             local_search_passes=0,
             local_search_budget=0,
         )
-        rows.append(
-            {
-                "instance": instance.name,
-                "customers": size,
-                "method": "H0",
-                "seed": seed,
-                "samples": samples,
-                "feasible": int(h0.feasible),
-                "objective_h": h0.objective_hours if h0.feasible else "",
-                "routes": h0.routes if h0.feasible else "",
-                "charging_stops": h0.charging_stops if h0.feasible else "",
-                "charging_h": h0.charging_hours if h0.feasible else "",
-                "runtime_s": h0.runtime_seconds,
-                "oracle_calls": h0.oracle_calls,
-                "reason": h0.reason,
-            }
+        h0_strong = randomized_greedy(
+            instance,
+            restarts=samples,
+            seed=seed,
+            local_search_passes=h0_local_passes,
+            local_search_budget=h0_local_budget,
         )
+        for label, h0 in (("H0", h0_equal), ("H0_strong", h0_strong)):
+            rows.append(
+                {
+                    "instance": instance.name,
+                    "customers": size,
+                    "method": label,
+                    "seed": seed,
+                    "version": version,
+                    "samples": samples,
+                    "feasible": int(h0.feasible),
+                    "objective_h": h0.objective_hours if h0.feasible else "",
+                    "routes": h0.routes if h0.feasible else "",
+                    "charging_stops": h0.charging_stops if h0.feasible else "",
+                    "charging_h": h0.charging_hours if h0.feasible else "",
+                    "runtime_s": h0.runtime_seconds,
+                    "oracle_calls": h0.oracle_calls,
+                    "reason": h0.reason,
+                }
+            )
         for method, policy in policies.items():
             attempts = []
             with torch.no_grad():
@@ -283,8 +297,14 @@ def run_compare(
                             seed=seed * 1000 + sample_index,
                         )
                     )
-            feasible = [attempt for attempt in attempts if attempt["feasible"]]
-            best = min(feasible, key=lambda attempt: attempt["objective"]) if feasible else None
+            feasible = [
+                attempt for attempt in attempts if attempt["feasible"]
+            ]
+            best = (
+                min(feasible, key=lambda attempt: attempt["objective"])
+                if feasible
+                else None
+            )
             charging_stops = charging_hours = 0
             if best is not None:
                 for plan in best["plans"]:
@@ -297,6 +317,7 @@ def run_compare(
                     "customers": size,
                     "method": method,
                     "seed": seed,
+                    "version": version,
                     "samples": samples,
                     "feasible": int(best is not None),
                     "objective_h": best["objective"] if best else "",
@@ -304,7 +325,9 @@ def run_compare(
                     "charging_stops": charging_stops if best else "",
                     "charging_h": charging_hours if best else "",
                     "runtime_s": sum(attempt["runtime"] for attempt in attempts),
-                    "oracle_calls": sum(attempt["oracle_calls"] for attempt in attempts),
+                    "oracle_calls": sum(
+                        attempt["oracle_calls"] for attempt in attempts
+                    ),
                     "reason": "" if best else attempts[-1]["reason"],
                 }
             )
@@ -312,12 +335,12 @@ def run_compare(
 
     results_dir.mkdir(parents=True, exist_ok=True)
     suffix = f"_from{trained_size}" if trained_size != size else ""
-    output = results_dir / f"compare_size{size}{suffix}_seed{seed}.csv"
+    output = results_dir / f"compare_size{size}{suffix}_seed{seed}_{version}.csv"
     with output.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
         writer.writeheader()
         writer.writerows(rows)
-    for method in ("H0", "H1", "H2", "H3", "H4"):
+    for method in ("H0", "H0_strong", "H1", "H2", "H3", "H4"):
         method_rows = [row for row in rows if row["method"] == method]
         feasible = [row for row in method_rows if row["feasible"]]
         objectives = [float(row["objective_h"]) for row in feasible]
@@ -340,14 +363,17 @@ def run_direct_comparison(
     limit: int,
     samples: int,
     seed: int,
+    version: str = "c2",
 ) -> None:
     """Compare realized learned charging with hybrid and post-optimized routes."""
     import torch
     from train import decode, decode_direct, load_direct_policy, load_policy
 
-    routing = load_policy(checkpoints_dir / f"H4_n{size}_seed{seed}.pt")
+    routing = load_policy(
+        checkpoints_dir / f"H4_n{size}_seed{seed}_{version}.pt"
+    )
     charging = load_direct_policy(
-        checkpoints_dir / f"CHARGE_n{size}_seed{seed}.pt"
+        checkpoints_dir / f"CHARGE_n{size}_seed{seed}_{version}.pt"
     )
     selected = [
         path
@@ -442,7 +468,7 @@ def run_direct_comparison(
             ]
         )
         print(f"evaluated direct charging on {instance.name}")
-    output = results_dir / f"direct_charge_size{size}_seed{seed}.csv"
+    output = results_dir / f"direct_charge_size{size}_seed{seed}_{version}.csv"
     with output.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
         writer.writeheader()
@@ -468,7 +494,9 @@ def make_plots(results_dir: Path, seed: int) -> None:
 
     fig, axes = plt.subplots(1, 2, figsize=(9, 3.5))
     for method in ("H1", "H2", "H3", "H4"):
-        path = results_dir / f"training_{method}_n10_seed{seed}.csv"
+        path = results_dir / f"training_{method}_n10_seed{seed}_c2.csv"
+        if not path.exists():
+            path = results_dir / f"training_{method}_n10_seed{seed}.csv"
         with path.open(newline="", encoding="utf-8") as handle:
             rows = [row for row in csv.DictReader(handle) if row["stage"] == "bc"]
         steps = [int(row["step"]) for row in rows]
@@ -483,32 +511,37 @@ def make_plots(results_dir: Path, seed: int) -> None:
     axes[0].legend(ncol=2)
     axes[1].legend(ncol=2)
     fig.tight_layout()
-    learning_path = results_dir / "learning_curves.png"
+    learning_path = results_dir / "learning_curves_c2.png"
     fig.savefig(learning_path, dpi=160)
     plt.close(fig)
 
     compare = []
-    for candidate_seed in (seed, seed + 1):
-        compare_path = results_dir / f"compare_size10_seed{candidate_seed}.csv"
-        if compare_path.exists():
-            with compare_path.open(newline="", encoding="utf-8") as handle:
-                compare.extend(csv.DictReader(handle))
-    methods = ("H0", "H1", "H2", "H3", "H4")
+    for candidate_seed in (seed, seed + 1, seed + 2):
+        for suffix in (f"_c2", ""):
+            compare_path = (
+                results_dir / f"compare_size10_seed{candidate_seed}{suffix}.csv"
+            )
+            if compare_path.exists():
+                with compare_path.open(newline="", encoding="utf-8") as handle:
+                    compare.extend(csv.DictReader(handle))
+                break
+    methods = ("H0", "H0_strong", "H1", "H2", "H3", "H4")
+    present = [m for m in methods if any(row["method"] == m for row in compare)]
     means = [
         statistics.mean(
             float(row["objective_h"])
             for row in compare
             if row["method"] == method and int(row["feasible"])
         )
-        for method in methods
+        for method in present
     ]
-    fig, axis = plt.subplots(figsize=(6, 3.5))
-    bars = axis.bar(methods, means)
+    fig, axis = plt.subplots(figsize=(7, 3.5))
+    bars = axis.bar(present, means)
     axis.set_ylabel("Mean verified route duration (h)")
-    axis.set_title("Controlled 10-construction budget (H0 without local search)")
+    axis.set_title("Cycle-2 comparison (equal samples + strong H0)")
     axis.bar_label(bars, fmt="%.2f")
     fig.tight_layout()
-    compare_figure = results_dir / "h0_h4_comparison.png"
+    compare_figure = results_dir / "h0_h4_comparison_c2.png"
     fig.savefig(compare_figure, dpi=160)
     plt.close(fig)
     print(f"Wrote {learning_path} and {compare_figure}")
@@ -532,6 +565,7 @@ def main() -> None:
     parser.add_argument("--samples", type=int, default=10)
     parser.add_argument("--checkpoints", type=Path, default=Path("checkpoints"))
     parser.add_argument("--checkpoint-size", type=int)
+    parser.add_argument("--version", type=str, default="c2")
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
 
@@ -560,6 +594,9 @@ def main() -> None:
             args.samples,
             args.seed,
             args.checkpoint_size,
+            args.version,
+            args.local_passes,
+            args.local_budget,
         )
     elif args.mode == "direct":
         run_direct_comparison(
@@ -570,6 +607,7 @@ def main() -> None:
             args.limit,
             args.samples,
             args.seed,
+            args.version,
         )
     else:
         make_plots(args.results, args.seed)

@@ -5,48 +5,55 @@ the parsed Montoya piecewise charging curves, service times, full initial
 battery, SOC bounds, customer coverage, depot return, and 10-hour route limit.
 No local BKS files were available, so optimality gaps are `NA`.
 
-## Main n=10 ablation
+## Cycle 2 main result (n=10, three seeds)
 
-Twenty official instances, seed 42, ten constructed solutions per method:
+Architecture preserved: shared causal visit-history Transformer → state fusion
+→ DeepSets fleet summary → hierarchical routing → frvcpy nonlinear charging.
 
-- H0 improved randomized greedy: 20/20 feasible, mean 22.157675 h.
-- H1 state-only neural pointer: 20/20 feasible, mean 22.911023 h.
-- H2 causal history without DeepSets: 20/20 feasible, mean 21.013877 h.
-- H3 state-only with DeepSets: 20/20 feasible, mean 22.911023 h.
-- H4 history plus DeepSets: 20/20 feasible, mean 21.608789 h.
+Training used 80 synthetic teachers, interleaved multi-open-route imitation
+(~37–40% multi-open steps), 300 BC + 30 RL updates, seeds 42/43/44. Checkpoints
+are versioned `*_c2.pt` and do not overwrite Cycle 1.
 
-The complete training/evaluation was repeated with seed 43. Across both seeds
-(40 instance-seed observations), H0/H1/H2/H3/H4 means were 22.121357,
-21.999735, 20.941772, 22.048655, and 21.494177 h. H2 improved over H0 by
-5.33%. H4 improved over H0 by 2.84% but was 2.64% worse than H2. These runs
-support useful customer-decision history, but not an additional benefit from
-the current DeepSets fleet aggregation. Two seeds remain insufficient for a
-strong statistical claim.
+Pooled over 60 official instance-seed evaluations (all 60/60 feasible):
 
-For budget control, H0 above used ten constructions without local search. The
-stronger local-search H0 averaged 20.368819 h on the same 20 instances.
-Therefore H2 was still 2.81% worse than the strongest classical result; the
-experiments do not establish neural superiority over improved H0.
+- Equal-budget H0: 22.062702 h
+- Strong H0 + local search: 20.141634 h
+- H1: 21.537649 h
+- H2 (history, no DeepSets): 21.048156 h
+- H3 (DeepSets, no history): 21.183247 h
+- H4 (history + DeepSets): 20.958189 h
 
-## Scale and generalization
+H4 improves on equal-budget H0 by 5.01% and slightly on H2 by 0.43% mean
+objective, but wins only 28.3% of paired H4-vs-H2 comparisons. H4 remains
+4.05% worse than H0_strong and beats it on only 16.7% of pairs. DeepSets
+diagnostics show permutation invariance and nonzero gradients; the coordination
+signal is real but weak for this static offline benchmark.
 
-Improved H0 was feasible on 20/20 n=10, 20/20 n=20, and 5/5 sampled n=40
-instances. Mean objectives were 20.368819, 32.396377, and 59.954062 h.
+## Scale
 
-Without retraining, n=10 neural checkpoints remained 5/5 feasible on sampled
-n=20 instances. H2 had the best mean objective (35.124563 h) versus H0
-39.063000 h under five constructions per method.
+Zero-shot n=10→n=20 (20 official instances, seed-42 c2 checkpoints, 5 samples):
+all methods 20/20 feasible. Means: H0 36.690980; H0_strong 34.420101;
+H1/H3 34.658276; H2 34.594263; H4 34.579682. H4 is the best neural mean and
+within 0.16 h of H0_strong.
+
+Zero-shot n=10→n=40 (5 instances, 3 samples): all 5/5 feasible. Means:
+H0 63.747925; H0_strong 60.168459; H1 62.057388; H2 61.469290; H3 62.218225;
+H4 61.921243. H2 is the best neural mean; H4 does not beat H2 or H0_strong.
 
 ## Learned charging
 
-The direct GO/CHARGE/station/target-SOC policy was feasible on only 4/20 n=10
-instances despite expert imitation and necessary physical masks. Hybrid H4 was
-20/20 feasible. Post-optimizing the direct policy's customer orders restored
-20/20 feasibility, but that gain belongs to `frvcpy`, not the learned charging
-heads.
+Cycle 2 direct CHARGE uses physical Wh candidates and time-aware masks with
+exact nonlinear curves. Feasibility remains 4/20 on official n=10; hybrid H4
+stays 20/20. Post-repair feasibility is due to frvcpy, not learned heads.
+
+## Cycle 1 contrast
+
+Under sequential IL and smaller data, H2 clearly beat H4. Cycle 2’s interleaved
+training and richer tokens close that gap and slightly reverse the mean ranking,
+without establishing DeepSets superiority or neural dominance over strong H0.
 
 ## Reproduction
 
-Key commands are recorded in `results/notes.md`. Checkpoints are in
-`checkpoints/`; per-instance CSVs, learning curves, and a fully concrete
-feasible route example are in `results/`.
+Commands and per-seed tables are in `results/notes.md`. CSVs, learning curves
+(`learning_curves_c2.png`), and checkpoints live under `results/` and
+`checkpoints/`.

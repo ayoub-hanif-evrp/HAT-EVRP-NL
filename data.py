@@ -161,6 +161,34 @@ def instance_files(data_dir: str | Path) -> list[Path]:
     return sorted(Path(data_dir).rglob("*.xml"))
 
 
+def _pmedian_stations(
+    points: list[tuple[float, float]], count: int, rng: random.Random
+) -> list[tuple[float, float]]:
+    """Greedy p-median-like station placement among candidate sites."""
+    if count <= 0:
+        return []
+    candidates = points[:]
+    rng.shuffle(candidates)
+    selected = [candidates[0]]
+    while len(selected) < min(count, len(candidates)):
+        best = None
+        best_cost = float("inf")
+        for candidate in candidates:
+            if candidate in selected:
+                continue
+            trial = selected + [candidate]
+            cost = 0.0
+            for px, py in points:
+                cost += min(math.hypot(px - sx, py - sy) for sx, sy in trial)
+            if cost < best_cost:
+                best_cost = cost
+                best = candidate
+        if best is None:
+            break
+        selected.append(best)
+    return selected
+
+
 def generate_synthetic(size: int, seed: int, distribution: str | None = None) -> Instance:
     """Generate an independent Montoya-like instance for policy training."""
     rng = random.Random(seed)
@@ -184,9 +212,16 @@ def generate_synthetic(size: int, seed: int, distribution: str | None = None) ->
                 clustered[k] = (rng.uniform(0, 120), rng.uniform(0, 120))
         customer_xy = clustered
 
-    station_count = max(2, round(size * 0.15))
-    station_xy = [(rng.uniform(5, 115), rng.uniform(5, 115)) for _ in range(station_count)]
+    density = (0.10, 0.15, 0.20, 0.25)[seed % 4]
+    station_count = max(2, round(size * density))
+    if seed % 2 == 0:
+        station_xy = _pmedian_stations(customer_xy + [depot_xy], station_count, rng)
+    else:
+        station_xy = [
+            (rng.uniform(5, 115), rng.uniform(5, 115)) for _ in range(station_count)
+        ]
     technologies = ("fast", "normal", "slow")
+    tech_pool = technologies[: 1 + (seed % 3)]
     curve_times = {
         "fast": (0.0, 0.31, 0.39, 0.51),
         "normal": (0.0, 0.62, 0.77, 1.01),
@@ -196,13 +231,13 @@ def generate_synthetic(size: int, seed: int, distribution: str | None = None) ->
         technology: ChargingCurve(
             technology, curve_times[technology], (0.0, 13600.0, 15200.0, 16000.0)
         )
-        for technology in technologies[: min(3, station_count)]
+        for technology in tech_pool
     }
 
     nodes = [Node(0, 0, *depot_xy)]
     nodes.extend(Node(k + 1, 1, *xy) for k, xy in enumerate(customer_xy))
     for k, xy in enumerate(station_xy):
-        technology = tuple(curves)[k % len(curves)]
+        technology = tech_pool[k % len(tech_pool)]
         nodes.append(Node(size + 1 + k, 2, *xy, station_type=technology))
     node_tuple = tuple(nodes)
     service = tuple(0.5 if node.kind == 1 else 0.0 for node in node_tuple)
@@ -212,8 +247,9 @@ def generate_synthetic(size: int, seed: int, distribution: str | None = None) ->
     )
     travel = tuple(tuple(distance / 40.0 for distance in row) for row in distances)
     energy = tuple(tuple(distance * 125.0 for distance in row) for row in distances)
+    place = "pmed" if seed % 2 == 0 else "rand"
     return Instance(
-        name=f"syn_{distribution}_n{size}_s{seed}",
+        name=f"syn_{distribution}_n{size}_{place}_s{seed}",
         path=Path("<synthetic>"),
         nodes=node_tuple,
         depot=0,
