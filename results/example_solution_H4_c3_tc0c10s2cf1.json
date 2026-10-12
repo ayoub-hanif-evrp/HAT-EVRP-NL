@@ -1,0 +1,134 @@
+{
+  "instance": "tc0c10s2cf1",
+  "feasible": true,
+  "objective_h": 24.753250464638164,
+  "reason": "",
+  "routes": [
+    {
+      "customers": [
+        7,
+        9,
+        5,
+        2
+      ],
+      "stops": [
+        {
+          "node": 0,
+          "charge_wh": null
+        },
+        {
+          "node": 7,
+          "charge_wh": null
+        },
+        {
+          "node": 9,
+          "charge_wh": null
+        },
+        {
+          "node": 5,
+          "charge_wh": null
+        },
+        {
+          "node": 2,
+          "charge_wh": null
+        },
+        {
+          "node": 0,
+          "charge_wh": null
+        }
+      ],
+      "duration_h": 5.115200582286089,
+      "charging_h": 0.0,
+      "charging_stops": 0,
+      "end_soc_wh": 423.99708856955203,
+      "feasible": true,
+      "reason": ""
+    },
+    {
+      "customers": [
+        8,
+        4,
+        3,
+        1
+      ],
+      "stops": [
+        {
+          "node": 0,
+          "charge_wh": null
+        },
+        {
+          "node": 8,
+          "charge_wh": null
+        },
+        {
+          "node": 4,
+          "charge_wh": null
+        },
+        {
+          "node": 11,
+          "charge_wh": 10321.623005321833
+        },
+        {
+          "node": 3,
+          "charge_wh": null
+        },
+        {
+          "node": 12,
+          "charge_wh": 11094.69998373663
+        },
+        {
+          "node": 1,
+          "charge_wh": null
+        },
+        {
+          "node": 0,
+          "charge_wh": null
+        }
+      ],
+      "duration_h": 9.971562173555494,
+      "charging_h": 0.4882975757438015,
+      "charging_stops": 2,
+      "end_soc_wh": 0.0,
+      "feasible": true,
+      "reason": ""
+    },
+    {
+      "customers": [
+        10,
+        6
+      ],
+      "stops": [
+        {
+          "node": 0,
+          "charge_wh": null
+        },
+        {
+          "node": 12,
+          "charge_wh": 11918.811546057666
+        },
+        {
+          "node": 10,
+          "charge_wh": null
+        },
+        {
+          "node": 6,
+          "charge_wh": null
+        },
+        {
+          "node": 12,
+          "charge_wh": 12026.684523383823
+        },
+        {
+          "node": 0,
+          "charge_wh": null
+        }
+      ],
+      "duration_h": 9.666487708796579,
+      "charging_h": 0.6773884949082802,
+      "charging_stops": 2,
+      "end_soc_wh": 0.0,
+      "feasible": true,
+      "reason": ""
+    }
+  ]
+}

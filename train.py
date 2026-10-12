@@ -183,6 +183,38 @@ def direct_examples(
     return examples
 
 
+def _onward_energy_need(instance: Instance, node: int) -> float:
+    if node == instance.depot:
+        return 0.0
+    return min(
+        instance.energy_wh[node][other]
+        for other in (instance.depot, *instance.stations)
+    )
+
+
+def _station_supports_next(
+    instance: Instance, station: int, next_customer: int, full_soc: float
+) -> bool:
+    """True if a full battery at station can reach next, possibly via one more CS."""
+    need = instance.energy_wh[station][next_customer] + _onward_energy_need(
+        instance, next_customer
+    )
+    if need <= full_soc + 1e-7:
+        return True
+    for relay in instance.stations:
+        if relay == station:
+            continue
+        if instance.energy_wh[station][relay] > full_soc + 1e-7:
+            continue
+        if (
+            instance.energy_wh[relay][next_customer]
+            + _onward_energy_need(instance, next_customer)
+            <= full_soc + 1e-7
+        ):
+            return True
+    return False
+
+
 def decode_direct(
     model: DirectChargePolicy, instance: Instance, customers: tuple[int, ...]
 ) -> dict:
@@ -223,57 +255,47 @@ def decode_direct(
             onward_safe = True
             time_ok_go = travel_to_next <= remaining_hours + 1e-9
         else:
-            onward_safe = arrival_at_next + 1e-7 >= min(
-                instance.energy_wh[next_customer][node]
-                for node in (instance.depot, *instance.stations)
+            onward_safe = arrival_at_next + 1e-7 >= _onward_energy_need(
+                instance, next_customer
             )
-            # Leave enough time to return to depot after serving the customer.
-            time_ok_go = (
-                travel_to_next
-                + service_next
-                + instance.travel_hours[next_customer][instance.depot]
-                <= remaining_hours + 1e-9
-            )
+            # Optimistic time lower bound: travel+service; return may include charging.
+            time_ok_go = travel_to_next + service_next <= remaining_hours + 1e-9
         go_feasible = (
             energy_to_next <= soc + 1e-7 and onward_safe and time_ok_go
         )
         reachable = []
         for station in instance.stations:
+            energy_to_station = instance.energy_wh[current][station]
             energy_ok = (
-                instance.energy_wh[current][station] <= soc + 1e-7
+                energy_to_station <= soc + 1e-7
                 and station != current
-                and (
-                    instance.energy_wh[station][next_customer]
-                    + (
-                        0.0
-                        if next_customer == instance.depot
-                        else min(
-                            instance.energy_wh[next_customer][node]
-                            for node in (instance.depot, *instance.stations)
-                        )
-                    )
-                    <= instance.battery_wh + 1e-7
+                and _station_supports_next(
+                    instance, station, next_customer, instance.battery_wh
                 )
             )
             if not energy_ok:
                 reachable.append(False)
                 continue
-            arrival = soc - instance.energy_wh[current][station]
-            required_target = instance.energy_wh[station][next_customer] + (
-                0.0
-                if next_customer == instance.depot
-                else min(
-                    instance.energy_wh[next_customer][node]
-                    for node in (instance.depot, *instance.stations)
-                )
+            arrival = soc - energy_to_station
+            required_target = min(
+                instance.battery_wh,
+                instance.energy_wh[station][next_customer]
+                + _onward_energy_need(instance, next_customer),
             )
+            # If one hop is insufficient, charge toward full for a relay hop.
+            if required_target > instance.battery_wh + 1e-7 or not (
+                instance.energy_wh[station][next_customer]
+                + _onward_energy_need(instance, next_customer)
+                <= instance.battery_wh + 1e-7
+            ):
+                required_target = instance.battery_wh
             candidates = physical_target_socs(
                 instance, arrival, station, required_target
             )
             travel_cs = instance.travel_hours[current][station]
             time_feasible = False
             for target_soc in candidates:
-                if target_soc + 1e-7 < required_target:
+                if target_soc + 1e-7 < min(required_target, arrival + 1.0):
                     continue
                 charge_dur = charging_time(
                     instance.curves[instance.nodes[station].station_type],
@@ -285,11 +307,6 @@ def decode_direct(
                     + charge_dur
                     + instance.travel_hours[station][next_customer]
                     + instance.service_times[next_customer]
-                    + (
-                        0.0
-                        if next_customer == instance.depot
-                        else instance.travel_hours[next_customer][instance.depot]
-                    )
                 )
                 if after <= remaining_hours + 1e-9:
                     time_feasible = True
@@ -318,13 +335,13 @@ def decode_direct(
         )
         station = instance.stations[station_index]
         arrival = soc - instance.energy_wh[current][station]
-        required_target = instance.energy_wh[station][next_customer] + (
-            0.0
-            if next_customer == instance.depot
-            else min(
-                instance.energy_wh[next_customer][node]
-                for node in (instance.depot, *instance.stations)
-            )
+        direct_need = instance.energy_wh[station][next_customer] + _onward_energy_need(
+            instance, next_customer
+        )
+        required_target = (
+            min(instance.battery_wh, direct_need)
+            if direct_need <= instance.battery_wh + 1e-7
+            else instance.battery_wh
         )
         candidates = physical_target_socs(
             instance, arrival, station, required_target
@@ -340,9 +357,18 @@ def decode_direct(
         )
         travel_cs = instance.travel_hours[current][station]
         quantity_mask = []
+        charge_durs = []
         for target_soc in candidates:
-            if target_soc + 1e-7 < required_target or target_soc <= arrival + 1e-7:
+            if target_soc <= arrival + 1e-7:
                 quantity_mask.append(False)
+                charge_durs.append(float("inf"))
+                continue
+            if (
+                direct_need <= instance.battery_wh + 1e-7
+                and target_soc + 1e-7 < required_target
+            ):
+                quantity_mask.append(False)
+                charge_durs.append(float("inf"))
                 continue
             charge_dur = charging_time(
                 instance.curves[instance.nodes[station].station_type],
@@ -354,22 +380,27 @@ def decode_direct(
                 + charge_dur
                 + instance.travel_hours[station][next_customer]
                 + instance.service_times[next_customer]
-                + (
-                    0.0
-                    if next_customer == instance.depot
-                    else instance.travel_hours[next_customer][instance.depot]
-                )
             )
             quantity_mask.append(after <= remaining_hours + 1e-9)
+            charge_durs.append(charge_dur)
         quantity_mask_t = torch.tensor(
             quantity_mask, dtype=torch.bool, device=model.device
         )
         if not bool(quantity_mask_t.any()):
             reason = "no positive target-SOC action"
             break
-        quantity = int(
-            quantity_logits.masked_fill(~quantity_mask_t, float("-inf")).argmax()
-        )
+        masked_logits = quantity_logits.masked_fill(~quantity_mask_t, float("-inf"))
+        if remaining_hours < 3.0:
+            # Prefer the shortest feasible charge when time is scarce.
+            best = None
+            for index, ok in enumerate(quantity_mask):
+                if not ok:
+                    continue
+                if best is None or charge_durs[index] < charge_durs[best] - 1e-12:
+                    best = index
+            quantity = int(best)
+        else:
+            quantity = int(masked_logits.argmax())
         target_soc = candidates[quantity]
         amount = target_soc - arrival
         charge_dur = charging_time(
@@ -722,7 +753,11 @@ def decode(
     instance: Instance,
     sample: bool = False,
     seed: int = 0,
+    local_passes: int = 0,
+    local_budget: int = 0,
 ) -> dict:
+    from solver import local_search
+
     start = time.perf_counter()
     if sample:
         torch.manual_seed(seed)
@@ -733,16 +768,21 @@ def decode(
     entropy = 0.0
     reason = ""
     max_decisions = 3 * len(instance.customers) + 5
+    nodes = model.encode_nodes(instance)
+    history_cache: dict = {}
+    singleton_ok = {
+        customer: oracle.solve((customer,)).feasible for customer in instance.customers
+    }
 
     for decision in range(max_decisions):
         if not unserved and all(route["closed"] for route in routes):
             break
         nodes, route_vectors, open_indices, context = model.encode_state(
-            instance, routes, unserved
+            instance, routes, unserved, nodes=nodes, history_cache=history_cache
         )
         route_scores = model.route_logits(route_vectors, open_indices, context)
         new_feasible = bool(unserved) and any(
-            oracle.solve((customer,)).feasible for customer in unserved
+            singleton_ok[customer] for customer in unserved
         )
         route_mask = [True] * len(open_indices) + [new_feasible]
         if not any(route_mask):
@@ -772,8 +812,12 @@ def decode(
             order,
             allow_close=not is_new,
         )
-        masks = [oracle.solve((*prefix, candidate)).feasible for candidate in order]
-        if not is_new:
+        if is_new:
+            masks = [singleton_ok[candidate] for candidate in order]
+        else:
+            masks = [
+                oracle.solve((*prefix, candidate)).feasible for candidate in order
+            ]
             masks.append(True)
         if not any(masks):
             reason = "selected route has no feasible action"
@@ -804,7 +848,13 @@ def decode(
     else:
         reason = "decision budget exceeded"
 
+    customer_routes = [route["customers"] for route in routes]
     plans = [route["plan"] for route in routes]
+    improvements = 0
+    if local_passes > 0 and local_budget > 0 and not unserved:
+        customer_routes, plans, improvements = local_search(
+            customer_routes, plans, oracle, local_passes, local_budget
+        )
     valid, validation_reason = check_solution(instance, plans) if not unserved else (
         False,
         f"{len(unserved)} customers unserved",
@@ -815,7 +865,7 @@ def decode(
     return {
         "feasible": valid,
         "objective": objective,
-        "routes": tuple(route["customers"] for route in routes),
+        "routes": tuple(customer_routes),
         "plans": plans,
         "runtime": time.perf_counter() - start,
         "oracle_calls": oracle.calls,
@@ -823,6 +873,7 @@ def decode(
         "log_prob": torch.stack(log_probs).sum() if log_probs else None,
         "entropy": entropy / max(1, len(log_probs)),
         "decisions": decision + 1,
+        "local_improvements": improvements,
     }
 
 
@@ -1006,7 +1057,7 @@ def main() -> None:
     parser.add_argument("--eval-every", type=int, default=10)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--version", type=str, default="c2")
+    parser.add_argument("--version", type=str, default="c3")
     parser.add_argument("--results", type=Path, default=Path("results"))
     parser.add_argument("--checkpoints", type=Path, default=Path("checkpoints"))
     args = parser.parse_args()

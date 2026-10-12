@@ -27,7 +27,7 @@ class BaselineResult:
     reason: str = ""
 
 
-def _local_search(
+def local_search(
     routes: list[tuple[int, ...]],
     plans: list[RoutePlan],
     oracle: FixedRouteOracle,
@@ -222,7 +222,7 @@ def randomized_greedy(
 
     objective, routes, plans = best
     local_start = time.perf_counter()
-    routes, plans, improvements = _local_search(
+    routes, plans, improvements = local_search(
         routes,
         plans,
         oracle,

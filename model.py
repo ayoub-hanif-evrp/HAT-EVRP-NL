@@ -173,17 +173,35 @@ class HATPolicy(nn.Module):
         )
         return self.history_encoder(sequence.unsqueeze(0), mask=causal)[0, -1]
 
+    def encode_nodes(self, instance: Instance) -> torch.Tensor:
+        """Cacheable static node embeddings for one instance."""
+        return self.node_encoder(self._node_features(instance))
+
     def encode_state(
         self,
         instance: Instance,
         routes: list[dict],
         unserved: set[int],
+        nodes: torch.Tensor | None = None,
+        history_cache: dict | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor, list[int], torch.Tensor]:
-        nodes = self.node_encoder(self._node_features(instance))
+        if nodes is None:
+            nodes = self.encode_nodes(instance)
         route_vectors = []
         for route in routes:
             customers = route["customers"]
-            history = self._history_vector(instance, nodes, route)
+            plan = route.get("plan")
+            cache_key = (
+                customers,
+                plan.stops if plan is not None else None,
+                self.config.history,
+            )
+            if history_cache is not None and cache_key in history_cache:
+                history = history_cache[cache_key]
+            else:
+                history = self._history_vector(instance, nodes, route)
+                if history_cache is not None:
+                    history_cache[cache_key] = history
             last_node = customers[-1] if customers else instance.depot
             scalars = torch.tensor(
                 [
@@ -253,29 +271,30 @@ class HATPolicy(nn.Module):
     ) -> torch.Tensor:
         route_vector = self.new_route if selected_route is None else selected_route
         query = self.customer_query(torch.cat([route_vector, context]))
-        scores = []
-        for customer in unserved_order:
+        if unserved_order:
             relative = torch.tensor(
                 [
-                    instance.distances_km[selected_last_node][customer] / 170.0,
-                    instance.travel_hours[selected_last_node][customer]
-                    / instance.max_route_hours,
-                    instance.energy_wh[selected_last_node][customer]
-                    / instance.battery_wh,
+                    [
+                        instance.distances_km[selected_last_node][customer] / 170.0,
+                        instance.travel_hours[selected_last_node][customer]
+                        / instance.max_route_hours,
+                        instance.energy_wh[selected_last_node][customer]
+                        / instance.battery_wh,
+                    ]
+                    for customer in unserved_order
                 ],
                 dtype=torch.float32,
                 device=self.device,
             )
-            scores.append(
-                torch.dot(query, self.customer_key(nodes[customer]))
-                / math.sqrt(self.config.d_model)
-                + self.relative_score(relative).squeeze(-1)
-            )
+            keys = self.customer_key(nodes[unserved_order])
+            pointer = torch.matmul(keys, query) / math.sqrt(self.config.d_model)
+            scores = pointer + self.relative_score(relative).squeeze(-1)
+        else:
+            scores = torch.empty(0, device=self.device)
         if allow_close:
-            scores.append(
-                self.close_score(torch.cat([route_vector, context])).squeeze(-1)
-            )
-        return torch.stack(scores)
+            close = self.close_score(torch.cat([route_vector, context])).squeeze(-1)
+            scores = torch.cat([scores, close.unsqueeze(0)])
+        return scores
 
 
 def physical_target_socs(

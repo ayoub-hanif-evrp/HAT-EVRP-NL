@@ -223,11 +223,62 @@ mean; H4 is close but does not beat H2 or H0_strong.
 - Direct: `results/direct_charge_size10_seed42_c2.csv`
 - Checkpoints: `checkpoints/*_c2.pt` (Cycle 1 files preserved)
 
-## Current conclusion and remaining work
+## Cycle 3 — final completion (`c3`)
 
-Cycle 2 correctly feeds visit-level SOC/time/energy/charge history and trains
-DeepSets under genuine multi-open competition. Across three seeds, H4 edges
-H2 on pooled mean but not on paired win-rate; neither matches H0_strong.
-Direct learned charging remains unreliable; hybrid frvcpy charging is required
-for validated feasibility. Remaining: full n=40 evaluation, optional wall-clock
-equalization tables, and further CHARGE work only after stronger routing gains.
+### Investigation of Cycle 2
+
+H4 vs H2 was seed-fragile (seed 42 mostly ties/losses; seed 43 wins). H4 opened
+slightly more routes than H0_strong (≈3.07 vs 2.80) and was ~6–9× slower per
+instance. DeepSets gradients and permutation invariance were healthy; the weak
+H4−H2 gap is therefore not an implementation bug but limited coordination value
+on this static offline problem.
+
+### Efficiency
+
+Cached static node embeddings, route-history keys, batched customer scoring, and
+singleton oracle reuse. Smoke decode H4 on `tc0c10s2cf1`: ~0.042 s, 55 oracle
+calls; LS refine reduced objective 29.02→25.28 with identical checker.
+
+### Training
+
+```
+python train.py --model H{k} --size 10 --steps 400 --rl-steps 40 \
+  --train-instances 120 --val-instances 12 --eval-every 40 --seed {42,43,44} --version c3
+python train.py --model CHARGE --size 10 --steps 3000 --train-instances 120 --seed 42 --version c3
+```
+
+### Final n=10 (pooled 60)
+
+Equal samples: H0 22.063; H0_strong 20.142; H1 21.249; H2 20.966; H3 22.131;
+H4 20.975. H4−H2 +0.009 h (33% win). H4−H0_strong +0.833 h (12% win).
+
+Equal LS (`--neural-local-passes 3 --neural-local-budget 4000`):
+H1 19.644; H2 19.601; H3 19.702; H4 19.597 vs H0_strong 20.142.
+H4−H0_strong −0.545 h (**76.7%** win). H4−H2 −0.004 h (near tie).
+
+Wall-clock seed 42: H0 20.994; H0_strong 20.010; H2 20.792; H4 21.057.
+
+### Scale (seed 42)
+
+n=20 equal: H2 33.708; H4 33.820; H0_strong 34.420 (20/20).
+n=20 eqls: H2 32.217; H4 32.307; H0_strong 34.420 (20/20).
+n=40 eqls: H2 57.173; H4 57.506; H0_strong 60.195 (20/20).
+n=80 eqls sample: H2/H4 88.151; H0_strong 95.506 (3/3). No full 160/320 run
+on CPU.
+
+### Direct CHARGE c3
+
+Still 4/20 feasible; hybrid 20/20. Retained as negative ablation.
+
+### Deliverables
+
+`results/summary.md`, `paper_draft.md`, aggregate CSVs/figures `*_c3*`,
+`example_solution_H4_c3_tc0c10s2cf1.json`, checkpoints `*_c3.pt`.
+
+## Final conclusion
+
+History-aware hybrid routing is useful. With equal LS, neural H2/H4 beat strong
+H0 on n=10–40 in these runs. DeepSets does not reliably improve over history
+alone. Learned nonlinear charging remains unreliable; `frvcpy` hybrid charging
+is required for validated feasibility. Wall-clock equalization still favors
+classical search.
