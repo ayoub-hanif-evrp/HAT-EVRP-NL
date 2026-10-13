@@ -756,14 +756,20 @@ def decode(
     local_passes: int = 0,
     local_budget: int = 0,
     cost_lambda: float = 0.0,
+    route_lambda: float = 0.0,
     local_operators: str = "basic",
+    route_cost_top_k: int = 3,
 ) -> dict:
     """Greedy/sampled hierarchical decode with optional oracle-aware scoring.
 
     When ``cost_lambda > 0``, customer pointer logits are adjusted by
     ``logit - cost_lambda * (D(R⊕j) - D(R)) / T_max``, using FRVCP durations
     already required for feasibility masks (cache hits; no redundant solves).
-    ``cost_lambda=0`` preserves the original Cycle-3 decode behavior.
+
+    When ``route_lambda > 0``, route/new-route logits are biased by the best
+    feasible one-customer extension potential among a shortlist of top learned
+    route candidates (plus NEW_ROUTE). ``route_lambda=0`` and ``cost_lambda=0``
+    preserve Cycle-3 decode behavior.
     """
     from solver import local_search
 
@@ -804,6 +810,51 @@ def decode(
             ~torch.tensor(route_mask, dtype=torch.bool, device=model.device),
             float("-inf"),
         )
+        if route_lambda != 0.0 and unserved:
+            scale = max(instance.max_route_hours, 1e-6)
+            adjusted_routes = route_scores.clone()
+            finite = [
+                index
+                for index in range(len(open_indices) + 1)
+                if bool(route_mask[index])
+            ]
+            # Shortlist: top-k open routes by learned score, always include NEW_ROUTE if feasible.
+            open_finite = [index for index in finite if index < len(open_indices)]
+            open_finite.sort(
+                key=lambda index: float(route_scores[index].detach()), reverse=True
+            )
+            shortlist = open_finite[: max(0, route_cost_top_k)]
+            if new_feasible:
+                shortlist.append(len(open_indices))
+            for route_pos in shortlist:
+                if route_pos == len(open_indices):
+                    potentials = [
+                        plan.duration_hours
+                        for customer, plan in singleton_plans.items()
+                        if customer in unserved and plan.feasible
+                    ]
+                    if not potentials:
+                        continue
+                    potential = min(potentials)
+                else:
+                    route_index = open_indices[route_pos]
+                    prefix = routes[route_index]["customers"]
+                    base = float(routes[route_index]["duration"])
+                    potentials = []
+                    for customer in sorted(unserved):
+                        plan = oracle.solve((*prefix, customer))
+                        if plan.feasible:
+                            potentials.append(plan.duration_hours - base)
+                    if not potentials:
+                        continue
+                    potential = min(potentials)
+                adjusted_routes[route_pos] = (
+                    adjusted_routes[route_pos] - float(route_lambda) * potential / scale
+                )
+            route_scores = adjusted_routes.masked_fill(
+                ~torch.tensor(route_mask, dtype=torch.bool, device=model.device),
+                float("-inf"),
+            )
         route_dist = torch.distributions.Categorical(logits=route_scores)
         route_action = route_dist.sample() if sample else torch.argmax(route_scores)
         log_probs.append(route_dist.log_prob(route_action))
@@ -880,8 +931,9 @@ def decode(
     customer_routes = [route["customers"] for route in routes]
     plans = [route["plan"] for route in routes]
     improvements = 0
+    search_diag = None
     if local_passes > 0 and local_budget > 0 and not unserved:
-        customer_routes, plans, improvements = local_search(
+        customer_routes, plans, improvements, search_diag = local_search(
             customer_routes,
             plans,
             oracle,
@@ -917,6 +969,8 @@ def decode(
         "decisions": decision + 1,
         "local_improvements": improvements,
         "cost_lambda": float(cost_lambda),
+        "route_lambda": float(route_lambda),
+        "search_diagnostics": None if search_diag is None else search_diag.as_dict(),
     }
 
 

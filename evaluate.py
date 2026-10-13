@@ -282,7 +282,7 @@ def _refine_best_once(
     from solver import local_search
 
     oracle = FixedRouteOracle(instance)
-    refined_routes, refined_plans, improvements = local_search(
+    refined_routes, refined_plans, improvements, diagnostics = local_search(
         list(customer_routes),
         list(plans),
         oracle,
@@ -290,7 +290,7 @@ def _refine_best_once(
         evaluation_budget=local_budget,
         operators=operators,
     )
-    return refined_routes, refined_plans, improvements, oracle.calls
+    return refined_routes, refined_plans, improvements, oracle.calls, diagnostics
 
 
 def _classical_until_time(
@@ -376,7 +376,7 @@ def _classical_until_time(
     improvements = 0
     if local_passes > 0:
         oracle = FixedRouteOracle(instance)
-        best_routes, best_plans, improvements = local_search(
+        best_routes, best_plans, improvements, _diag = local_search(
             best_routes,
             best_plans,
             oracle,
@@ -465,6 +465,8 @@ def run_compare(
     fair_ls: bool = False,
     cost_lambda: float = 0.0,
     methods: tuple[str, ...] = ("H1", "H2", "H3", "H4"),
+    local_operators: str = "basic",
+    route_lambda: float = 0.0,
 ) -> None:
     """Evaluate H0-H4 with equal construction budgets and optional fair one-shot LS.
 
@@ -525,6 +527,8 @@ def run_compare(
                             local_passes=0 if fair_ls else neural_local_passes,
                             local_budget=0 if fair_ls else neural_local_budget,
                             cost_lambda=cost_lambda,
+                            route_lambda=route_lambda,
+                            local_operators=local_operators,
                         )
                     )
                 neural_raw[method] = attempts
@@ -554,8 +558,13 @@ def run_compare(
             refine_time = 0.0
             if fair_ls and refine_passes > 0:
                 refine_start = time.perf_counter()
-                routes, plans, _, refine_oracle = _refine_best_once(
-                    instance, routes, plans, refine_passes, refine_budget
+                routes, plans, _, refine_oracle, _diag = _refine_best_once(
+                    instance,
+                    routes,
+                    plans,
+                    refine_passes,
+                    refine_budget,
+                    operators=local_operators,
                 )
                 refine_time = time.perf_counter() - refine_start
                 valid, reason = check_solution(instance, plans)
@@ -620,6 +629,7 @@ def run_compare(
                 local_search_passes=h0_local_passes,
                 local_search_budget=h0_local_budget,
                 deterministic_first=True,
+                local_operators=local_operators if fair_ls else "basic",
             )
             h0_samples = samples
             strong_samples = samples
@@ -976,6 +986,18 @@ def main() -> None:
         default="H1,H2,H3,H4",
         help="Comma-separated neural methods to evaluate",
     )
+    parser.add_argument(
+        "--local-operators",
+        choices=("basic", "strong", "strong_balanced"),
+        default="basic",
+        help="Local-search operator set for classical and neural refinement",
+    )
+    parser.add_argument(
+        "--route-lambda",
+        type=float,
+        default=0.0,
+        help="Optional route-level cost-aware logit weight (0 = unchanged)",
+    )
     args = parser.parse_args()
 
     if args.mode == "inspect":
@@ -1013,6 +1035,8 @@ def main() -> None:
             args.fair_ls,
             args.cost_lambda,
             tuple(method.strip() for method in args.methods.split(",") if method.strip()),
+            args.local_operators,
+            args.route_lambda,
         )
     elif args.mode == "direct":
         run_direct_comparison(

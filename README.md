@@ -78,5 +78,5 @@ python evaluate.py --mode compare --size 10 --limit 20 --samples 10 --seed 42 \
   --version c3 --fair-ls --tag costaware --cost-lambda 2 --methods H2
 ```
 
-Strong LS: `local_search(..., operators="strong")` under the same evaluation budget.  
-Details: [`results/IMPROVEMENT_REPORT.md`](results/IMPROVEMENT_REPORT.md).
+Strong LS: `--local-operators strong` (or `strong_balanced`) under the same evaluation budget.  
+Matched H2/H4 λ analysis: [`results/TARGETED_IMPROVEMENT_REPORT.md`](results/TARGETED_IMPROVEMENT_REPORT.md).

@@ -323,6 +323,8 @@ Under fair LS, H2/H4 spend substantially more runtime and FRVCP calls than H0_st
 
 Sources: `FINAL_n10_bks_gaps.csv` (naive), `IMPROVEMENT_bks_gaps_corrected.csv`. Corrected gaps remain below specialized BKS but are far smaller than the earlier misaligned 43% figure. Optional post-freeze inference/search improvements (oracle-aware scoring, stronger LS) further reduce lit gaps; see `results/IMPROVEMENT_REPORT.md`.
 
+**Matched-λ caveat.** Comparing H2 at λ=2 with H4 at λ=4 confounds architecture with the inference weight. Under identical λ ∈ {0,2,4} and identical strong LS, layout-clustered H4−H2 intervals include zero; at λ=4, H2 achieves the best mean (19.335 h, ~0.60% lit gap). The 20 official n=10 instances comprise only five customer layouts. Details: `results/TARGETED_IMPROVEMENT_REPORT.md`.
+
 ---
 
 ## 10. Learned Nonlinear Charging Ablation
