@@ -191,7 +191,7 @@ def _pmedian_stations(
 
 @dataclass(frozen=True)
 class SyntheticConfig:
-    """Independently controllable synthetic instance factors (v2 generator)."""
+    """Independently controllable synthetic instance factors (v2/v2c generator)."""
 
     geometry: str = "random"  # random | clustered | mixed
     station_placement: str = "uniform"  # uniform | pmedian_region
@@ -201,6 +201,8 @@ class SyntheticConfig:
     n_clusters: int | None = None
     station_count: int | None = None  # if set, overrides density rounding
     depot_bias: str = "center"  # center | offset (farther mean depot–customer)
+    layout_family: str = "mixed"  # compact | offset | elongated | mixed
+    region_span: float = 120.0  # geographic box size for customers
 
 
 def _station_count_from_density(size: int, density: float) -> int:
@@ -212,13 +214,14 @@ def _station_count_from_density(size: int, density: float) -> int:
     return max(2, math.ceil(size * density - 1e-12))
 
 
-def sample_synthetic_config(rng: random.Random) -> SyntheticConfig:
+def sample_synthetic_config(rng: random.Random, version: str = "v2") -> SyntheticConfig:
     """Independently sample geometry, placement, density, and technologies.
 
-    Priors are rebalanced toward Montoya-like mass (fast+slow / normal+slow pairs,
-    ~50% three-station instances at n=10) while remaining factor-independent and
-    never copying official coordinates.
+    ``version='v2c'`` matches Montoya n=10 *moments* (station count, tech, layout
+    family weights, depot–customer / CC distance) without copying official coords.
     """
+    if version == "v2c":
+        return _sample_synthetic_config_v2c(rng)
     geometry = rng.choice(("random", "clustered", "mixed"))
     station_placement = rng.choice(("uniform", "pmedian_region"))
     # Explicit station counts: equal weight on 2 vs 3 for typical n≈10 training.
@@ -247,6 +250,51 @@ def sample_synthetic_config(rng: random.Random) -> SyntheticConfig:
         cluster_sigma=cluster_sigma,
         station_count=station_count,
         depot_bias=depot_bias,
+    )
+
+
+def _sample_synthetic_config_v2c(rng: random.Random) -> SyntheticConfig:
+    """Moment-matched priors: ~50% 3 stations; tc0/tc1/tc2-style layout mix."""
+    # Official n=10 layout weights: tc0=4/20, tc1=12/20, tc2=4/20.
+    layout_family = rng.choices(
+        ("compact", "offset", "elongated"), weights=(0.2, 0.6, 0.2), k=1
+    )[0]
+    if layout_family == "compact":
+        geometry = rng.choice(("clustered", "mixed"))
+        depot_bias = "center"
+        cluster_sigma = rng.uniform(6.0, 10.0)
+        region_span = rng.uniform(115.0, 125.0)
+    elif layout_family == "offset":
+        geometry = rng.choice(("random", "mixed", "clustered"))
+        depot_bias = "offset"
+        cluster_sigma = rng.uniform(5.0, 9.0)
+        region_span = rng.uniform(118.0, 130.0)
+    else:  # elongated / tc2-like
+        geometry = rng.choice(("random", "mixed"))
+        depot_bias = rng.choice(("center", "offset"))
+        cluster_sigma = rng.uniform(4.0, 7.0)
+        region_span = rng.uniform(120.0, 135.0)
+    station_count = rng.choice((2, 3))
+    density = station_count / 10.0
+    tech_weights = (
+        (("fast", "slow"), 6),
+        (("normal", "slow"), 2),
+        (("fast",), 1.5),
+        (("fast", "normal"), 0.5),
+    )
+    techs, weights = zip(*tech_weights)
+    tech_pool = rng.choices(techs, weights=weights, k=1)[0]
+    station_placement = rng.choice(("uniform", "pmedian_region"))
+    return SyntheticConfig(
+        geometry=geometry,
+        station_placement=station_placement,
+        density=density,
+        tech_pool=tech_pool,
+        cluster_sigma=cluster_sigma,
+        station_count=station_count,
+        depot_bias=depot_bias,
+        layout_family=layout_family,
+        region_span=region_span,
     )
 
 
@@ -309,17 +357,16 @@ def generate_synthetic(
 ) -> Instance:
     """Generate an independent Montoya-like instance for policy training.
 
-    ``generator_version='v2'`` (default): geometry, station placement, density,
-    and charging technologies are sampled independently via the RNG.
-    ``generator_version='v1'`` restores the legacy seed-% coupled generator for
-    ablation comparisons.
+    ``generator_version='v2'`` / ``'v2c'``: independent (v2) or Montoya-moment
+    matched (v2c) sampling. ``'v1'`` restores the legacy seed-% coupled generator.
     """
     rng = random.Random(seed)
     if generator_version == "v1":
         return _generate_synthetic_v1(size, seed, distribution, rng)
 
+    sample_version = "v2c" if generator_version == "v2c" else "v2"
     if config is None:
-        config = sample_synthetic_config(rng)
+        config = sample_synthetic_config(rng, version=sample_version)
         if distribution is not None:
             config = SyntheticConfig(
                 geometry=distribution,
@@ -330,39 +377,48 @@ def generate_synthetic(
                 n_clusters=config.n_clusters,
                 station_count=config.station_count,
                 depot_bias=config.depot_bias,
+                layout_family=config.layout_family,
+                region_span=config.region_span,
             )
 
     # Customers first so offset depots can sit away from the customer mass (tc1-like).
+    span = float(config.region_span)
+    lo, hi = 0.0, span
     geometry = config.geometry
     if geometry == "random":
-        customer_xy = [(rng.uniform(0, 120), rng.uniform(0, 120)) for _ in range(size)]
+        customer_xy = [(rng.uniform(lo, hi), rng.uniform(lo, hi)) for _ in range(size)]
     else:
         n_clusters = config.n_clusters or max(2, round(math.sqrt(size) / 1.5))
-        centers = [(rng.uniform(8, 112), rng.uniform(8, 112)) for _ in range(n_clusters)]
+        margin = max(8.0, 0.07 * span)
+        centers = [
+            (rng.uniform(margin, span - margin), rng.uniform(margin, span - margin))
+            for _ in range(n_clusters)
+        ]
         customer_xy = [
             (
-                min(120, max(0, centers[k % n_clusters][0] + rng.gauss(0, config.cluster_sigma))),
-                min(120, max(0, centers[k % n_clusters][1] + rng.gauss(0, config.cluster_sigma))),
+                min(hi, max(lo, centers[k % n_clusters][0] + rng.gauss(0, config.cluster_sigma))),
+                min(hi, max(lo, centers[k % n_clusters][1] + rng.gauss(0, config.cluster_sigma))),
             )
             for k in range(size)
         ]
         if geometry == "mixed":
             for k in range(size // 2):
-                customer_xy[k] = (rng.uniform(0, 120), rng.uniform(0, 120))
+                customer_xy[k] = (rng.uniform(lo, hi), rng.uniform(lo, hi))
 
     cx = sum(x for x, _ in customer_xy) / len(customer_xy)
     cy = sum(y for _, y in customer_xy) / len(customer_xy)
     if config.depot_bias == "offset":
         # Strong corner bias to raise mean depot–customer distance toward Montoya tc1.
-        corner = rng.choice(((2, 2), (2, 118), (118, 2), (118, 118)))
+        corner = rng.choice(((2, 2), (2, span - 2), (span - 2, 2), (span - 2, span - 2)))
         depot_xy = (
-            min(118, max(2, 0.15 * cx + 0.85 * corner[0] + rng.uniform(-5, 5))),
-            min(118, max(2, 0.15 * cy + 0.85 * corner[1] + rng.uniform(-5, 5))),
+            min(span - 2, max(2, 0.12 * cx + 0.88 * corner[0] + rng.uniform(-4, 4))),
+            min(span - 2, max(2, 0.12 * cy + 0.88 * corner[1] + rng.uniform(-4, 4))),
         )
     else:
+        pad = max(8.0, 0.08 * span)
         depot_xy = (
-            min(110, max(10, cx + rng.uniform(-25, 25))),
-            min(110, max(10, cy + rng.uniform(-25, 25))),
+            min(span - pad, max(pad, cx + rng.uniform(-0.2 * span, 0.2 * span))),
+            min(span - pad, max(pad, cy + rng.uniform(-0.2 * span, 0.2 * span))),
         )
 
     if config.station_count is not None:
@@ -379,12 +435,14 @@ def generate_synthetic(
         station_xy = []
         attempts = 0
         while len(station_xy) < station_count and attempts < station_count * 40:
-            xy = (rng.uniform(2, 118), rng.uniform(2, 118))
+            xy = (rng.uniform(2, span - 2), rng.uniform(2, span - 2))
             attempts += 1
             if all(math.hypot(xy[0] - sx, xy[1] - sy) > 1.0 for sx, sy in station_xy):
                 station_xy.append(xy)
         while len(station_xy) < station_count:
-            station_xy.append((rng.uniform(5, 115), rng.uniform(5, 115)))
+            station_xy.append(
+                (rng.uniform(5, span - 5), rng.uniform(5, span - 5))
+            )
 
     tech_pool = config.tech_pool
     curve_times = {
@@ -416,9 +474,10 @@ def generate_synthetic(
     energy = tuple(tuple(distance * 125.0 for distance in row) for row in distances)
     tech_tag = "".join(t[0] for t in tech_pool)
     place_tag = config.station_placement.replace("_", "-")
+    tag = "v2c" if generator_version == "v2c" else "v2"
     return Instance(
         name=(
-            f"syn_v2_{geometry}_n{size}_{place_tag}"
+            f"syn_{tag}_{config.layout_family}_{geometry}_n{size}_{place_tag}"
             f"_d{int(config.density*100)}_{tech_tag}_s{seed}"
         ),
         path=Path("<synthetic>"),
@@ -515,3 +574,71 @@ def _generate_synthetic_v1(
         travel_hours=travel,
         energy_wh=energy,
     )
+
+
+def distribution_gate_metrics(
+    size: int = 10,
+    n: int = 500,
+    seed_start: int = 910000,
+    generator_version: str = "v2c",
+) -> dict:
+    """Empirical moments for the synthetic gate (no official instances used)."""
+    depot_customer: list[float] = []
+    customer_customer: list[float] = []
+    n_stations: list[int] = []
+    for i in range(n):
+        inst = generate_synthetic(
+            size, seed_start + i, generator_version=generator_version
+        )
+        n_stations.append(len(inst.stations))
+        dx, dy = inst.nodes[inst.depot].x, inst.nodes[inst.depot].y
+        cust = list(inst.customers)
+        depot_customer.extend(
+            math.hypot(dx - inst.nodes[c].x, dy - inst.nodes[c].y) for c in cust
+        )
+        for a_i, a in enumerate(cust):
+            for b in cust[a_i + 1 :]:
+                customer_customer.append(
+                    math.hypot(
+                        inst.nodes[a].x - inst.nodes[b].x,
+                        inst.nodes[a].y - inst.nodes[b].y,
+                    )
+                )
+    frac3 = sum(1 for k in n_stations if k >= 3) / max(1, len(n_stations))
+    mean_dc = sum(depot_customer) / max(1, len(depot_customer))
+    mean_cc = sum(customer_customer) / max(1, len(customer_customer))
+    return {
+        "n": n,
+        "generator_version": generator_version,
+        "mean_depot_customer_km": mean_dc,
+        "mean_customer_customer_km": mean_cc,
+        "frac_3plus_stations": frac3,
+        "station_count_hist": {
+            str(k): n_stations.count(k) for k in sorted(set(n_stations))
+        },
+    }
+
+
+def assert_distribution_gate(
+    metrics: dict | None = None,
+    target_dc: float = 70.0,
+    dc_tol: float = 5.0,
+    frac3_lo: float = 0.4,
+    frac3_hi: float = 0.6,
+) -> dict:
+    """Fail if v2c moments are outside Montoya-like bands."""
+    metrics = metrics or distribution_gate_metrics()
+    mean_dc = float(metrics["mean_depot_customer_km"])
+    frac3 = float(metrics["frac_3plus_stations"])
+    if abs(mean_dc - target_dc) > dc_tol:
+        raise AssertionError(
+            f"distribution gate failed: mean_dc={mean_dc:.2f} "
+            f"(target {target_dc}±{dc_tol})"
+        )
+    if not (frac3_lo <= frac3 <= frac3_hi):
+        raise AssertionError(
+            f"distribution gate failed: frac_3plus={frac3:.3f} "
+            f"(expected [{frac3_lo},{frac3_hi}])"
+        )
+    metrics["gate_passed"] = True
+    return metrics

@@ -1,0 +1,12 @@
+{
+  "n": 500,
+  "generator_version": "v2c",
+  "mean_depot_customer_km": 69.83217799345319,
+  "mean_customer_customer_km": 54.49094099756472,
+  "frac_3plus_stations": 0.462,
+  "station_count_hist": {
+    "2": 269,
+    "3": 231
+  },
+  "gate_passed": true
+}

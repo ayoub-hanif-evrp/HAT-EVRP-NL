@@ -817,6 +817,155 @@ def teacher_loss(
     return torch.stack(losses).mean(), decisions, stats
 
 
+def neural_lns(
+    model: HATPolicy,
+    instance: Instance,
+    routes: list[tuple[int, ...]],
+    plans: list,
+    max_iterations: int = 6,
+    seed: int = 0,
+    cost_lambda: float = 4.0,
+    destroy_min: int = 2,
+    destroy_max: int = 4,
+) -> tuple[list[tuple[int, ...]], list, int, dict]:
+    """Ruin + neural-policy repair (search; not an architectural claim).
+
+    Destroy customers with classical operators; repair by decoding the policy
+    only on removed customers while keeping surviving routes closed.
+    """
+    from charging import FixedRouteOracle, check_solution
+    from solver_ls import ruin_and_repair
+
+    rng = random.Random(seed)
+    oracle = FixedRouteOracle(instance)
+    best_routes = [tuple(r) for r in routes]
+    best_plans = list(plans)
+    best_obj = sum(p.duration_hours for p in best_plans)
+    improvements = 0
+    # Seed with classical ruin once under small budget for diversity.
+    best_routes, best_plans, classical_imp, _ = ruin_and_repair(
+        best_routes,
+        best_plans,
+        oracle,
+        instance,
+        max_iterations=2,
+        evaluation_budget=200,
+        seed=seed,
+        destroy_min=destroy_min,
+        destroy_max=destroy_max,
+    )
+    improvements += classical_imp
+    best_obj = sum(p.duration_hours for p in best_plans)
+
+    for it in range(max_iterations):
+        customers = [c for r in best_routes for c in r]
+        if len(customers) < 2:
+            break
+        k = min(len(customers), rng.randint(destroy_min, destroy_max))
+        removed = set(rng.sample(customers, k))
+        kept_routes = []
+        kept_plans = []
+        for route, plan in zip(best_routes, best_plans):
+            kept = tuple(c for c in route if c not in removed)
+            if not kept:
+                continue
+            rebuilt = oracle.solve(kept)
+            if rebuilt is None or not rebuilt.feasible:
+                kept_routes = []
+                break
+            state = route_state(instance, kept, rebuilt)
+            state["closed"] = True
+            kept_routes.append(state)
+            kept_plans.append(rebuilt)
+        if not kept_routes and removed != set(customers):
+            continue
+        repaired = decode(
+            model,
+            instance,
+            sample=True,
+            seed=seed + 17 + it,
+            cost_lambda=cost_lambda,
+            initial_routes=kept_routes,
+            only_customers=removed,
+        )
+        if not repaired["feasible"]:
+            continue
+        cand_routes = list(repaired["routes"])
+        cand_plans = list(repaired["plans"])
+        valid, _ = check_solution(instance, cand_plans)
+        if not valid:
+            continue
+        obj = sum(p.duration_hours for p in cand_plans)
+        if obj < best_obj - 1e-10:
+            best_obj = obj
+            best_routes = [tuple(r) for r in cand_routes]
+            best_plans = cand_plans
+            improvements += 1
+    return (
+        best_routes,
+        best_plans,
+        improvements,
+        {"schedule": "neural_lns_search", "improvements": improvements},
+    )
+
+
+def pomo_reinforce_step(
+    model: HATPolicy,
+    instance: Instance,
+    optimizer: torch.optim.Optimizer,
+    k: int = 8,
+    seed: int = 0,
+    cost_lambda: float = 0.0,
+) -> tuple[torch.Tensor, dict]:
+    """POMO-style multi-rollout REINFORCE with shared mean baseline.
+
+    Forces diverse first customers (up to K) then samples the rest of the
+    hierarchical trajectory. Reward = -full duration if feasible else -100.
+    """
+    customers = list(instance.customers)
+    rng = random.Random(seed)
+    starts = customers[:]
+    rng.shuffle(starts)
+    starts = starts[: max(1, min(k, len(starts)))]
+    rollouts = []
+    model.train()
+    for index, first in enumerate(starts):
+        result = decode(
+            model,
+            instance,
+            sample=True,
+            seed=seed * 100 + index,
+            cost_lambda=cost_lambda,
+            force_first_customer=first,
+        )
+        reward = -result["objective"] if result["feasible"] else -100.0
+        rollouts.append((result, reward))
+    rewards = [reward for _, reward in rollouts]
+    baseline = sum(rewards) / max(1, len(rewards))
+    optimizer.zero_grad()
+    losses = []
+    for result, reward in rollouts:
+        if result["log_prob"] is None:
+            continue
+        advantage = reward - baseline
+        if abs(advantage) < 1e-9:
+            continue
+        losses.append(-advantage * result["log_prob"])
+    if losses:
+        loss = torch.stack(losses).mean()
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+        optimizer.step()
+    else:
+        loss = torch.tensor(0.0)
+    best = min(
+        (r for r, rew in rollouts if r["feasible"]),
+        key=lambda r: r["objective"],
+        default=rollouts[0][0],
+    )
+    return loss, best
+
+
 def diagnose_deepsets(model: HATPolicy, instance: Instance) -> dict:
     """Compact checks that DeepSets is permutation-invariant and informative."""
     if not model.config.deepsets:
@@ -876,6 +1025,9 @@ def decode(
     route_cost_top_k: int = 3,
     ruin_iterations: int = 0,
     ruin_budget: int = 0,
+    force_first_customer: int | None = None,
+    initial_routes: list[dict] | None = None,
+    only_customers: set[int] | None = None,
 ) -> dict:
     """Greedy/sampled hierarchical decode with optional oracle-aware scoring.
 
@@ -894,8 +1046,12 @@ def decode(
     if sample:
         torch.manual_seed(seed)
     oracle = FixedRouteOracle(instance)
-    routes: list[dict] = []
-    unserved = set(instance.customers)
+    routes: list[dict] = list(initial_routes) if initial_routes else []
+    if only_customers is not None:
+        unserved = set(only_customers)
+    else:
+        served = {c for route in routes for c in route["customers"]}
+        unserved = set(instance.customers) - served
     log_probs: list[torch.Tensor] = []
     entropy = 0.0
     reason = ""
@@ -908,6 +1064,9 @@ def decode(
     singleton_ok = {
         customer: plan.feasible for customer, plan in singleton_plans.items()
     }
+    forced_first_pending = force_first_customer is not None and force_first_customer in (
+        unserved if only_customers is not None else set(instance.customers)
+    )
 
     for decision in range(max_decisions):
         if not unserved and all(route["closed"] for route in routes):
@@ -920,6 +1079,9 @@ def decode(
             singleton_ok[customer] for customer in unserved
         )
         route_mask = [True] * len(open_indices) + [new_feasible]
+        if forced_first_pending and not routes:
+            # POMO-style: force NEW_ROUTE then the designated first customer.
+            route_mask = [False] * len(open_indices) + [new_feasible]
         if not any(route_mask):
             reason = "no route action can serve remaining customers"
             break
@@ -1019,6 +1181,16 @@ def decode(
             ~torch.tensor(masks, dtype=torch.bool, device=model.device),
             float("-inf"),
         )
+        if forced_first_pending and is_new and force_first_customer in order:
+            # Force the designated first customer (POMO multi-start).
+            forced_pos = order.index(force_first_customer)
+            customer_mask = [False] * len(order)
+            customer_mask[forced_pos] = True
+            customer_scores = customer_scores.masked_fill(
+                ~torch.tensor(customer_mask, dtype=torch.bool, device=model.device),
+                float("-inf"),
+            )
+            forced_first_pending = False
         customer_dist = torch.distributions.Categorical(logits=customer_scores)
         customer_action = (
             customer_dist.sample() if sample else torch.argmax(customer_scores)
@@ -1115,10 +1287,13 @@ def train_model(args: argparse.Namespace) -> None:
     generator_version = getattr(args, "generator", "v2")
     multi_target = bool(getattr(args, "multi_target", False))
     fleet_counterfactual = bool(getattr(args, "fleet_counterfactual", False))
-    # New seed ranges avoid overlap with Cycle-3 (10k/20k) and prior experiments.
-    # v2b (Montoya-rebalanced) uses a fresh band to avoid reusing prior v2 instances.
-    train_seed_start = 700000 + args.seed * 1000
-    val_seed_start = 800000 + args.seed * 1000
+    # Fresh seed bands per generator family to avoid instance reuse across cycles.
+    if generator_version == "v2c":
+        train_seed_start = 920000 + args.seed * 1000
+        val_seed_start = 930000 + args.seed * 1000
+    else:
+        train_seed_start = 700000 + args.seed * 1000
+        val_seed_start = 800000 + args.seed * 1000
     train_data = make_teacher_data(
         args.size,
         args.train_instances,
@@ -1202,25 +1377,38 @@ def train_model(args: argparse.Namespace) -> None:
                 best_state = copy.deepcopy(model.state_dict())
             model.train()
 
+    pomo_k = int(getattr(args, "pomo_k", 0) or 0)
     for rl_step in range(1, args.rl_steps + 1):
         instance, _ = train_data[(rl_step - 1) % len(train_data)]
-        model.eval()
-        with torch.no_grad():
-            greedy = decode(model, instance, sample=False, seed=args.seed + rl_step)
-        model.train()
-        sampled = decode(model, instance, sample=True, seed=args.seed + rl_step)
-        sampled_reward = -sampled["objective"] if sampled["feasible"] else -100.0
-        greedy_reward = -greedy["objective"] if greedy["feasible"] else -100.0
-        advantage = sampled_reward - greedy_reward
-        if sampled["log_prob"] is not None and abs(advantage) > 1e-9:
-            optimizer.zero_grad()
-            rl_loss = -advantage * sampled["log_prob"]
-            rl_loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-            optimizer.step()
+        if pomo_k > 0:
+            rl_loss, sampled = pomo_reinforce_step(
+                model,
+                instance,
+                optimizer,
+                k=min(pomo_k, len(instance.customers)),
+                seed=args.seed + rl_step,
+                cost_lambda=float(getattr(args, "cost_lambda", 0.0)),
+            )
         else:
-            rl_loss = torch.tensor(0.0)
-        if rl_step == args.rl_steps:
+            model.eval()
+            with torch.no_grad():
+                greedy = decode(model, instance, sample=False, seed=args.seed + rl_step)
+            model.train()
+            sampled = decode(model, instance, sample=True, seed=args.seed + rl_step)
+            sampled_reward = -sampled["objective"] if sampled["feasible"] else -100.0
+            greedy_reward = -greedy["objective"] if greedy["feasible"] else -100.0
+            advantage = sampled_reward - greedy_reward
+            if sampled["log_prob"] is not None and abs(advantage) > 1e-9:
+                optimizer.zero_grad()
+                rl_loss = -advantage * sampled["log_prob"]
+                rl_loss.backward()
+                torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                optimizer.step()
+            else:
+                rl_loss = torch.tensor(0.0)
+        if rl_step == args.rl_steps or (
+            args.eval_every > 0 and rl_step % args.eval_every == 0
+        ):
             model.eval()
             with torch.no_grad():
                 decoded = [
@@ -1233,9 +1421,11 @@ def train_model(args: argparse.Namespace) -> None:
                 else float("nan")
             )
             row = {
-                "stage": "rl",
+                "stage": "rl_pomo" if pomo_k > 0 else "rl",
                 "step": rl_step,
-                "loss": float(rl_loss.detach()),
+                "loss": float(rl_loss.detach())
+                if hasattr(rl_loss, "detach")
+                else float(rl_loss),
                 "feasible_rate": len(feasible) / len(decoded),
                 "validation_objective": mean_objective,
                 "entropy": sum(result["entropy"] for result in decoded)
@@ -1245,6 +1435,7 @@ def train_model(args: argparse.Namespace) -> None:
                 "decisions": sampled["decisions"],
                 "multi_open_frac": multi_open_sum / max(1, args.steps),
                 "competing_frac": "",
+                "fleet_cf_frac": "",
             }
             rows.append(row)
             print(row)
@@ -1252,6 +1443,7 @@ def train_model(args: argparse.Namespace) -> None:
             if score > best_score:
                 best_score = score
                 best_state = copy.deepcopy(model.state_dict())
+            model.train()
 
     model.load_state_dict(best_state)
     final_diag = diagnose_deepsets(model, validation[0][0])
@@ -1323,7 +1515,7 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--version", type=str, default="c3")
     parser.add_argument("--teacher", choices=("basic", "strong"), default="basic")
-    parser.add_argument("--generator", choices=("v1", "v2"), default="v2")
+    parser.add_argument("--generator", choices=("v1", "v2", "v2c"), default="v2")
     parser.add_argument(
         "--multi-target",
         action="store_true",
@@ -1333,6 +1525,18 @@ def main() -> None:
         "--fleet-counterfactual",
         action="store_true",
         help="Duration-delta ranking loss when multiple open expert routes compete",
+    )
+    parser.add_argument(
+        "--pomo-k",
+        type=int,
+        default=0,
+        help="POMO multi-rollout count during RL (0 = single-sample RL)",
+    )
+    parser.add_argument(
+        "--cost-lambda",
+        type=float,
+        default=0.0,
+        help="Optional cost-aware decode weight during POMO RL",
     )
     parser.add_argument("--results", type=Path, default=Path("results"))
     parser.add_argument("--checkpoints", type=Path, default=Path("checkpoints"))
