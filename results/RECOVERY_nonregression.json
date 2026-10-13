@@ -1,0 +1,19 @@
+{
+  "pass": true,
+  "details": {
+    "H2": {
+      "recovered_mean": 57.11328887600023,
+      "historical_mean": 57.17274009092578,
+      "abs_diff": 0.05945121492554506,
+      "pass": true,
+      "n": 20
+    },
+    "H4": {
+      "recovered_mean": 57.41256041378927,
+      "historical_mean": 57.50564156359235,
+      "abs_diff": 0.09308114980307636,
+      "pass": true,
+      "n": 20
+    }
+  }
+}
