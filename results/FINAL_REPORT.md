@@ -34,7 +34,7 @@ Raw: `compare_size10_seed{42,43,44}_c3.csv` (60/60 feasible).
 
 ## Protocol B — Fair one-shot local search (primary)
 
-Raw: `compare_size10_fairls_final_seed{42,43,44}_c3.csv` (60/60 feasible). Aggregate: `FINAL_n10_fairls.csv`.
+Raw: `raw/cycle3/compare_size10_fairls_final_seed{42,43,44}_c3.csv` (60/60 feasible). Aggregate: `raw/cycle3/FINAL_n10_fairls.csv`.
 
 | Method | Mean h | Median h | Routes | Charge stops | Charge h | Runtime s | Oracle |
 |---|---:|---:|---:|---:|---:|---:|---:|
@@ -92,10 +92,12 @@ Provenance: `literature_bks_froger2021.csv` (spot-checked against HAL PDF of Fro
 | H2 | 42.7% | **5.0%** |
 | H4 | 43.2% | **5.4%** |
 
-Sources: `FINAL_n10_bks_gaps.csv` (naive, retained), `IMPROVEMENT_bks_gaps_corrected.csv`.  
-Further optional inference/search gains: `IMPROVEMENT_REPORT.md` (cost-aware λ + strong LS; not part of frozen Cycle-3 baseline tables above).
+Sources: `raw/cycle3/FINAL_n10_bks_gaps.csv` (naive, retained), `raw/cost_aware/IMPROVEMENT_bks_gaps_corrected.csv`.  
+Further optional inference/search gains: `archive/reports/IMPROVEMENT_REPORT.md` (cost-aware λ + strong LS; not part of frozen Cycle-3 baseline tables above).
 
-### Targeted follow-up (matched λ; see `TARGETED_IMPROVEMENT_REPORT.md`)
+Current strongest n40 search result (ordinary λ=0 + hybrid): see [`REGRESSION_RECOVERY_REPORT.md`](REGRESSION_RECOVERY_REPORT.md) and [`README.md`](README.md).
+
+### Targeted follow-up (matched λ; see `archive/reports/TARGETED_IMPROVEMENT_REPORT.md`)
 
 Under **identical** `cost_lambda` and strong LS, H4 does **not** reliably beat H2 (layout-clustered CIs include 0). Best verified n=10 config this cycle: **H2 λ=4 + strong LS → 19.335 h** (~0.60% lit BKS gap). Earlier H4-vs-H2 “wins” with λ=2 vs λ=4 were confounded.
 

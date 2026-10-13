@@ -16,14 +16,17 @@ import time
 from collections import defaultdict
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 RES = ROOT / "results"
+RAW_REC = RES / "raw" / "regression_recovery"
 CKPT = ROOT / "checkpoints"
 DATA = ROOT / "dataset"
-HIST = RES / "compare_size40_from10_fairls_final_seed42_c3.csv"
+HIST = RES / "raw" / "cycle3" / "compare_size40_from10_fairls_final_seed42_c3.csv"
+if not HIST.exists():
+    HIST = RES / "compare_size40_from10_fairls_final_seed42_c3.csv"
 PREFIX = "RECOVERY"
 SEED = 42
 SAMPLES = 3
@@ -35,6 +38,20 @@ HIST_H4_MEAN = 57.50564156359235
 def _mean(xs):
     xs = [x for x in xs if isinstance(x, (int, float)) and math.isfinite(x)]
     return statistics.mean(xs) if xs else float("nan")
+
+
+def _resolve_recovery(name: str) -> Path:
+    """Prefer raw/regression_recovery, then results/ root (legacy)."""
+    archived = RAW_REC / name
+    if archived.exists():
+        return archived
+    direct = RES / name
+    return direct if direct.exists() else archived
+
+
+def _recovery_out(name: str) -> Path:
+    RAW_REC.mkdir(parents=True, exist_ok=True)
+    return RAW_REC / name
 
 
 def _write_csv(path: Path, rows: list[dict]) -> None:
@@ -159,7 +176,7 @@ def stage_reproduce() -> Path:
                     f"repro {method} {inst.name} obj={obj}",
                     flush=True,
                 )
-    out = RES / f"{PREFIX}_n40_repro_fairls.csv"
+    out = _recovery_out(f"{PREFIX}_n40_repro_fairls.csv")
     _write_csv(out, rows)
 
     delta_rows = []
@@ -199,7 +216,7 @@ def stage_reproduce() -> Path:
         ]
         ref = HIST_H2_MEAN if method == "H2" else HIST_H4_MEAN
         print(f"REPRO {method}: mean={_mean(objs):.6f} hist={ref:.6f}", flush=True)
-    _write_csv(RES / f"{PREFIX}_n40_repro_vs_hist.csv", delta_rows)
+    _write_csv(_recovery_out(f"{PREFIX}_n40_repro_vs_hist.csv"), delta_rows)
     return out
 
 
@@ -331,7 +348,7 @@ def stage_construction_ablation() -> list[dict]:
                         f"construct={best['objective']:.3f} ls={obj if valid else 'inf'}",
                         flush=True,
                     )
-    _write_csv(RES / f"{PREFIX}_n40_construction_ablation.csv", rows)
+    _write_csv(_recovery_out(f"{PREFIX}_n40_construction_ablation.csv"), rows)
     # Summary means
     summary = {}
     by = defaultdict(list)
@@ -342,7 +359,7 @@ def stage_construction_ablation() -> list[dict]:
     for key, vals in sorted(by.items()):
         summary[f"{key[0]}|{key[1]}"] = _mean(vals)
         print(f"ABLATION mean LS {key[0]} {key[1]}: {_mean(vals):.6f}", flush=True)
-    (RES / f"{PREFIX}_n40_construction_ablation_summary.json").write_text(
+    _recovery_out(f"{PREFIX}_n40_construction_ablation_summary.json").write_text(
         json.dumps(summary, indent=2), encoding="utf-8"
     )
     return rows
@@ -535,15 +552,15 @@ def stage_pipeline_on_recovered() -> list[dict]:
                         f"hist={href} delta={(obj-href) if href else ''}",
                         flush=True,
                     )
-    _write_csv(RES / f"{PREFIX}_n40_recovered_pipeline.csv", rows)
+    _write_csv(_recovery_out(f"{PREFIX}_n40_recovered_pipeline.csv"), rows)
     return rows
 
 
 def stage_nonregression_check() -> dict:
     """Assert recovered basic_ls ≈ historical means within tolerance."""
-    path = RES / f"{PREFIX}_n40_recovered_pipeline.csv"
+    path = _resolve_recovery(f"{PREFIX}_n40_recovered_pipeline.csv")
     if not path.exists():
-        path = RES / f"{PREFIX}_n40_repro_fairls.csv"
+        path = _resolve_recovery(f"{PREFIX}_n40_repro_fairls.csv")
     rows = list(csv.DictReader(path.open(encoding="utf-8")))
     report = {"pass": True, "details": {}}
     # Prefer basic_ls stage if present
@@ -576,7 +593,7 @@ def stage_nonregression_check() -> dict:
         }
         report["pass"] = report["pass"] and ok
         print(f"NONREG {method}: mean={mean:.6f} hist={ref:.6f} pass={ok}", flush=True)
-    (RES / f"{PREFIX}_nonregression.json").write_text(
+    _recovery_out(f"{PREFIX}_nonregression.json").write_text(
         json.dumps(report, indent=2), encoding="utf-8"
     )
     return report
@@ -586,9 +603,10 @@ def stage_same_instance_vs_insertion() -> None:
     """Document exact same-instance comparison vs INSERTION hybrid."""
     hist_h2 = _hist_objectives("H2")
     hist_h4 = _hist_objectives("H4")
-    ins = list(
-        csv.DictReader((RES / "INSERTION_official_n40.csv").open(encoding="utf-8"))
-    )
+    ins_path = RES / "INSERTION_official_n40.csv"
+    if not ins_path.exists():
+        ins_path = RES / "raw" / "insertion_repair" / "INSERTION_official_n40.csv"
+    ins = list(csv.DictReader(ins_path.open(encoding="utf-8")))
     rows = []
     for method, hist in (("H2", hist_h2), ("H4", hist_h4)):
         label = f"{method}_c3"
@@ -616,7 +634,7 @@ def stage_same_instance_vs_insertion() -> None:
                         "worse": int(iobj > hobj + 1e-9),
                     }
                 )
-    _write_csv(RES / f"{PREFIX}_n40_hist_vs_insertion.csv", rows)
+    _write_csv(_recovery_out(f"{PREFIX}_n40_hist_vs_insertion.csv"), rows)
     for method in ("H2", "H4"):
         for mode in ("hybrid_insert", "classical_ruin", "ls"):
             deltas = [
@@ -637,7 +655,11 @@ def stage_same_instance_vs_insertion() -> None:
 
 
 def stage_fair_budget_compare() -> list[dict]:
-    """Same recovered starts; classical vs neural under equal oracle budget."""
+    """Matched recovered starts; search branches run to completion (unequal compute).
+
+    Label carefully: this is NOT an equal-oracle-budget experiment. Each method
+    reports its own realized frvcpy solver executions and search runtime.
+    """
     import torch
     from charging import FixedRouteOracle, check_solution, check_route
     from evaluate import _refine_best_once
@@ -756,7 +778,7 @@ def stage_fair_budget_compare() -> list[dict]:
                         f"fair {method} {name} {inst.name} obj={obj:.4f} exec={calls}",
                         flush=True,
                     )
-    _write_csv(RES / f"{PREFIX}_n40_fair_search.csv", rows)
+    _write_csv(_recovery_out(f"{PREFIX}_n40_fair_search.csv"), rows)
     return rows
 
 
@@ -771,7 +793,7 @@ def stage_report() -> None:
         "## 1. Historical vs latest insertion pipeline (same 20 instances)",
         "",
     ]
-    vs_path = RES / f"{PREFIX}_n40_hist_vs_insertion.csv"
+    vs_path = _resolve_recovery(f"{PREFIX}_n40_hist_vs_insertion.csv")
     if vs_path.exists():
         rows = list(csv.DictReader(vs_path.open(encoding="utf-8")))
         lines.append(
@@ -808,7 +830,7 @@ def stage_report() -> None:
         ]
     )
 
-    abl = RES / f"{PREFIX}_n40_construction_ablation_summary.json"
+    abl = _resolve_recovery(f"{PREFIX}_n40_construction_ablation_summary.json")
     if abl.exists():
         summary = json.loads(abl.read_text(encoding="utf-8"))
         lines.append("## 3. Construction ablation (identical basic one-shot LS)")
@@ -825,7 +847,7 @@ def stage_report() -> None:
         )
         lines.append("")
 
-    pipe = RES / f"{PREFIX}_n40_recovered_pipeline.csv"
+    pipe = _resolve_recovery(f"{PREFIX}_n40_recovered_pipeline.csv")
     if pipe.exists():
         rows = list(csv.DictReader(pipe.open(encoding="utf-8")))
         lines.append("## 4. Recovered ordinary λ=0 construction + staged search")
@@ -853,10 +875,16 @@ def stage_report() -> None:
             )
         lines.append("")
 
-    fair = RES / f"{PREFIX}_n40_fair_search.csv"
+    fair = _resolve_recovery(f"{PREFIX}_n40_fair_search.csv")
     if fair.exists():
         rows = list(csv.DictReader(fair.open(encoding="utf-8")))
-        lines.append("## 5. Fair search from recovered strong-LS starts")
+        lines.append(
+            "## 5. Matched-start search (unequal realized compute)"
+        )
+        lines.append("")
+        lines.append(
+            "Not an equal-oracle-budget experiment; each branch reports its own executions."
+        )
         lines.append("")
         lines.append("| Method | Mode | Mean h | Mean exec | Mean search s |")
         lines.append("|---|---|---:|---:|---:|")
@@ -872,7 +900,7 @@ def stage_report() -> None:
             )
         lines.append("")
 
-    nr = RES / f"{PREFIX}_nonregression.json"
+    nr = _resolve_recovery(f"{PREFIX}_nonregression.json")
     if nr.exists():
         report = json.loads(nr.read_text(encoding="utf-8"))
         lines.append("## 6. Non-regression check")
@@ -886,22 +914,52 @@ def stage_report() -> None:
             )
         lines.append("")
 
+    # Dynamic conclusions from recovered pipeline if available.
+    best_line = (
+        "- Historical fair-LS (~57.17 h H2 / ~57.51 h H4) is the construction reference."
+    )
+    pipe = _resolve_recovery(f"{PREFIX}_n40_recovered_pipeline.csv")
+    if pipe.exists():
+        rows = list(csv.DictReader(pipe.open(encoding="utf-8")))
+        hybrid = {}
+        for method in ("H2", "H4"):
+            objs = [
+                float(r["objective_h"])
+                for r in rows
+                if r["method"] == method
+                and r["stage"] == "hybrid_insert"
+                and r["feasible"] == "1"
+            ]
+            if objs:
+                hybrid[method] = _mean(objs)
+        if hybrid:
+            best_method = min(hybrid, key=hybrid.get)
+            best_line = (
+                f"- Current best recovered n40 (matched ordinary λ=0 starts): "
+                f"**{best_method} + hybrid_insert = {hybrid[best_method]:.4f} h** "
+                f"(beats historical fair-LS). "
+                f"H2={hybrid.get('H2', float('nan')):.4f}, "
+                f"H4={hybrid.get('H4', float('nan')):.4f}."
+            )
     lines.extend(
         [
             "## 7. Conclusions",
             "",
-            "- Do **not** treat INSERTION hybrid n40 as the global best.",
-            "- Historical fair-LS (~57.17 h H2 / ~57.51 h H4) remains the quality reference.",
-            "- Root cause is construction/protocol mismatch (forced starts + cost_lambda=4),",
-            "  not failure of position-aware insertion itself.",
-            "- Best scientific configuration: **historical ordinary λ=0 construction +",
-            "  basic/strong LS**, then optional hybrid_insert that never worsens the incumbent.",
-            "- H2 vs H4 must stay matched; report whichever wins honestly.",
+            "- Do **not** treat INSERTION forced+λ4 hybrid n40 as the global best.",
+            best_line,
+            "- Root cause of the insertion-pipeline regression: forced-first starts",
+            "  (primary) and cost_lambda=4 on n40 (secondary).",
+            "- Best scientific deployment config: **ordinary λ=0 construction + LS +",
+            "  hybrid_insert (never worsen incumbent)**.",
+            "- H4 beat H2 on recovered n40 means in the single-seed experiment; this does",
+            "  **not** establish a general DeepSets advantage without multi-seed CIs.",
+            "- Equal wall-clock neural superiority is not established; fair_search reports",
+            "  matched starts with unequal realized oracle executions.",
             "",
             "## Commands",
             "",
             "```bash",
-            "python results/run_regression_recovery.py --stage all",
+            "python scripts/experiments/run_regression_recovery.py --stage all",
             "```",
             "",
         ]

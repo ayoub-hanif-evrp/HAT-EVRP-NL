@@ -54,7 +54,9 @@ Historical targets: H2=57.1727, H4=57.5056.
 | H4 | neural_insert | 57.7121 | +0.2065 | 9/20 | 3229 |
 | H4 | strong_ls | 57.9364 | +0.4307 | 2/20 | 5654 |
 
-## 5. Fair search from recovered strong-LS starts
+## 5. Matched-start search (unequal realized compute)
+
+Not an equal-oracle-budget experiment; each branch reports its own executions.
 
 | Method | Mode | Mean h | Mean exec | Mean search s |
 |---|---|---:|---:|---:|
@@ -69,49 +71,25 @@ Historical targets: H2=57.1727, H4=57.5056.
 
 ## 6. Non-regression check
 
-- Protocol recovery: ordinary starts, `cost_lambda=0`, 3 samples (greedy then sample), basic one-shot LS.
-- H2 recovered basic_ls mean **57.113** vs hist **57.173** (16/20 exact instance matches).
-- H4 recovered basic_ls mean **57.413** vs hist **57.506** (13/20 exact).
-- Small mean differences are within numerical/nondeterminism noise; recovered is slightly *better*.
-- Tolerance: pass if recovered mean ≤ historical + 0.15 h.
+- Overall pass: **True**
+- H2: recovered mean 57.113289 vs hist 57.172740 (Δ=0.05945121492554506, pass=True)
+- H4: recovered mean 57.412560 vs hist 57.505642 (Δ=0.09308114980307636, pass=True)
 
-## 7. Root cause (measured)
+## 7. Conclusions
 
-| Factor | H2 mean after basic LS | Effect |
-|---|---:|---|
-| ordinary + λ=0 (historical) | **57.11** | baseline recovered |
-| ordinary + λ=4 | 58.83 | mild harm (~+1.7 h) |
-| forced + λ=0 | 71.39 | **catastrophic** (~+14 h) |
-| forced + λ=4 | 67.46 | still catastrophic |
-
-**Primary cause:** forced-first-customer multi-start on every attempt (n10→n40 transfer).
-**Secondary:** `cost_lambda=4` trained/tuned around n10 harms n40 ordinary construction.
-Position-aware insertion was never the regression; it was applied on already-broken basins.
-
-## 8. Final retained configurations (n40)
-
-| Rank | Config | Mean full h | vs hist H2 57.17 |
-|---|---|---:|---|
-| 1 | **H4_c3 + ordinary λ=0 + strong LS + hybrid_insert** | **56.370** | beats hist |
-| 2 | H4_c3 + ordinary λ=0 + strong LS + classical_ruin | 56.560 | beats hist |
-| 3 | **H2_c3 + ordinary λ=0 + strong LS + hybrid_insert** | **56.806** | beats hist |
-| 4 | H2_c3 + ordinary λ=0 + strong LS + classical_ruin | 57.034 | beats hist |
-| — | Historical fair-LS H2 / H4 | 57.173 / 57.506 | reference |
-| — | INSERTION forced+λ4 hybrid H2 / H4 | 63.832 / 66.878 | **do not use** |
-
-- Hybrid beats classical under the recovered construction (matched starts).
-- Hybrid uses more oracle executions (~1147 vs ~395 ruin-only); still improves quality.
-- Pure neural_insert alone does **not** beat classical ruin.
-- Under matched recovered settings, **H4 hybrid beats H2 hybrid** on n40 mean duration.
-
-## 9. Remaining limitations
-
-- Equal wall-clock / equal-oracle-budget trajectories across seeds not fully swept (single seed 42).
-- Strong LS alone can be slightly worse than basic LS from the same construction; hybrid/classical recover from the strong-LS incumbent.
-- Do not select `cost_lambda` on official n40; n10-tuned λ=4 does not transfer cleanly.
+- Do **not** treat INSERTION forced+λ4 hybrid n40 as the global best.
+- Current best recovered n40 (matched ordinary λ=0 starts): **H4 + hybrid_insert = 56.3700 h** (beats historical fair-LS). H2=56.8055, H4=56.3700.
+- Root cause of the insertion-pipeline regression: forced-first starts
+  (primary) and cost_lambda=4 on n40 (secondary).
+- Best scientific deployment config: **ordinary λ=0 construction + LS +
+  hybrid_insert (never worsen incumbent)**.
+- H4 beat H2 on recovered n40 means in the single-seed experiment; this does
+  **not** establish a general DeepSets advantage without multi-seed CIs.
+- Equal wall-clock neural superiority is not established; fair_search reports
+  matched starts with unequal realized oracle executions.
 
 ## Commands
 
 ```bash
-python results/run_regression_recovery.py --stage all
+python scripts/experiments/run_regression_recovery.py --stage all
 ```

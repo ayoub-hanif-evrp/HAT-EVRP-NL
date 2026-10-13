@@ -1,15 +1,16 @@
 # History-Aware Transformer Agents with DeepSets Coordination for Electric Vehicle Routing with Nonlinear Charging
 
-**HAT-EVRP-NL — research manuscript (frozen repository state)**  
-Authoritative numerical tables: `results/FINAL_REPORT.md`  
-Verified aggregates: `results/FINAL_*.csv`  
-Figures: `results/figures/`
+**HAT-EVRP-NL — research manuscript**  
+Results index: `results/README.md`  
+Cycle-3 baseline tables: `results/FINAL_REPORT.md`  
+Publication tables/figures: `results/tables/`, `results/figures/`  
+Raw evidence: `results/raw/`
 
 ---
 
 ## Abstract
 
-The electric vehicle routing problem with nonlinear charging functions (E-VRP-NL) requires sequencing customers under battery and route-duration limits while optimizing piecewise-linear concave charging at stations. We study whether *encoding each EV’s visit history with a shared causal Transformer* and *aggregating open-route embeddings with DeepSets* improves neural construction on Montoya’s static offline benchmark when charging is optimized by an exact fixed-route solver (`frvcpy`). We implement HAT-EVRP-NL: static node encoding, shared causal history Transformer, dynamic EV-state fusion, DeepSets fleet aggregation, hierarchical route/customer decoding, nonlinear charging optimization, and an independent Python forward simulator for feasibility. Controlled ablations H1–H4 isolate history and DeepSets. On the twenty official 10-customer instances (seeds 42–44), fair best-of-N plus one-shot local search yields mean durations H0_strong 20.142 h, H1 19.993 h, **H2 19.813 h**, H3 20.109 h, H4 19.886 h (lower is better). History improves over state-only routing (H2−H1: −0.180 h; 80%/10%/10% win/tie/loss). DeepSets does **not** reliably improve over history alone (H4−H2: +0.074 h; 95% CI [−0.018, +0.165]; 20%/60%/20%). History-aware policies with fair local search improve on the tested classical greedy+LS baseline on n=10–40, yet remain ~43% above published uncapacitated best-known solutions (Froger et al., *Transportation Science*, 2022; online Dec. 2021, Table 13). Direct learned charging is unreliable (4/20 feasible). **Contribution:** an experimental evaluation of history-aware, fleet-aware neural hybrid routing with nonlinear charging—not a new state-of-the-art E-VRP solver. H2 is the strongest efficient neural variant; H4 is the complete proposed architecture without a consistent win over H2.
+The electric vehicle routing problem with nonlinear charging functions (E-VRP-NL) requires sequencing customers under battery and route-duration limits while optimizing piecewise-linear concave charging at stations. We study whether *encoding each EV’s visit history with a shared causal Transformer* and *aggregating open-route embeddings with DeepSets* improves neural construction on Montoya’s static offline benchmark when charging is optimized by an exact fixed-route solver (`frvcpy`). We implement HAT-EVRP-NL: static node encoding, shared causal history Transformer, dynamic EV-state fusion, DeepSets fleet aggregation, hierarchical route/customer decoding, nonlinear charging optimization, and an independent Python forward simulator for feasibility. Controlled ablations H1–H4 isolate history and DeepSets. On the twenty official 10-customer instances (seeds 42–44), fair best-of-N plus one-shot local search yields mean durations H0_strong 20.142 h, H1 19.993 h, **H2 19.813 h**, H3 20.109 h, H4 19.886 h (lower is better). History improves over state-only routing (H2−H1: −0.180 h; 80%/10%/10% win/tie/loss). DeepSets does **not** reliably improve over history alone (H4−H2: +0.074 h; 95% CI [−0.018, +0.165]; 20%/60%/20%). History-aware policies with fair local search improve on the tested classical greedy+LS baseline on n=10–40. Under the **corrected** literature-compatible objective (travel + nonlinear charging; service excluded), n=10 fair-LS gaps vs Froger et al. (*Transportation Science*, 2022; online Dec. 2021, Table 13) are on the order of ~5% for H2—not the obsolete ~43% figure obtained by wrongly comparing full duration to literature BKS. Post-Cycle-3 recovered hybrid search further improves n=40 means (H2 56.806 h, H4 56.370 h vs historical fair-LS 57.173 / 57.506 h; single seed; unequal search compute). Direct learned charging is unreliable (4/20 feasible). **Contribution:** an experimental evaluation of history-aware, fleet-aware neural hybrid routing with nonlinear charging—not a new state-of-the-art E-VRP solver. H2 is the strongest efficient neural variant on the matched Cycle-3 fair-LS protocol; H4 is the complete architecture without a consistent multi-seed DeepSets win.
 
 ---
 
@@ -28,7 +29,7 @@ We evaluate these questions with a *hybrid* pipeline: the neural policy proposes
 
 - A reproducible HAT-EVRP-NL architecture and H1–H4 ablations on Montoya E-VRP-NL.
 - Fair protocols separating equal constructions, best-of-N + identical one-shot local search, and corrected wall-clock comparisons.
-- Evidence that Transformer history helps; DeepSets does not consistently help; hybrid charging is necessary; large gaps vs. published BKS remain.
+- Evidence that Transformer history helps; DeepSets does not consistently help; hybrid charging is necessary; corrected lit BKS gaps are moderate (~5% on n=10 fair-LS), not the misaligned ~43% figure.
 
 ---
 
@@ -303,7 +304,7 @@ On this *static offline* benchmark with unlimited fleet and exact post-hoc charg
 
 Under fair LS, H2/H4 spend substantially more runtime and FRVCP calls than H0_strong for modest mean gains. Efficiency favors H2 over H4 when quality is comparable.
 
-![Learning curves](results/figures/fig_learning_curves_c3_seed42.png)
+![Learning curves](results/archive/figures_legacy/fig_learning_curves_c3_seed42.png)
 
 ---
 
@@ -321,9 +322,9 @@ Under fair LS, H2/H4 spend substantially more runtime and FRVCP calls than H0_st
 | H2 | 42.7% | **5.0%** |
 | H4 | 43.2% | **5.4%** |
 
-Sources: `FINAL_n10_bks_gaps.csv` (naive), `IMPROVEMENT_bks_gaps_corrected.csv`. Corrected gaps remain below specialized BKS but are far smaller than the earlier misaligned 43% figure. Optional post-freeze inference/search improvements (oracle-aware scoring, stronger LS) further reduce lit gaps; see `results/IMPROVEMENT_REPORT.md`.
+Sources: `results/raw/cycle3/FINAL_n10_bks_gaps.csv` (naive), `results/raw/cost_aware/IMPROVEMENT_bks_gaps_corrected.csv`. Corrected gaps remain below specialized BKS but are far smaller than the earlier misaligned 43% figure. Optional post-freeze inference/search improvements (oracle-aware scoring, stronger LS, recovered hybrid) further reduce objectives; see `results/archive/reports/IMPROVEMENT_REPORT.md` and `results/REGRESSION_RECOVERY_REPORT.md`.
 
-**Matched-λ caveat.** Comparing H2 at λ=2 with H4 at λ=4 confounds architecture with the inference weight. Under identical λ ∈ {0,2,4} and identical strong LS, layout-clustered H4−H2 intervals include zero; at λ=4, H2 achieves the best mean (19.335 h, ~0.60% lit gap). The 20 official n=10 instances comprise only five customer layouts. Details: `results/TARGETED_IMPROVEMENT_REPORT.md`.
+**Matched-λ caveat.** Comparing H2 at λ=2 with H4 at λ=4 confounds architecture with the inference weight. Under identical λ ∈ {0,2,4} and identical strong LS, layout-clustered H4−H2 intervals include zero; at λ=4, H2 achieves the best mean (19.335 h, ~0.60% lit gap). The 20 official n=10 instances comprise only five customer layouts. Details: `results/archive/reports/TARGETED_IMPROVEMENT_REPORT.md`.
 
 ---
 
@@ -337,7 +338,7 @@ A separate controller predicts GO vs CHARGE, station selection, and target SOC. 
 | `hybrid_H4` (`frvcpy`) | 20/20 |
 | `direct_plus_repair` (frvcpy repair) | 20/20 |
 
-Source: `direct_charge_size10_seed42_c3.csv`. Feasible-only objective averages for the 4/20 successes are **not** used as evidence of superiority (selection bias). Calling `frvcpy` after failure demonstrates repair, **not** successful learned charging.
+Source: `results/raw/misc/direct_charge_size10_seed42_c3.csv`. Feasible-only objective averages for the 4/20 successes are **not** used as evidence of superiority (selection bias). Calling `frvcpy` after failure demonstrates repair, **not** successful learned charging.
 
 ---
 
@@ -348,8 +349,9 @@ Source: `direct_charge_size10_seed42_c3.csv`. Feasible-only objective averages f
 - CPU-only experiments.
 - n=80 is a three-instance sample; 160/320 unevaluated.
 - Neural methods cost more FRVCP/runtime than H0_strong under fair LS.
-- Large BKS gaps (~43%).
-- No consistent DeepSets advantage; unreliable direct learned charging.
+- Corrected lit BKS gaps remain nonzero (~5% on n=10 fair-LS); the obsolete ~43% figure must not be cited.
+- No consistent multi-seed DeepSets advantage; unreliable direct learned charging.
+- Recovered n40 hybrid gains are single-seed and use unequal realized search compute.
 - Python-only validation (no external checker).
 
 **Possible future directions (not implemented here):** larger training; GPU; stronger classical/neural baselines; full large-instance evaluation; external checker cross-certification; alternative fleet coordination mechanisms.

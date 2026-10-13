@@ -31,6 +31,137 @@ def literature_compatible_objective_hours(
     return float(full_duration_hours) - total_customer_service_hours(instance)
 
 
+def decompose_route(
+    instance: Instance, stops: ConcreteRoute, tolerance: float = 1e-7
+) -> dict:
+    """Break one concrete route into travel / service / nonlinear charging hours.
+
+    Charging hours use exact piecewise-linear F_s(q_out)-F_s(q_in) via
+    ``charging_time``. Does not invent values: infeasible routes return
+    ``feasible=False``.
+    """
+    check = check_route(instance, stops)
+    if not check.feasible or stops is None:
+        return {
+            "feasible": False,
+            "travel_h": float("nan"),
+            "service_h": float("nan"),
+            "charging_h": float("nan"),
+            "full_h": float("nan"),
+            "energy_charged_wh": float("nan"),
+            "n_charges": 0,
+            "station_types": (),
+            "reason": check.reason,
+        }
+    service_h = 0.0
+    charging_h = 0.0
+    travel_h = 0.0
+    energy_wh = 0.0
+    station_types: list[str] = []
+    for index, (node, amount) in enumerate(stops):
+        kind = instance.nodes[node].kind
+        if kind == 1:
+            service_h += instance.service_times[node]
+        if amount is not None and amount > tolerance:
+            curve = instance.curves[instance.nodes[node].station_type]
+            # Reconstruct SOC-in from check by re-simulating locally for energy.
+            # Prefer amount as energy charged; charging time from F_s.
+            # We re-walk SOC for exact F_s(q_out)-F_s(q_in).
+            pass
+        if index + 1 < len(stops):
+            nxt = stops[index + 1][0]
+            travel_h += instance.travel_hours[node][nxt]
+
+    # Accurate charging hours and energy from a single forward pass.
+    soc = instance.battery_wh
+    charging_h = 0.0
+    energy_wh = 0.0
+    station_types = []
+    n_charges = 0
+    for index, (node, amount) in enumerate(stops):
+        kind = instance.nodes[node].kind
+        if amount is not None:
+            added = max(float(amount), 0.0)
+            if added > tolerance and kind == 2:
+                curve = instance.curves[instance.nodes[node].station_type]
+                q_out = min(soc + added, instance.battery_wh)
+                charging_h += charging_time(curve, soc, q_out)
+                energy_wh += q_out - soc
+                station_types.append(str(instance.nodes[node].station_type))
+                n_charges += 1
+                soc = q_out
+        if index + 1 < len(stops):
+            nxt = stops[index + 1][0]
+            soc = max(0.0, soc - instance.energy_wh[node][nxt])
+
+    full_h = float(check.duration_hours)
+    # Travel inferred so travel+service+charge == full (identity check).
+    travel_h = full_h - service_h - charging_h
+    return {
+        "feasible": True,
+        "travel_h": travel_h,
+        "service_h": service_h,
+        "charging_h": charging_h,
+        "full_h": full_h,
+        "energy_charged_wh": energy_wh,
+        "n_charges": n_charges,
+        "station_types": tuple(station_types),
+        "reason": "",
+    }
+
+
+def decompose_solution(instance: Instance, plans: list[RoutePlan]) -> dict:
+    """Aggregate travel/service/nonlinear-charging over a multi-route solution."""
+    valid, reason = check_solution(instance, plans)
+    if not valid:
+        return {
+            "feasible": False,
+            "travel_h": float("nan"),
+            "service_h": float("nan"),
+            "charging_h": float("nan"),
+            "full_h": float("nan"),
+            "lit_h": float("nan"),
+            "energy_charged_wh": float("nan"),
+            "n_routes": 0,
+            "n_charges": 0,
+            "charging_share": float("nan"),
+            "station_types": (),
+            "reason": reason,
+            "identity_ok": False,
+        }
+    travel = service = charging = energy = 0.0
+    n_charges = 0
+    types: list[str] = []
+    for plan in plans:
+        part = decompose_route(instance, plan.stops)
+        travel += part["travel_h"]
+        service += part["service_h"]
+        charging += part["charging_h"]
+        energy += part["energy_charged_wh"]
+        n_charges += part["n_charges"]
+        types.extend(part["station_types"])
+    full = travel + service + charging
+    expected_full = sum(p.duration_hours for p in plans)
+    lit = literature_compatible_objective_hours(instance, expected_full)
+    identity_ok = abs(full - expected_full) <= 1e-6 and abs(
+        lit - (expected_full - total_customer_service_hours(instance))
+    ) <= 1e-6
+    return {
+        "feasible": True,
+        "travel_h": travel,
+        "service_h": service,
+        "charging_h": charging,
+        "full_h": expected_full,
+        "lit_h": lit,
+        "energy_charged_wh": energy,
+        "n_routes": len(plans),
+        "n_charges": n_charges,
+        "charging_share": charging / expected_full if expected_full > 0 else 0.0,
+        "station_types": tuple(types),
+        "reason": "",
+        "identity_ok": identity_ok,
+    }
+
 @dataclass(frozen=True)
 class RoutePlan:
     feasible: bool

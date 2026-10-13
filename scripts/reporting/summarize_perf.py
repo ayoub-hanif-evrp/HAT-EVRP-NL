@@ -7,7 +7,24 @@ import statistics
 from collections import defaultdict
 from pathlib import Path
 
-RES = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[2]
+RES = ROOT / "results"
+RAW = RES / "raw"
+
+
+def _find(name: str) -> Path:
+    for base in (
+        RES,
+        RAW / "generator_research",
+        RAW / "misc",
+        RAW / "cycle3",
+        RAW / "neural_repair",
+    ):
+        cand = base / name
+        if cand.exists():
+            return cand
+    matches = list(RAW.rglob(name))
+    return matches[0] if matches else RES / name
 
 
 def mean(xs):
@@ -16,7 +33,7 @@ def mean(xs):
 
 
 def summarize_synth():
-    path = RES / "PERF_synth_validation.csv"
+    path = _find("PERF_synth_validation.csv")
     if not path.exists():
         return {}
     rows = list(csv.DictReader(path.open(encoding="utf-8")))
@@ -39,7 +56,7 @@ def summarize_synth():
 
 
 def summarize_search():
-    path = RES / "PERF_search_ablation.csv"
+    path = _find("PERF_search_ablation.csv")
     if not path.exists():
         return {}
     rows = list(csv.DictReader(path.open(encoding="utf-8")))
@@ -67,7 +84,7 @@ def summarize_search():
 
 
 def summarize_official(size=10):
-    path = RES / f"PERF_official_n{size}.csv"
+    path = _find(f"PERF_official_n{size}.csv")
     if not path.exists():
         return {}
     rows = list(csv.DictReader(path.open(encoding="utf-8")))

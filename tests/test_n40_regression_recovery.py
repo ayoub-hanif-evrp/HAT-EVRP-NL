@@ -9,9 +9,17 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 RES = ROOT / "results"
-HIST = RES / "compare_size40_from10_fairls_final_seed42_c3.csv"
-REPRO = RES / "RECOVERY_n40_repro_fairls.csv"
-PIPE = RES / "RECOVERY_n40_recovered_pipeline.csv"
+def _find(*parts: str) -> Path:
+    candidates = [RES.joinpath(*parts), RES / "raw" / "cycle3" / parts[-1], RES / "raw" / "regression_recovery" / parts[-1]]
+    for path in candidates:
+        if path.exists():
+            return path
+    return candidates[0]
+
+
+HIST = _find("compare_size40_from10_fairls_final_seed42_c3.csv")
+REPRO = _find("RECOVERY_n40_repro_fairls.csv")
+PIPE = _find("RECOVERY_n40_recovered_pipeline.csv")
 
 HIST_H2 = 57.17274009092578
 HIST_H4 = 57.50564156359235
