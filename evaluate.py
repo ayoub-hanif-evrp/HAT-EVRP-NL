@@ -276,10 +276,18 @@ def _refine_best_once(
     local_passes: int,
     local_budget: int,
     operators: str = "basic",
+    ruin_iterations: int = 0,
+    ruin_budget: int = 0,
+    ruin_seed: int = 0,
 ):
-    """Apply identical one-shot local search used by H0_strong after best-of-N."""
+    """Apply identical one-shot local search used by H0_strong after best-of-N.
+
+    Optional bounded ruin-and-repair is a *search* post-process (not architecture).
+    When enabled, it runs after LS under a separate oracle budget.
+    """
     from charging import FixedRouteOracle
     from solver import local_search
+    from solver_ls import ruin_and_repair
 
     oracle = FixedRouteOracle(instance)
     refined_routes, refined_plans, improvements, diagnostics = local_search(
@@ -290,6 +298,31 @@ def _refine_best_once(
         evaluation_budget=local_budget,
         operators=operators,
     )
+    if ruin_iterations > 0 and ruin_budget > 0:
+        ruin_oracle = FixedRouteOracle(instance)
+        refined_routes, refined_plans, ruin_improvements, ruin_diag = ruin_and_repair(
+            refined_routes,
+            refined_plans,
+            ruin_oracle,
+            instance,
+            max_iterations=ruin_iterations,
+            evaluation_budget=ruin_budget,
+            seed=ruin_seed,
+        )
+        improvements += ruin_improvements
+        # Merge search labels for CSV transparency.
+        diagnostics.schedule = f"{diagnostics.schedule}+ruin"
+        diagnostics.evaluations += ruin_diag.evaluations
+        diagnostics.improvements += ruin_diag.improvements
+        diagnostics.feasible_candidates += ruin_diag.feasible_candidates
+        diagnostics.provisional_updates += ruin_diag.provisional_updates
+        return (
+            refined_routes,
+            refined_plans,
+            improvements,
+            oracle.calls + ruin_oracle.calls,
+            diagnostics,
+        )
     return refined_routes, refined_plans, improvements, oracle.calls, diagnostics
 
 
@@ -467,6 +500,8 @@ def run_compare(
     methods: tuple[str, ...] = ("H1", "H2", "H3", "H4"),
     local_operators: str = "basic",
     route_lambda: float = 0.0,
+    ruin_iterations: int = 0,
+    ruin_budget: int = 0,
 ) -> None:
     """Evaluate H0-H4 with equal construction budgets and optional fair one-shot LS.
 
@@ -479,6 +514,9 @@ def run_compare(
 
     ``cost_lambda`` enables optional oracle-aware pointer scoring at inference
     (see ``train.decode``). Default 0 preserves Cycle-3 behavior.
+
+    ``ruin_iterations`` / ``ruin_budget`` enable optional bounded ruin-and-repair
+    after LS. This is a search improvement and must not be attributed to H2/H4.
     """
     import time
 
@@ -565,6 +603,9 @@ def run_compare(
                     refine_passes,
                     refine_budget,
                     operators=local_operators,
+                    ruin_iterations=ruin_iterations,
+                    ruin_budget=ruin_budget,
+                    ruin_seed=seed + 91,
                 )
                 refine_time = time.perf_counter() - refine_start
                 valid, reason = check_solution(instance, plans)
@@ -695,6 +736,9 @@ def run_compare(
     if not extra:
         if wallclock:
             extra = "wallclock_final"
+        elif fair_ls and ruin_iterations > 0:
+            # Explicit search label: ruin is not an architectural method.
+            extra = "fairls_ruin_search"
         elif fair_ls:
             extra = "fairls"
         elif neural_local_passes > 0:
@@ -998,6 +1042,18 @@ def main() -> None:
         default=0.0,
         help="Optional route-level cost-aware logit weight (0 = unchanged)",
     )
+    parser.add_argument(
+        "--ruin-iterations",
+        type=int,
+        default=0,
+        help="Bounded ruin-and-repair iterations after fair LS (0=off; search-only)",
+    )
+    parser.add_argument(
+        "--ruin-budget",
+        type=int,
+        default=0,
+        help="FRVCP evaluation budget for ruin-and-repair (search-only)",
+    )
     args = parser.parse_args()
 
     if args.mode == "inspect":
@@ -1037,6 +1093,8 @@ def main() -> None:
             tuple(method.strip() for method in args.methods.split(",") if method.strip()),
             args.local_operators,
             args.route_lambda,
+            args.ruin_iterations,
+            args.ruin_budget,
         )
     elif args.mode == "direct":
         run_direct_comparison(

@@ -6,6 +6,7 @@ import argparse
 import csv
 import copy
 from dataclasses import asdict
+import math
 from pathlib import Path
 import random
 import time
@@ -598,18 +599,47 @@ def expert_consistent_actions(
     return actions
 
 
+def _action_duration_delta(
+    oracle: FixedRouteOracle,
+    routes: list[dict],
+    live_index: dict[int, int],
+    kind: str,
+    expert_id: int,
+    customer: int | None,
+) -> float:
+    """Marginal full-route duration change for an expert-consistent action."""
+    if kind == "close":
+        return 0.0
+    assert customer is not None
+    if expert_id not in live_index:
+        plan = oracle.solve((customer,))
+        return plan.duration_hours if plan.feasible else float("inf")
+    active = live_index[expert_id]
+    prefix = routes[active]["customers"]
+    before = routes[active]["duration"]
+    plan = oracle.solve((*prefix, customer))
+    if not plan.feasible:
+        return float("inf")
+    return plan.duration_hours - before
+
+
 def teacher_loss(
     model: HATPolicy,
     instance: Instance,
     teacher_routes: tuple[tuple[int, ...], ...],
     rng: random.Random | None = None,
     multi_target: bool = False,
+    fleet_counterfactual: bool = False,
 ) -> tuple[torch.Tensor, int, dict]:
     """Imitation loss on an interleaved multi-open-route trajectory.
 
     multi_target=False: classic single-path cross-entropy (Cycle-3).
     multi_target=True: -log sum of hierarchical probs over all expert-consistent
     next actions, then advance along one randomly chosen consistent action.
+    fleet_counterfactual=True: when multiple open expert routes compete, rank
+    consistent actions by FRVCP duration delta and CE on the lowest-delta action
+    (plus a soft ranking term over route-choice probs). Creates a DeepSets-relevant
+    credit signal that plain BC lacks.
     """
     rng = rng or random.Random(0)
     oracle = FixedRouteOracle(instance)
@@ -623,6 +653,7 @@ def teacher_loss(
     competing_states = 0
     total_states = 0
     multi_valid_states = 0
+    fleet_cf_states = 0
 
     while any(remaining) or live_index:
         consistent = expert_consistent_actions(teacher_routes, remaining, live_index)
@@ -640,7 +671,13 @@ def teacher_loss(
         route_log_probs = F.log_softmax(route_scores, dim=0)
 
         joint_log_probs = []
+        action_deltas = []
         for kind, expert_id, customer in consistent:
+            action_deltas.append(
+                _action_duration_delta(
+                    oracle, routes, live_index, kind, expert_id, customer
+                )
+            )
             if kind == "extend":
                 assert customer is not None
                 if expert_id not in live_index:
@@ -705,9 +742,38 @@ def teacher_loss(
                 cust_log = F.log_softmax(masked, dim=0)
                 joint_log_probs.append(route_log_probs[route_pos] + cust_log[len(order)])
 
-        if multi_target:
+        use_fleet_cf = (
+            fleet_counterfactual
+            and len(open_indices) >= 2
+            and len(consistent) >= 2
+            and any(math.isfinite(d) for d in action_deltas)
+        )
+        if multi_target and not use_fleet_cf:
             losses.append(-torch.logsumexp(torch.stack(joint_log_probs), dim=0))
             kind, expert_id, customer = rng.choice(consistent)
+        elif use_fleet_cf:
+            fleet_cf_states += 1
+            finite = [
+                (i, d)
+                for i, d in enumerate(action_deltas)
+                if math.isfinite(d)
+            ]
+            finite.sort(key=lambda item: item[1])
+            best_i = finite[0][0]
+            # Hard CE on best duration-delta expert action.
+            losses.append(-joint_log_probs[best_i])
+            # Soft ranking: prefer lower-delta actions among consistent set.
+            if len(finite) >= 2:
+                rank_logits = torch.stack([joint_log_probs[i] for i, _ in finite])
+                # Target distribution: softmax(-delta / temperature).
+                temps = torch.tensor(
+                    [-d / 0.25 for _, d in finite],
+                    dtype=rank_logits.dtype,
+                    device=rank_logits.device,
+                )
+                target = F.softmax(temps, dim=0)
+                losses.append(-(target * F.log_softmax(rank_logits, dim=0)).sum())
+            kind, expert_id, customer = consistent[best_i]
         else:
             # Single-target: pick one consistent action and CE on that pair.
             kind, expert_id, customer = rng.choice(consistent)
@@ -745,6 +811,7 @@ def teacher_loss(
         "multi_open_frac": multi_open_states / max(1, total_states),
         "competing_frac": competing_states / max(1, total_states),
         "multi_valid_frac": multi_valid_states / max(1, total_states),
+        "fleet_cf_frac": fleet_cf_states / max(1, total_states),
         "total_states": total_states,
     }
     return torch.stack(losses).mean(), decisions, stats
@@ -1047,9 +1114,11 @@ def train_model(args: argparse.Namespace) -> None:
     teacher = getattr(args, "teacher", "basic")
     generator_version = getattr(args, "generator", "v2")
     multi_target = bool(getattr(args, "multi_target", False))
+    fleet_counterfactual = bool(getattr(args, "fleet_counterfactual", False))
     # New seed ranges avoid overlap with Cycle-3 (10k/20k) and prior experiments.
-    train_seed_start = 300000 + args.seed * 1000
-    val_seed_start = 400000 + args.seed * 1000
+    # v2b (Montoya-rebalanced) uses a fresh band to avoid reusing prior v2 instances.
+    train_seed_start = 700000 + args.seed * 1000
+    val_seed_start = 800000 + args.seed * 1000
     train_data = make_teacher_data(
         args.size,
         args.train_instances,
@@ -1080,6 +1149,7 @@ def train_model(args: argparse.Namespace) -> None:
             "teacher": teacher,
             "generator": generator_version,
             "multi_target": multi_target,
+            "fleet_counterfactual": fleet_counterfactual,
             "train_seed_start": train_seed_start,
         }
     )
@@ -1088,7 +1158,12 @@ def train_model(args: argparse.Namespace) -> None:
         instance, routes = train_data[(step - 1) % len(train_data)]
         optimizer.zero_grad()
         loss, decisions, stats = teacher_loss(
-            model, instance, routes, rng=train_rng, multi_target=multi_target
+            model,
+            instance,
+            routes,
+            rng=train_rng,
+            multi_target=multi_target,
+            fleet_counterfactual=fleet_counterfactual,
         )
         multi_open_sum += stats["multi_open_frac"]
         loss.backward()
@@ -1117,6 +1192,7 @@ def train_model(args: argparse.Namespace) -> None:
                 "decisions": decisions,
                 "multi_open_frac": multi_open_sum / step,
                 "competing_frac": stats["competing_frac"],
+                "fleet_cf_frac": stats.get("fleet_cf_frac", 0.0),
             }
             rows.append(row)
             print(row)
@@ -1195,6 +1271,7 @@ def train_model(args: argparse.Namespace) -> None:
             "teacher": teacher,
             "generator": generator_version,
             "multi_target": multi_target,
+            "fleet_counterfactual": fleet_counterfactual,
             "diagnostics": final_diag,
         },
         checkpoint,
@@ -1251,6 +1328,11 @@ def main() -> None:
         "--multi-target",
         action="store_true",
         help="Expert-consistent multi-action imitation loss",
+    )
+    parser.add_argument(
+        "--fleet-counterfactual",
+        action="store_true",
+        help="Duration-delta ranking loss when multiple open expert routes compete",
     )
     parser.add_argument("--results", type=Path, default=Path("results"))
     parser.add_argument("--checkpoints", type=Path, default=Path("checkpoints"))

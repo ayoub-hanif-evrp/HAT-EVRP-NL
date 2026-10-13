@@ -199,30 +199,54 @@ class SyntheticConfig:
     tech_pool: tuple[str, ...] = ("fast", "normal")
     cluster_sigma: float = 5.0
     n_clusters: int | None = None
+    station_count: int | None = None  # if set, overrides density rounding
+    depot_bias: str = "center"  # center | offset (farther mean depot–customer)
+
+
+def _station_count_from_density(size: int, density: float) -> int:
+    """Map density to station count without banker's-rounding collapse.
+
+    For n=10, densities in {0.10..0.25} all previously yielded 2 stations because
+    ``round(2.5)==2``. Use ceil so 0.25 → 3, matching Montoya's 2/3 split.
+    """
+    return max(2, math.ceil(size * density - 1e-12))
 
 
 def sample_synthetic_config(rng: random.Random) -> SyntheticConfig:
-    """Independently sample geometry, placement, density, and technologies."""
+    """Independently sample geometry, placement, density, and technologies.
+
+    Priors are rebalanced toward Montoya-like mass (fast+slow / normal+slow pairs,
+    ~50% three-station instances at n=10) while remaining factor-independent and
+    never copying official coordinates.
+    """
     geometry = rng.choice(("random", "clustered", "mixed"))
     station_placement = rng.choice(("uniform", "pmedian_region"))
-    density = rng.choice((0.10, 0.15, 0.20, 0.25))
-    tech_choices = (
-        ("fast",),
-        ("normal",),
-        ("slow",),
-        ("fast", "normal"),
-        ("fast", "slow"),
-        ("normal", "slow"),
-        ("fast", "normal", "slow"),
+    # Explicit station counts: equal weight on 2 vs 3 for typical n≈10 training.
+    station_count = rng.choice((2, 2, 3, 3, 4))
+    # Density kept for naming / scaling; count is authoritative when set.
+    density = station_count / 10.0
+    # Weighted tech pools: emphasize Montoya pairs; keep rare singles for coverage.
+    tech_weights = (
+        (("fast", "slow"), 4),
+        (("normal", "slow"), 2),
+        (("fast", "normal"), 1),
+        (("fast",), 1),
+        (("fast", "normal", "slow"), 1),
+        (("normal",), 0.5),
+        (("slow",), 0.5),
     )
-    tech_pool = tech_choices[rng.randrange(len(tech_choices))]
+    techs, weights = zip(*tech_weights)
+    tech_pool = rng.choices(techs, weights=weights, k=1)[0]
     cluster_sigma = rng.uniform(3.5, 8.0)
+    depot_bias = rng.choice(("center", "offset", "offset"))
     return SyntheticConfig(
         geometry=geometry,
         station_placement=station_placement,
         density=density,
         tech_pool=tech_pool,
         cluster_sigma=cluster_sigma,
+        station_count=station_count,
+        depot_bias=depot_bias,
     )
 
 
@@ -304,9 +328,11 @@ def generate_synthetic(
                 tech_pool=config.tech_pool,
                 cluster_sigma=config.cluster_sigma,
                 n_clusters=config.n_clusters,
+                station_count=config.station_count,
+                depot_bias=config.depot_bias,
             )
 
-    depot_xy = (rng.uniform(10, 110), rng.uniform(10, 110))
+    # Customers first so offset depots can sit away from the customer mass (tc1-like).
     geometry = config.geometry
     if geometry == "random":
         customer_xy = [(rng.uniform(0, 120), rng.uniform(0, 120)) for _ in range(size)]
@@ -324,7 +350,28 @@ def generate_synthetic(
             for k in range(size // 2):
                 customer_xy[k] = (rng.uniform(0, 120), rng.uniform(0, 120))
 
-    station_count = max(2, round(size * config.density))
+    cx = sum(x for x, _ in customer_xy) / len(customer_xy)
+    cy = sum(y for _, y in customer_xy) / len(customer_xy)
+    if config.depot_bias == "offset":
+        # Strong corner bias to raise mean depot–customer distance toward Montoya tc1.
+        corner = rng.choice(((2, 2), (2, 118), (118, 2), (118, 118)))
+        depot_xy = (
+            min(118, max(2, 0.15 * cx + 0.85 * corner[0] + rng.uniform(-5, 5))),
+            min(118, max(2, 0.15 * cy + 0.85 * corner[1] + rng.uniform(-5, 5))),
+        )
+    else:
+        depot_xy = (
+            min(110, max(10, cx + rng.uniform(-25, 25))),
+            min(110, max(10, cy + rng.uniform(-25, 25))),
+        )
+
+    if config.station_count is not None:
+        station_count = max(2, int(config.station_count))
+        # Scale with problem size when config was sampled at n≈10 units.
+        if size != 10:
+            station_count = max(2, round(station_count * size / 10))
+    else:
+        station_count = _station_count_from_density(size, config.density)
     demand = customer_xy + [depot_xy]
     if config.station_placement == "pmedian_region":
         station_xy = _region_pmedian_stations(station_count, rng, demand)

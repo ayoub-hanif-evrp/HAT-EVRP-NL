@@ -1,0 +1,20 @@
+{
+  "n": 200,
+  "station_count_hist": {
+    "3": 75,
+    "2": 91,
+    "4": 34
+  },
+  "frac_3plus_stations": 0.545,
+  "tech_hist": {
+    "fast+slow": 76,
+    "fast+normal+slow": 18,
+    "normal+slow": 46,
+    "slow": 13,
+    "fast": 19,
+    "normal": 9,
+    "fast+normal": 19
+  },
+  "mean_depot_customer_km": 65.79269700100059,
+  "has_3_stations": true
+}
