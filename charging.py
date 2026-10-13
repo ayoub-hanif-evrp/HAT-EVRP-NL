@@ -230,6 +230,9 @@ def check_route(
         if node < 0 or node >= len(instance.nodes):
             return fail(f"unknown node {node}")
         kind = instance.nodes[node].kind
+        # Depot may only appear at the endpoints (start/end).
+        if kind == 0 and index not in (0, len(stops) - 1):
+            return fail(f"interior depot visit at stop {index}")
         if kind == 1:
             seen.append(node)
             duration += instance.service_times[node]
@@ -263,6 +266,9 @@ def check_route(
         return fail(f"customer order {tuple(seen)} != expected {expected}")
     if len(seen) != len(set(seen)):
         return fail("customer repeated within route")
+    # Empty depot→depot with no customers is not a valid service route.
+    if not seen:
+        return fail("empty depot-to-depot route")
     if duration > instance.max_route_hours + tolerance:
         return fail(
             f"route duration {duration:.9f} exceeds {instance.max_route_hours:.9f}"

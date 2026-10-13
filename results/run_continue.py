@@ -199,15 +199,16 @@ def stage_official(size: int = 10, mode: str = "ls", samples: int = 8) -> list[d
                 inst = parse_instance(path_inst)
                 attempts = []
                 for i in range(samples):
+                    # Matched multi-start for ALL checkpoints (not only continued).
                     force = list(inst.customers)[i % len(inst.customers)]
                     attempts.append(
                         decode(
                             policy,
                             inst,
-                            sample=i > 0,
+                            sample=True,
                             seed=42 * 1000 + i,
                             cost_lambda=4.0,
-                            force_first_customer=force if "cont" in label else None,
+                            force_first_customer=force,
                         )
                     )
                 construct_t = sum(a["runtime"] for a in attempts)

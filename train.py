@@ -672,6 +672,7 @@ def teacher_loss(
 
         joint_log_probs = []
         action_deltas = []
+        state_competing = False
         for kind, expert_id, customer in consistent:
             action_deltas.append(
                 _action_duration_delta(
@@ -709,7 +710,7 @@ def teacher_loss(
                 if not is_new:
                     masks.append(True)
                 if sum(masks[: len(order)]) >= 2 and len(open_indices) >= 1:
-                    competing_states += 1
+                    state_competing = True
                 masked = customer_scores.masked_fill(
                     ~torch.tensor(masks, dtype=torch.bool, device=model.device),
                     float("-inf"),
@@ -741,6 +742,10 @@ def teacher_loss(
                 )
                 cust_log = F.log_softmax(masked, dim=0)
                 joint_log_probs.append(route_log_probs[route_pos] + cust_log[len(order)])
+
+        # Count each decision state at most once (never >1 competing_frac).
+        if state_competing or len(consistent) > 1:
+            competing_states += 1
 
         use_fleet_cf = (
             fleet_counterfactual
@@ -823,8 +828,16 @@ def _partial_after_destroy(
     plans: list,
     removed: set[int],
     oracle: FixedRouteOracle | None = None,
+    *,
+    keep_open: bool = True,
 ) -> tuple[list[dict], list] | None:
-    """Rebuild kept routes as closed states after removing customers."""
+    """Rebuild kept routes after removing customers for neural repair.
+
+    Surviving customer order is preserved. When ``keep_open`` is True (default),
+    routes stay eligible for extension so the policy can re-insert removed
+    customers into existing EV routes or open new ones. Charging is recomputed
+    via frvcpy for each surviving sequence.
+    """
     oracle = oracle or FixedRouteOracle(instance)
     kept_routes: list[dict] = []
     kept_plans: list = []
@@ -836,12 +849,34 @@ def _partial_after_destroy(
         if rebuilt is None or not rebuilt.feasible:
             return None
         state = route_state(instance, kept, rebuilt)
-        state["closed"] = True
+        # CRITICAL: leave open so decode() can extend existing routes.
+        state["closed"] = not keep_open
         kept_routes.append(state)
         kept_plans.append(rebuilt)
     if not kept_routes and removed != {c for r in routes for c in r}:
         return None
     return kept_routes, kept_plans
+
+
+def _accept_repaired(
+    instance: Instance,
+    repaired: dict,
+    best_obj: float,
+    fallback_routes: list[tuple[int, ...]],
+    fallback_plans: list,
+) -> tuple[list[tuple[int, ...]], list, float, bool]:
+    """Accept neural repair only if feasible, covering, and strictly better."""
+    if not repaired.get("feasible"):
+        return fallback_routes, fallback_plans, best_obj, False
+    cand_routes = [tuple(r) for r in repaired["routes"]]
+    cand_plans = list(repaired["plans"])
+    valid, _ = check_solution(instance, cand_plans)
+    if not valid:
+        return fallback_routes, fallback_plans, best_obj, False
+    obj = sum(p.duration_hours for p in cand_plans)
+    if obj < best_obj - 1e-10:
+        return cand_routes, cand_plans, obj, True
+    return fallback_routes, fallback_plans, best_obj, False
 
 
 def neural_lns(
@@ -854,34 +889,36 @@ def neural_lns(
     cost_lambda: float = 4.0,
     destroy_min: int = 2,
     destroy_max: int = 4,
+    seed_classical: bool = False,
 ) -> tuple[list[tuple[int, ...]], list, int, dict]:
-    """Ruin + neural-policy repair (search; not an architectural claim).
+    """Ruin + insertion-capable neural-policy repair (search-labeled).
 
-    Destroy customers with classical operators; repair by decoding the policy
-    only on removed customers while keeping surviving routes closed.
+    Surviving routes stay open so the hierarchical decoder may append removed
+    customers onto existing routes (preserving relative order) or open new
+    routes. Falls back to the incumbent if repair fails or worsens the objective.
     """
-    from solver_ls import ruin_and_repair
-
     rng = random.Random(seed)
     oracle = FixedRouteOracle(instance)
     best_routes = [tuple(r) for r in routes]
     best_plans = list(plans)
     best_obj = sum(p.duration_hours for p in best_plans)
     improvements = 0
-    # Seed with classical ruin once under small budget for diversity.
-    best_routes, best_plans, classical_imp, _ = ruin_and_repair(
-        best_routes,
-        best_plans,
-        oracle,
-        instance,
-        max_iterations=2,
-        evaluation_budget=200,
-        seed=seed,
-        destroy_min=destroy_min,
-        destroy_max=destroy_max,
-    )
-    improvements += classical_imp
-    best_obj = sum(p.duration_hours for p in best_plans)
+    if seed_classical:
+        from solver_ls import ruin_and_repair
+
+        best_routes, best_plans, classical_imp, _ = ruin_and_repair(
+            best_routes,
+            best_plans,
+            oracle,
+            instance,
+            max_iterations=2,
+            evaluation_budget=200,
+            seed=seed,
+            destroy_min=destroy_min,
+            destroy_max=destroy_max,
+        )
+        improvements += classical_imp
+        best_obj = sum(p.duration_hours for p in best_plans)
 
     for it in range(max_iterations):
         customers = [c for r in best_routes for c in r]
@@ -890,32 +927,25 @@ def neural_lns(
         k = min(len(customers), rng.randint(destroy_min, destroy_max))
         removed = set(rng.sample(customers, k))
         partial = _partial_after_destroy(
-            instance, best_routes, best_plans, removed, oracle
+            instance, best_routes, best_plans, removed, oracle, keep_open=True
         )
         if partial is None:
             continue
         kept_routes, _ = partial
+        assert all(not r["closed"] for r in kept_routes)
         repaired = decode(
             model,
             instance,
             sample=True,
             seed=seed + 17 + it,
             cost_lambda=cost_lambda,
-            initial_routes=kept_routes,
-            only_customers=removed,
+            initial_routes=copy.deepcopy(kept_routes),
+            only_customers=set(removed),
         )
-        if not repaired["feasible"]:
-            continue
-        cand_routes = list(repaired["routes"])
-        cand_plans = list(repaired["plans"])
-        valid, _ = check_solution(instance, cand_plans)
-        if not valid:
-            continue
-        obj = sum(p.duration_hours for p in cand_plans)
-        if obj < best_obj - 1e-10:
-            best_obj = obj
-            best_routes = [tuple(r) for r in cand_routes]
-            best_plans = cand_plans
+        best_routes, best_plans, best_obj, improved = _accept_repaired(
+            instance, repaired, best_obj, best_routes, best_plans
+        )
+        if improved:
             improvements += 1
     return (
         best_routes,
@@ -938,10 +968,10 @@ def hybrid_lns(
     classical_iterations: int = 6,
     classical_budget: int = 600,
 ) -> tuple[list[tuple[int, ...]], list, int, dict]:
-    """Classical ruin first, then neural repair attempts; keep best-so-far.
+    """Classical ruin first, then insertion-capable neural repair; keep best.
 
-    Guarantees quality ≥ pure classical ruin under the same classical budget
-    (search-labeled; not an architectural claim).
+    Search-labeled. Classical ruin establishes a floor under a matched budget;
+    neural attempts may only improve further via open-route reinsertion.
     """
     from solver_ls import ruin_and_repair
 
@@ -971,7 +1001,7 @@ def hybrid_lns(
         k = min(len(customers), rng.randint(destroy_min, destroy_max))
         removed = set(rng.sample(customers, k))
         partial = _partial_after_destroy(
-            instance, best_routes, best_plans, removed, oracle
+            instance, best_routes, best_plans, removed, oracle, keep_open=True
         )
         if partial is None:
             continue
@@ -982,21 +1012,13 @@ def hybrid_lns(
             sample=True,
             seed=seed + 31 + it,
             cost_lambda=cost_lambda,
-            initial_routes=kept_routes,
-            only_customers=removed,
+            initial_routes=copy.deepcopy(kept_routes),
+            only_customers=set(removed),
         )
-        if not repaired["feasible"]:
-            continue
-        cand_routes = list(repaired["routes"])
-        cand_plans = list(repaired["plans"])
-        valid, _ = check_solution(instance, cand_plans)
-        if not valid:
-            continue
-        obj = sum(p.duration_hours for p in cand_plans)
-        if obj < best_obj - 1e-10:
-            best_obj = obj
-            best_routes = [tuple(r) for r in cand_routes]
-            best_plans = cand_plans
+        best_routes, best_plans, best_obj, improved = _accept_repaired(
+            instance, repaired, best_obj, best_routes, best_plans
+        )
+        if improved:
             improvements += 1
             neural_imp += 1
     return (
@@ -1503,6 +1525,44 @@ def train_model(args: argparse.Namespace) -> None:
     best_state = copy.deepcopy(model.state_dict())
     multi_open_sum = 0.0
     train_rng = random.Random(args.seed + 17)
+    # Checkpoint selection uses the same cost weight as intended deployment.
+    val_cost_lambda = float(getattr(args, "cost_lambda", 0.0))
+
+    def _validation_metrics() -> dict:
+        model.eval()
+        with torch.no_grad():
+            decoded = [
+                decode(
+                    model,
+                    val_inst,
+                    sample=False,
+                    cost_lambda=val_cost_lambda,
+                )
+                for val_inst, _ in validation
+            ]
+            greedy_diag = [
+                decode(model, val_inst, sample=False, cost_lambda=0.0)
+                for val_inst, _ in validation
+            ]
+        feasible = [result for result in decoded if result["feasible"]]
+        mean_objective = (
+            sum(result["objective"] for result in feasible) / len(feasible)
+            if feasible
+            else float("nan")
+        )
+        greedy_feas = [result for result in greedy_diag if result["feasible"]]
+        greedy_obj = (
+            sum(result["objective"] for result in greedy_feas) / len(greedy_feas)
+            if greedy_feas
+            else float("nan")
+        )
+        return {
+            "feasible_rate": len(feasible) / len(decoded),
+            "validation_objective": mean_objective,
+            "entropy": sum(result["entropy"] for result in decoded) / len(decoded),
+            "greedy0_objective": greedy_obj,
+            "val_cost_lambda": val_cost_lambda,
+        }
 
     diag = diagnose_deepsets(model, train_data[0][0])
     print(
@@ -1514,6 +1574,7 @@ def train_model(args: argparse.Namespace) -> None:
             "fleet_counterfactual": fleet_counterfactual,
             "train_seed_start": train_seed_start,
             "init_checkpoint": str(init_ckpt) if init_ckpt else None,
+            "val_cost_lambda": val_cost_lambda,
         }
     )
 
@@ -1533,33 +1594,26 @@ def train_model(args: argparse.Namespace) -> None:
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         optimizer.step()
         if step == 1 or step % args.eval_every == 0 or step == args.steps:
-            model.eval()
-            with torch.no_grad():
-                decoded = [decode(model, val_inst) for val_inst, _ in validation]
-            feasible = [result for result in decoded if result["feasible"]]
-            mean_objective = (
-                sum(result["objective"] for result in feasible) / len(feasible)
-                if feasible
-                else float("nan")
-            )
+            metrics = _validation_metrics()
             row = {
                 "stage": "bc",
                 "step": step,
                 "loss": float(loss.detach()),
-                "feasible_rate": len(feasible) / len(decoded),
-                "validation_objective": mean_objective,
-                "entropy": sum(result["entropy"] for result in decoded)
-                / len(decoded),
+                "feasible_rate": metrics["feasible_rate"],
+                "validation_objective": metrics["validation_objective"],
+                "entropy": metrics["entropy"],
                 "elapsed_s": time.perf_counter() - start,
                 "device": str(device),
                 "decisions": decisions,
                 "multi_open_frac": multi_open_sum / step,
                 "competing_frac": stats["competing_frac"],
                 "fleet_cf_frac": stats.get("fleet_cf_frac", 0.0),
+                "greedy0_objective": metrics["greedy0_objective"],
+                "val_cost_lambda": metrics["val_cost_lambda"],
             }
             rows.append(row)
             print(row)
-            score = (row["feasible_rate"], -mean_objective)
+            score = (row["feasible_rate"], -row["validation_objective"])
             if score > best_score:
                 best_score = score
                 best_state = copy.deepcopy(model.state_dict())
@@ -1597,37 +1651,28 @@ def train_model(args: argparse.Namespace) -> None:
         if rl_step == args.rl_steps or (
             args.eval_every > 0 and rl_step % args.eval_every == 0
         ):
-            model.eval()
-            with torch.no_grad():
-                decoded = [
-                    decode(model, val_instance) for val_instance, _ in validation
-                ]
-            feasible = [result for result in decoded if result["feasible"]]
-            mean_objective = (
-                sum(result["objective"] for result in feasible) / len(feasible)
-                if feasible
-                else float("nan")
-            )
+            metrics = _validation_metrics()
             row = {
                 "stage": "rl_pomo" if pomo_k > 0 else "rl",
                 "step": rl_step,
                 "loss": float(rl_loss.detach())
                 if hasattr(rl_loss, "detach")
                 else float(rl_loss),
-                "feasible_rate": len(feasible) / len(decoded),
-                "validation_objective": mean_objective,
-                "entropy": sum(result["entropy"] for result in decoded)
-                / len(decoded),
+                "feasible_rate": metrics["feasible_rate"],
+                "validation_objective": metrics["validation_objective"],
+                "entropy": metrics["entropy"],
                 "elapsed_s": time.perf_counter() - start,
                 "device": str(device),
                 "decisions": sampled["decisions"],
                 "multi_open_frac": multi_open_sum / max(1, args.steps),
                 "competing_frac": "",
                 "fleet_cf_frac": "",
+                "greedy0_objective": metrics["greedy0_objective"],
+                "val_cost_lambda": metrics["val_cost_lambda"],
             }
             rows.append(row)
             print(row)
-            score = (row["feasible_rate"], -mean_objective)
+            score = (row["feasible_rate"], -row["validation_objective"])
             if score > best_score:
                 best_score = score
                 best_state = copy.deepcopy(model.state_dict())
@@ -1648,37 +1693,28 @@ def train_model(args: argparse.Namespace) -> None:
         if repair_step == repair_rl_steps or (
             args.eval_every > 0 and repair_step % args.eval_every == 0
         ):
-            model.eval()
-            with torch.no_grad():
-                decoded = [
-                    decode(model, val_instance) for val_instance, _ in validation
-                ]
-            feasible = [result for result in decoded if result["feasible"]]
-            mean_objective = (
-                sum(result["objective"] for result in feasible) / len(feasible)
-                if feasible
-                else float("nan")
-            )
+            metrics = _validation_metrics()
             row = {
                 "stage": "rl_repair",
                 "step": repair_step,
                 "loss": float(rl_loss.detach())
                 if hasattr(rl_loss, "detach")
                 else float(rl_loss),
-                "feasible_rate": len(feasible) / len(decoded),
-                "validation_objective": mean_objective,
-                "entropy": sum(result["entropy"] for result in decoded)
-                / len(decoded),
+                "feasible_rate": metrics["feasible_rate"],
+                "validation_objective": metrics["validation_objective"],
+                "entropy": metrics["entropy"],
                 "elapsed_s": time.perf_counter() - start,
                 "device": str(device),
                 "decisions": sampled.get("decisions", ""),
                 "multi_open_frac": multi_open_sum / max(1, args.steps),
                 "competing_frac": "",
                 "fleet_cf_frac": "",
+                "greedy0_objective": metrics["greedy0_objective"],
+                "val_cost_lambda": metrics["val_cost_lambda"],
             }
             rows.append(row)
             print(row)
-            score = (row["feasible_rate"], -mean_objective)
+            score = (row["feasible_rate"], -row["validation_objective"])
             if score > best_score:
                 best_score = score
                 best_state = copy.deepcopy(model.state_dict())
