@@ -1,0 +1,74 @@
+{
+  "n": 240,
+  "repro_ok": 240,
+  "repro_rate": 1.0,
+  "zero_detour_instances": 0,
+  "geometry": {
+    "random": 91,
+    "clustered": 75,
+    "mixed": 74
+  },
+  "placement": {
+    "uniform": 130,
+    "pmedian-region": 110
+  },
+  "density": {
+    "d15": 59,
+    "d20": 68,
+    "d10": 65,
+    "d25": 48
+  },
+  "tech": {
+    "fs": 31,
+    "fn": 33,
+    "n": 34,
+    "ns": 36,
+    "fns": 31,
+    "s": 41,
+    "f": 34
+  },
+  "geo_tech": {
+    "clustered|f": 12,
+    "clustered|fast": 4,
+    "clustered|fast+normal": 4,
+    "clustered|fast+normal+slow": 4,
+    "clustered|fn": 14,
+    "clustered|fns": 8,
+    "clustered|fs": 6,
+    "clustered|n": 9,
+    "clustered|ns": 11,
+    "clustered|s": 15,
+    "mixed|f": 14,
+    "mixed|fast": 4,
+    "mixed|fast+normal": 4,
+    "mixed|fast+normal+slow": 4,
+    "mixed|fn": 7,
+    "mixed|fns": 8,
+    "mixed|fs": 10,
+    "mixed|n": 11,
+    "mixed|ns": 12,
+    "mixed|s": 12,
+    "random|f": 8,
+    "random|fast": 4,
+    "random|fast+normal": 4,
+    "random|fast+normal+slow": 4,
+    "random|fn": 12,
+    "random|fns": 15,
+    "random|fs": 15,
+    "random|n": 14,
+    "random|ns": 13,
+    "random|s": 14
+  },
+  "place_dens": {
+    "pmedian-region|d10": 31,
+    "pmedian-region|d15": 23,
+    "pmedian-region|d20": 30,
+    "pmedian-region|d25": 26,
+    "uniform|d10": 34,
+    "uniform|d15": 36,
+    "uniform|d20": 38,
+    "uniform|d25": 22
+  },
+  "decouple_geo_tech": true,
+  "explicit_combo_ok": true
+}

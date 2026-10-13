@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import math
+import random
 
 from charging import FixedRouteOracle, RoutePlan
 
@@ -11,7 +13,8 @@ from charging import FixedRouteOracle, RoutePlan
 class OperatorStats:
     attempted: int = 0
     feasible: int = 0
-    accepted: int = 0
+    provisional_updates: int = 0  # better than current pass incumbent
+    accepted: int = 0  # applied moves (alias of improvements for operators)
     oracle_evals: int = 0
     improvement_h: float = 0.0
 
@@ -19,7 +22,9 @@ class OperatorStats:
 @dataclass
 class SearchDiagnostics:
     evaluations: int = 0
-    improvements: int = 0
+    feasible_candidates: int = 0
+    provisional_updates: int = 0
+    improvements: int = 0  # accepted moves actually applied
     operators: dict[str, OperatorStats] = field(default_factory=dict)
     budget: int = 0
     schedule: str = "sequential"
@@ -32,6 +37,8 @@ class SearchDiagnostics:
     def as_dict(self) -> dict:
         return {
             "evaluations": self.evaluations,
+            "feasible_candidates": self.feasible_candidates,
+            "provisional_updates": self.provisional_updates,
             "improvements": self.improvements,
             "budget": self.budget,
             "schedule": self.schedule,
@@ -39,6 +46,7 @@ class SearchDiagnostics:
                 name: {
                     "attempted": stats.attempted,
                     "feasible": stats.feasible,
+                    "provisional_updates": stats.provisional_updates,
                     "accepted": stats.accepted,
                     "oracle_evals": stats.oracle_evals,
                     "improvement_h": stats.improvement_h,
@@ -93,8 +101,10 @@ def local_search(
         stats.attempted += 1
         objective = sum(plan.duration_hours for plan in candidate_plans)
         stats.feasible += 1
+        diag.feasible_candidates += 1
         if objective < best_objective - tolerance:
-            stats.accepted += 1
+            stats.provisional_updates += 1
+            diag.provisional_updates += 1
             stats.improvement_h += current_objective - objective
             return objective, candidate_routes, candidate_plans
         return best_objective, best_routes, best_plans
@@ -410,5 +420,294 @@ def local_search(
         routes, plans = best_routes, best_plans
         improvements += 1
         diag.improvements += 1
+        # Credit the operator that produced the applied incumbent if unique.
+        for stats in diag.operators.values():
+            if stats.provisional_updates > stats.accepted:
+                stats.accepted += 1
+                break
         # Best-improvement: restart pass after one accepted move.
     return routes, plans, improvements, diag
+
+
+def _route_centroid(instance, route: tuple[int, ...]) -> tuple[float, float]:
+    if not route:
+        return instance.nodes[instance.depot].x, instance.nodes[instance.depot].y
+    xs = [instance.nodes[c].x for c in route]
+    ys = [instance.nodes[c].y for c in route]
+    return sum(xs) / len(xs), sum(ys) / len(ys)
+
+
+def ruin_and_repair(
+    routes: list[tuple[int, ...]],
+    plans: list[RoutePlan],
+    oracle: FixedRouteOracle,
+    instance,
+    max_iterations: int = 8,
+    evaluation_budget: int = 400,
+    seed: int = 0,
+    destroy_min: int = 2,
+    destroy_max: int = 4,
+) -> tuple[list[tuple[int, ...]], list[RoutePlan], int, SearchDiagnostics]:
+    """Bounded ruin-and-repair with charging-aware cheapest/regret repair.
+
+    Destroy operators (sampled): random customers, geographic cluster,
+    longest-route customers, or remove a short complete route.
+    Repair: cheapest feasible insertion then regret-2 fallback.
+    """
+    rng = random.Random(seed)
+    diag = SearchDiagnostics(budget=evaluation_budget, schedule="ruin_repair")
+    tolerance = 1e-10
+    best_routes = [tuple(r) for r in routes]
+    best_plans = list(plans)
+    best_obj = sum(p.duration_hours for p in best_plans)
+    improvements = 0
+
+    def remaining() -> int:
+        return evaluation_budget - diag.evaluations
+
+    def solve(name: str, customer_route: tuple[int, ...]) -> RoutePlan | None:
+        if remaining() <= 0:
+            return None
+        stats = diag.ensure(name)
+        plan = oracle.solve(customer_route)
+        diag.evaluations += 1
+        stats.oracle_evals += 1
+        return plan
+
+    def destroy(current_routes: list[tuple[int, ...]]) -> tuple[list[tuple[int, ...]], list[int]]:
+        customers = [c for r in current_routes for c in r]
+        if len(customers) < 2:
+            return current_routes, []
+        mode = rng.choice(("random", "geo", "long", "short_route"))
+        remove: set[int] = set()
+        k = min(len(customers), rng.randint(destroy_min, destroy_max))
+        if mode == "short_route" and len(current_routes) >= 2:
+            lengths = [(len(r), i) for i, r in enumerate(current_routes)]
+            lengths.sort()
+            victim = lengths[0][1]
+            remove = set(current_routes[victim])
+        elif mode == "long":
+            durations = []
+            for i, r in enumerate(current_routes):
+                # Prefer longer customer sequences as proxy for inefficiency.
+                durations.append((len(r), i))
+            durations.sort(reverse=True)
+            long_idx = durations[0][1]
+            pool = list(current_routes[long_idx])
+            rng.shuffle(pool)
+            remove = set(pool[:k])
+        elif mode == "geo":
+            seed_c = rng.choice(customers)
+            sx, sy = instance.nodes[seed_c].x, instance.nodes[seed_c].y
+            ranked = sorted(
+                customers,
+                key=lambda c: math.hypot(
+                    instance.nodes[c].x - sx, instance.nodes[c].y - sy
+                ),
+            )
+            remove = set(ranked[:k])
+        else:
+            remove = set(rng.sample(customers, k))
+
+        ruined = []
+        for route in current_routes:
+            kept = tuple(c for c in route if c not in remove)
+            if kept:
+                ruined.append(kept)
+        return ruined, sorted(remove)
+
+    def cheapest_insert(
+        name: str,
+        base_routes: list[tuple[int, ...]],
+        base_plans: list[RoutePlan],
+        customer: int,
+    ) -> tuple[list[tuple[int, ...]], list[RoutePlan], float] | None:
+        best = None
+        # Try existing routes.
+        for t, target in enumerate(base_routes):
+            for pos in range(len(target) + 1):
+                if remaining() < 1:
+                    return best
+                inserted = target[:pos] + (customer,) + target[pos:]
+                plan = solve(name, inserted)
+                if plan is None or not plan.feasible:
+                    continue
+                diag.feasible_candidates += 1
+                diag.ensure(name).feasible += 1
+                obj = (
+                    sum(p.duration_hours for i, p in enumerate(base_plans) if i != t)
+                    + plan.duration_hours
+                )
+                cand_routes = base_routes.copy()
+                cand_plans = base_plans.copy()
+                cand_routes[t] = inserted
+                cand_plans[t] = plan
+                if best is None or obj < best[2] - tolerance:
+                    best = (cand_routes, cand_plans, obj)
+        # New route.
+        if remaining() >= 1:
+            plan = solve(name, (customer,))
+            if plan is not None and plan.feasible:
+                diag.feasible_candidates += 1
+                diag.ensure(name).feasible += 1
+                cand_routes = base_routes + [(customer,)]
+                cand_plans = base_plans + [plan]
+                obj = sum(p.duration_hours for p in cand_plans)
+                if best is None or obj < best[2] - tolerance:
+                    best = (cand_routes, cand_plans, obj)
+        return best
+
+    def regret2_order(removed: list[int], base_routes, base_plans) -> list[int]:
+        """Order removed customers by insertion regret (approx, budget-light)."""
+        if len(removed) <= 1 or remaining() < 4:
+            return removed
+        scored = []
+        for customer in removed:
+            costs = []
+            for t, target in enumerate(base_routes):
+                for pos in (0, len(target) // 2, len(target)):
+                    if remaining() < 1:
+                        break
+                    inserted = target[:pos] + (customer,) + target[pos:]
+                    plan = solve("repair_regret", inserted)
+                    if plan is not None and plan.feasible:
+                        delta = plan.duration_hours - base_plans[t].duration_hours
+                        costs.append(delta)
+            if remaining() >= 1:
+                plan = solve("repair_regret", (customer,))
+                if plan is not None and plan.feasible:
+                    costs.append(plan.duration_hours)
+            costs.sort()
+            if len(costs) >= 2:
+                regret = costs[1] - costs[0]
+            elif costs:
+                regret = costs[0]
+            else:
+                regret = float("inf")
+            scored.append((regret, customer))
+        scored.sort(reverse=True)
+        return [c for _, c in scored]
+
+    current_routes = [tuple(r) for r in best_routes]
+    current_plans = list(best_plans)
+    for _it in range(max_iterations):
+        if remaining() <= 0:
+            break
+        ruined, removed = destroy(current_routes)
+        if not removed:
+            continue
+        # Re-optimize remaining routes after destroy.
+        rebuilt_routes: list[tuple[int, ...]] = []
+        rebuilt_plans: list[RoutePlan] = []
+        feasible_base = True
+        for route in ruined:
+            plan = solve("ruin", route)
+            if plan is None or not plan.feasible:
+                feasible_base = False
+                break
+            rebuilt_routes.append(route)
+            rebuilt_plans.append(plan)
+        if not feasible_base:
+            continue
+        order = regret2_order(removed, rebuilt_routes, rebuilt_plans)
+        repaired_routes = rebuilt_routes
+        repaired_plans = rebuilt_plans
+        ok = True
+        for customer in order:
+            diag.ensure("repair").attempted += 1
+            result = cheapest_insert(
+                "repair", repaired_routes, repaired_plans, customer
+            )
+            if result is None:
+                ok = False
+                break
+            repaired_routes, repaired_plans, _ = result
+        if not ok:
+            continue
+        # Exact coverage check.
+        covered = sorted(c for r in repaired_routes for c in r)
+        if covered != sorted(instance.customers):
+            continue
+        obj = sum(p.duration_hours for p in repaired_plans)
+        diag.ensure("repair").feasible += 1
+        if obj < best_obj - tolerance:
+            diag.provisional_updates += 1
+            diag.ensure("repair").provisional_updates += 1
+            best_obj = obj
+            best_routes = repaired_routes
+            best_plans = repaired_plans
+            current_routes = repaired_routes
+            current_plans = repaired_plans
+            improvements += 1
+            diag.improvements += 1
+            diag.ensure("repair").accepted += 1
+            diag.ensure("repair").improvement_h += (
+                sum(p.duration_hours for p in plans) - obj
+            )
+        else:
+            # Keep exploring from current (not only best) occasionally.
+            if rng.random() < 0.25:
+                current_routes = repaired_routes
+                current_plans = repaired_plans
+    return best_routes, best_plans, improvements, diag
+
+
+def assemble_route_pool(
+    candidate_solutions: list[tuple[list[tuple[int, ...]], list[RoutePlan]]],
+    oracle: FixedRouteOracle,
+    instance,
+    evaluation_budget: int = 200,
+) -> tuple[list[tuple[int, ...]], list[RoutePlan], int, SearchDiagnostics]:
+    """Greedy set-cover style assembly from unique feasible customer routes.
+
+    Method-specific pools should be labeled separately from portfolios.
+    """
+    diag = SearchDiagnostics(budget=evaluation_budget, schedule="route_pool")
+    # Best verified plan per customer sequence.
+    pool: dict[tuple[int, ...], RoutePlan] = {}
+    for routes, plans in candidate_solutions:
+        for route, plan in zip(routes, plans):
+            if not plan.feasible:
+                continue
+            key = tuple(route)
+            prev = pool.get(key)
+            if prev is None or plan.duration_hours < prev.duration_hours - 1e-12:
+                pool[key] = plan
+    if not pool:
+        return [], [], 0, diag
+
+    remaining_customers = set(instance.customers)
+    chosen_routes: list[tuple[int, ...]] = []
+    chosen_plans: list[RoutePlan] = []
+    improvements = 0
+    while remaining_customers:
+        best_key = None
+        best_score = float("inf")
+        for key, plan in pool.items():
+            if any(c not in remaining_customers for c in key):
+                continue
+            if not key:
+                continue
+            # Prefer routes covering more remaining customers per hour.
+            score = plan.duration_hours / len(key)
+            if score < best_score:
+                best_score = score
+                best_key = key
+        if best_key is None:
+            # Force singleton insertion for leftover customers.
+            customer = min(remaining_customers)
+            if diag.evaluations >= evaluation_budget:
+                break
+            plan = oracle.solve((customer,))
+            diag.evaluations += 1
+            if plan is None or not plan.feasible:
+                break
+            best_key = (customer,)
+            pool[best_key] = plan
+        chosen_routes.append(best_key)
+        chosen_plans.append(pool[best_key])
+        remaining_customers -= set(best_key)
+        improvements += 1
+    if remaining_customers:
+        return [], [], 0, diag
+    return chosen_routes, chosen_plans, improvements, diag

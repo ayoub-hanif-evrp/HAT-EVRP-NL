@@ -35,6 +35,7 @@ VARIANTS = {
     "H2": PolicyConfig(history=True, deepsets=False),
     "H3": PolicyConfig(history=False, deepsets=True),
     "H4": PolicyConfig(history=True, deepsets=True),
+    "H4_open": PolicyConfig(history=True, deepsets=True, deepsets_open_only=True),
 }
 
 
@@ -507,18 +508,34 @@ def route_state(instance: Instance, customers: tuple[int, ...], plan: RoutePlan)
 
 
 def make_teacher_data(
-    size: int, count: int, seed_start: int
+    size: int,
+    count: int,
+    seed_start: int,
+    teacher: str = "basic",
+    generator_version: str = "v2",
 ) -> list[tuple[Instance, tuple[tuple[int, ...], ...]]]:
+    """Build imitation teachers on synthetic instances.
+
+    teacher='basic': Cycle-3 style (3 restarts, 1 basic LS pass, budget 800).
+    teacher='strong': more diverse restarts + strong LS (exact FRVCP).
+    """
     data = []
     candidate_seed = seed_start
-    while len(data) < count and candidate_seed < seed_start + count * 40:
-        instance = generate_synthetic(size, candidate_seed)
+    if teacher == "strong":
+        restarts, passes, budget, operators = 8, 3, 2500, "strong"
+    else:
+        restarts, passes, budget, operators = 3, 1, 800, "basic"
+    while len(data) < count and candidate_seed < seed_start + count * 60:
+        instance = generate_synthetic(
+            size, candidate_seed, generator_version=generator_version
+        )
         result = randomized_greedy(
             instance,
-            restarts=3,
+            restarts=restarts,
             seed=candidate_seed,
-            local_search_passes=1,
-            local_search_budget=800,
+            local_search_passes=passes,
+            local_search_budget=budget,
+            local_operators=operators,
         )
         if result.feasible and len(result.customer_routes) >= 1:
             data.append((instance, result.customer_routes))
@@ -535,18 +552,15 @@ def interleaved_actions(
 ) -> list[tuple[str, int | None, int | None]]:
     """Build a valid interleaved construction: preserve per-route order.
 
-    Actions are ('extend', route_id, customer), ('close', route_id, None),
-    or starting a route is implied by the first extend of an unstarted route.
-    Multiple routes stay open while they still have remaining customers.
+    Actions are ('extend', route_id, customer), ('close', route_id, None).
+    Starting a route is the first extend of an unstarted expert route.
     """
     remaining = [list(route) for route in teacher_routes]
     started = [False] * len(teacher_routes)
-    open_ids = set()
+    open_ids: set[int] = set()
     actions: list[tuple[str, int | None, int | None]] = []
     while any(remaining[i] for i in range(len(remaining))) or open_ids:
-        extendable = [
-            i for i in range(len(remaining)) if remaining[i] and (started[i] or True)
-        ]
+        extendable = [i for i in range(len(remaining)) if remaining[i]]
         closable = [i for i in open_ids if not remaining[i]]
         choices: list[tuple[str, int]] = []
         for route_id in extendable:
@@ -569,134 +583,168 @@ def interleaved_actions(
     return actions
 
 
+def expert_consistent_actions(
+    teacher_routes: tuple[tuple[int, ...], ...],
+    remaining: list[list[int]],
+    live_index: dict[int, int],
+) -> list[tuple[str, int, int | None]]:
+    """All expert-consistent next actions at the current imitation state."""
+    actions: list[tuple[str, int, int | None]] = []
+    for expert_id, rem in enumerate(remaining):
+        if rem:
+            actions.append(("extend", expert_id, rem[0]))
+        elif expert_id in live_index:
+            actions.append(("close", expert_id, None))
+    return actions
+
+
 def teacher_loss(
     model: HATPolicy,
     instance: Instance,
     teacher_routes: tuple[tuple[int, ...], ...],
     rng: random.Random | None = None,
+    multi_target: bool = False,
 ) -> tuple[torch.Tensor, int, dict]:
-    """Imitation loss on an interleaved multi-open-route trajectory."""
+    """Imitation loss on an interleaved multi-open-route trajectory.
+
+    multi_target=False: classic single-path cross-entropy (Cycle-3).
+    multi_target=True: -log sum of hierarchical probs over all expert-consistent
+    next actions, then advance along one randomly chosen consistent action.
+    """
     rng = rng or random.Random(0)
     oracle = FixedRouteOracle(instance)
     routes: list[dict] = []
-    # Map expert route id -> live route index once started.
     live_index: dict[int, int] = {}
+    remaining = [list(route) for route in teacher_routes]
     unserved = set(instance.customers)
     losses = []
     decisions = 0
     multi_open_states = 0
     competing_states = 0
     total_states = 0
+    multi_valid_states = 0
 
-    for kind, expert_id, customer in interleaved_actions(teacher_routes, rng):
+    while any(remaining) or live_index:
+        consistent = expert_consistent_actions(teacher_routes, remaining, live_index)
+        if not consistent:
+            break
         nodes, route_vectors, open_indices, context = model.encode_state(
             instance, routes, unserved
         )
         total_states += 1
         if len(open_indices) >= 2:
             multi_open_states += 1
+        if len(consistent) > 1:
+            multi_valid_states += 1
         route_scores = model.route_logits(route_vectors, open_indices, context)
+        route_log_probs = F.log_softmax(route_scores, dim=0)
 
-        if kind == "extend":
-            assert expert_id is not None and customer is not None
-            if expert_id not in live_index:
-                route_target = len(open_indices)  # NEW_ROUTE
-                selected_vector = None
-                last_node = instance.depot
-                prefix: tuple[int, ...] = ()
-                is_new = True
+        joint_log_probs = []
+        for kind, expert_id, customer in consistent:
+            if kind == "extend":
+                assert customer is not None
+                if expert_id not in live_index:
+                    route_pos = len(open_indices)
+                    selected_vector = None
+                    last_node = instance.depot
+                    prefix: tuple[int, ...] = ()
+                    is_new = True
+                else:
+                    active_index = live_index[expert_id]
+                    route_pos = open_indices.index(active_index)
+                    selected_vector = route_vectors[active_index]
+                    prefix = routes[active_index]["customers"]
+                    last_node = prefix[-1]
+                    is_new = False
+                order = sorted(unserved)
+                customer_scores = model.customer_logits(
+                    instance,
+                    nodes,
+                    selected_vector,
+                    last_node,
+                    context,
+                    order,
+                    allow_close=not is_new,
+                )
+                masks = [
+                    oracle.solve((*prefix, candidate)).feasible for candidate in order
+                ]
+                if not is_new:
+                    masks.append(True)
+                if sum(masks[: len(order)]) >= 2 and len(open_indices) >= 1:
+                    competing_states += 1
+                masked = customer_scores.masked_fill(
+                    ~torch.tensor(masks, dtype=torch.bool, device=model.device),
+                    float("-inf"),
+                )
+                cust_log = F.log_softmax(masked, dim=0)
+                cust_pos = order.index(customer)
+                joint_log_probs.append(route_log_probs[route_pos] + cust_log[cust_pos])
             else:
                 active_index = live_index[expert_id]
-                route_target = open_indices.index(active_index)
-                selected_vector = route_vectors[active_index]
+                route_pos = open_indices.index(active_index)
+                order = sorted(unserved)
                 prefix = routes[active_index]["customers"]
-                last_node = prefix[-1]
-                is_new = False
-            losses.append(
-                F.cross_entropy(
-                    route_scores.unsqueeze(0),
-                    torch.tensor([route_target], device=model.device),
+                customer_scores = model.customer_logits(
+                    instance,
+                    nodes,
+                    route_vectors[active_index],
+                    prefix[-1] if prefix else instance.depot,
+                    context,
+                    order,
+                    allow_close=True,
                 )
-            )
-            order = sorted(unserved)
-            customer_scores = model.customer_logits(
-                instance,
-                nodes,
-                selected_vector,
-                last_node,
-                context,
-                order,
-                allow_close=not is_new,
-            )
-            masks = [
-                oracle.solve((*prefix, candidate)).feasible for candidate in order
-            ]
-            if not is_new:
+                masks = [
+                    oracle.solve((*prefix, candidate)).feasible for candidate in order
+                ]
                 masks.append(True)
-            if sum(masks[: len(order)]) >= 2 and len(open_indices) >= 1:
-                competing_states += 1
-            masked_scores = customer_scores.masked_fill(
-                ~torch.tensor(masks, dtype=torch.bool, device=model.device),
-                float("-inf"),
-            )
-            customer_target = order.index(customer)
-            losses.append(
-                F.cross_entropy(
-                    masked_scores.unsqueeze(0),
-                    torch.tensor([customer_target], device=model.device),
+                masked = customer_scores.masked_fill(
+                    ~torch.tensor(masks, dtype=torch.bool, device=model.device),
+                    float("-inf"),
                 )
-            )
-            plan = oracle.solve((*prefix, customer))
-            if is_new:
+                cust_log = F.log_softmax(masked, dim=0)
+                joint_log_probs.append(route_log_probs[route_pos] + cust_log[len(order)])
+
+        if multi_target:
+            losses.append(-torch.logsumexp(torch.stack(joint_log_probs), dim=0))
+            kind, expert_id, customer = rng.choice(consistent)
+        else:
+            # Single-target: pick one consistent action and CE on that pair.
+            kind, expert_id, customer = rng.choice(consistent)
+            chosen = None
+            for index, action in enumerate(consistent):
+                if action == (kind, expert_id, customer):
+                    chosen = joint_log_probs[index]
+                    break
+            assert chosen is not None
+            losses.append(-chosen)
+
+        # Advance environment along the selected expert-consistent action.
+        if kind == "extend":
+            assert customer is not None
+            if expert_id not in live_index:
+                prefix = ()
+                plan = oracle.solve((customer,))
                 routes.append(route_state(instance, (customer,), plan))
                 live_index[expert_id] = len(routes) - 1
             else:
-                routes[live_index[expert_id]] = route_state(
+                active_index = live_index[expert_id]
+                prefix = routes[active_index]["customers"]
+                plan = oracle.solve((*prefix, customer))
+                routes[active_index] = route_state(
                     instance, (*prefix, customer), plan
                 )
+            remaining[expert_id].pop(0)
             unserved.remove(customer)
-            decisions += 1
-            continue
-
-        # CLOSE an expert route that has no remaining customers.
-        assert expert_id is not None
-        active_index = live_index[expert_id]
-        route_target = open_indices.index(active_index)
-        losses.append(
-            F.cross_entropy(
-                route_scores.unsqueeze(0),
-                torch.tensor([route_target], device=model.device),
-            )
-        )
-        order = sorted(unserved)
-        prefix = routes[active_index]["customers"]
-        customer_scores = model.customer_logits(
-            instance,
-            nodes,
-            route_vectors[active_index],
-            prefix[-1] if prefix else instance.depot,
-            context,
-            order,
-            allow_close=True,
-        )
-        masks = [oracle.solve((*prefix, candidate)).feasible for candidate in order]
-        masks.append(True)
-        masked_scores = customer_scores.masked_fill(
-            ~torch.tensor(masks, dtype=torch.bool, device=model.device),
-            float("-inf"),
-        )
-        losses.append(
-            F.cross_entropy(
-                masked_scores.unsqueeze(0),
-                torch.tensor([len(order)], device=model.device),
-            )
-        )
-        routes[active_index]["closed"] = True
+        else:
+            routes[live_index[expert_id]]["closed"] = True
+            del live_index[expert_id]
         decisions += 1
 
     stats = {
         "multi_open_frac": multi_open_states / max(1, total_states),
         "competing_frac": competing_states / max(1, total_states),
+        "multi_valid_frac": multi_valid_states / max(1, total_states),
         "total_states": total_states,
     }
     return torch.stack(losses).mean(), decisions, stats
@@ -759,6 +807,8 @@ def decode(
     route_lambda: float = 0.0,
     local_operators: str = "basic",
     route_cost_top_k: int = 3,
+    ruin_iterations: int = 0,
+    ruin_budget: int = 0,
 ) -> dict:
     """Greedy/sampled hierarchical decode with optional oracle-aware scoring.
 
@@ -932,6 +982,7 @@ def decode(
     plans = [route["plan"] for route in routes]
     improvements = 0
     search_diag = None
+    ruin_diag = None
     if local_passes > 0 and local_budget > 0 and not unserved:
         customer_routes, plans, improvements, search_diag = local_search(
             customer_routes,
@@ -941,6 +992,19 @@ def decode(
             local_budget,
             operators=local_operators,
         )
+    if ruin_iterations > 0 and ruin_budget > 0 and not unserved and plans:
+        from solver_ls import ruin_and_repair
+
+        customer_routes, plans, ruin_improvements, ruin_diag = ruin_and_repair(
+            customer_routes,
+            plans,
+            oracle,
+            instance,
+            max_iterations=ruin_iterations,
+            evaluation_budget=ruin_budget,
+            seed=seed + 91,
+        )
+        improvements += ruin_improvements
     valid, validation_reason = check_solution(instance, plans) if not unserved else (
         False,
         f"{len(unserved)} customers unserved",
@@ -971,6 +1035,7 @@ def decode(
         "cost_lambda": float(cost_lambda),
         "route_lambda": float(route_lambda),
         "search_diagnostics": None if search_diag is None else search_diag.as_dict(),
+        "ruin_diagnostics": None if ruin_diag is None else ruin_diag.as_dict(),
     }
 
 
@@ -979,11 +1044,25 @@ def train_model(args: argparse.Namespace) -> None:
     torch.manual_seed(args.seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     version = getattr(args, "version", "c2")
+    teacher = getattr(args, "teacher", "basic")
+    generator_version = getattr(args, "generator", "v2")
+    multi_target = bool(getattr(args, "multi_target", False))
+    # New seed ranges avoid overlap with Cycle-3 (10k/20k) and prior experiments.
+    train_seed_start = 300000 + args.seed * 1000
+    val_seed_start = 400000 + args.seed * 1000
     train_data = make_teacher_data(
-        args.size, args.train_instances, 10000 + args.seed * 100
+        args.size,
+        args.train_instances,
+        train_seed_start,
+        teacher=teacher,
+        generator_version=generator_version,
     )
     validation = make_teacher_data(
-        args.size, args.val_instances, 20000 + args.seed * 100
+        args.size,
+        args.val_instances,
+        val_seed_start,
+        teacher=teacher,
+        generator_version=generator_version,
     )
     model = HATPolicy(VARIANTS[args.model]).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
@@ -995,13 +1074,21 @@ def train_model(args: argparse.Namespace) -> None:
     train_rng = random.Random(args.seed + 17)
 
     diag = diagnose_deepsets(model, train_data[0][0])
-    print({"diagnostics": diag})
+    print(
+        {
+            "diagnostics": diag,
+            "teacher": teacher,
+            "generator": generator_version,
+            "multi_target": multi_target,
+            "train_seed_start": train_seed_start,
+        }
+    )
 
     for step in range(1, args.steps + 1):
         instance, routes = train_data[(step - 1) % len(train_data)]
         optimizer.zero_grad()
         loss, decisions, stats = teacher_loss(
-            model, instance, routes, rng=train_rng
+            model, instance, routes, rng=train_rng, multi_target=multi_target
         )
         multi_open_sum += stats["multi_open_frac"]
         loss.backward()
@@ -1105,6 +1192,9 @@ def train_model(args: argparse.Namespace) -> None:
             "size": args.size,
             "seed": args.seed,
             "version": version,
+            "teacher": teacher,
+            "generator": generator_version,
+            "multi_target": multi_target,
             "diagnostics": final_diag,
         },
         checkpoint,
@@ -1155,6 +1245,13 @@ def main() -> None:
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--version", type=str, default="c3")
+    parser.add_argument("--teacher", choices=("basic", "strong"), default="basic")
+    parser.add_argument("--generator", choices=("v1", "v2"), default="v2")
+    parser.add_argument(
+        "--multi-target",
+        action="store_true",
+        help="Expert-consistent multi-action imitation loss",
+    )
     parser.add_argument("--results", type=Path, default=Path("results"))
     parser.add_argument("--checkpoints", type=Path, default=Path("checkpoints"))
     args = parser.parse_args()

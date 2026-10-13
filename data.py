@@ -189,12 +189,215 @@ def _pmedian_stations(
     return selected
 
 
-def generate_synthetic(size: int, seed: int, distribution: str | None = None) -> Instance:
-    """Generate an independent Montoya-like instance for policy training."""
+@dataclass(frozen=True)
+class SyntheticConfig:
+    """Independently controllable synthetic instance factors (v2 generator)."""
+
+    geometry: str = "random"  # random | clustered | mixed
+    station_placement: str = "uniform"  # uniform | pmedian_region
+    density: float = 0.15
+    tech_pool: tuple[str, ...] = ("fast", "normal")
+    cluster_sigma: float = 5.0
+    n_clusters: int | None = None
+
+
+def sample_synthetic_config(rng: random.Random) -> SyntheticConfig:
+    """Independently sample geometry, placement, density, and technologies."""
+    geometry = rng.choice(("random", "clustered", "mixed"))
+    station_placement = rng.choice(("uniform", "pmedian_region"))
+    density = rng.choice((0.10, 0.15, 0.20, 0.25))
+    tech_choices = (
+        ("fast",),
+        ("normal",),
+        ("slow",),
+        ("fast", "normal"),
+        ("fast", "slow"),
+        ("normal", "slow"),
+        ("fast", "normal", "slow"),
+    )
+    tech_pool = tech_choices[rng.randrange(len(tech_choices))]
+    cluster_sigma = rng.uniform(3.5, 8.0)
+    return SyntheticConfig(
+        geometry=geometry,
+        station_placement=station_placement,
+        density=density,
+        tech_pool=tech_pool,
+        cluster_sigma=cluster_sigma,
+    )
+
+
+def _region_pmedian_stations(
+    count: int, rng: random.Random, demand: list[tuple[float, float]]
+) -> list[tuple[float, float]]:
+    """P-median on independently sampled region candidates (not customer copies)."""
+    candidate_count = max(count * 8, 24)
+    candidates = [
+        (rng.uniform(2, 118), rng.uniform(2, 118)) for _ in range(candidate_count)
+    ]
+    # Reject near-duplicates.
+    filtered: list[tuple[float, float]] = []
+    for xy in candidates:
+        if all(math.hypot(xy[0] - fx, xy[1] - fy) > 1.5 for fx, fy in filtered):
+            filtered.append(xy)
+    if len(filtered) < count:
+        filtered.extend(
+            (rng.uniform(2, 118), rng.uniform(2, 118))
+            for _ in range(count - len(filtered))
+        )
+    return _pmedian_from_candidates(filtered, demand, count, rng)
+
+
+def _pmedian_from_candidates(
+    candidates: list[tuple[float, float]],
+    demand: list[tuple[float, float]],
+    count: int,
+    rng: random.Random,
+) -> list[tuple[float, float]]:
+    selected: list[tuple[float, float]] = []
+    remaining = list(candidates)
+    rng.shuffle(remaining)
+    for _ in range(min(count, len(remaining))):
+        best = None
+        best_cost = float("inf")
+        for candidate in remaining:
+            trial = selected + [candidate]
+            cost = 0.0
+            for px, py in demand:
+                cost += min(math.hypot(px - sx, py - sy) for sx, sy in trial)
+            if cost < best_cost:
+                best_cost = cost
+                best = candidate
+        if best is None:
+            break
+        selected.append(best)
+        remaining = [xy for xy in remaining if xy != best]
+    while len(selected) < count:
+        selected.append((rng.uniform(5, 115), rng.uniform(5, 115)))
+    return selected
+
+
+def generate_synthetic(
+    size: int,
+    seed: int,
+    distribution: str | None = None,
+    config: SyntheticConfig | None = None,
+    generator_version: str = "v2",
+) -> Instance:
+    """Generate an independent Montoya-like instance for policy training.
+
+    ``generator_version='v2'`` (default): geometry, station placement, density,
+    and charging technologies are sampled independently via the RNG.
+    ``generator_version='v1'`` restores the legacy seed-% coupled generator for
+    ablation comparisons.
+    """
     rng = random.Random(seed)
+    if generator_version == "v1":
+        return _generate_synthetic_v1(size, seed, distribution, rng)
+
+    if config is None:
+        config = sample_synthetic_config(rng)
+        if distribution is not None:
+            config = SyntheticConfig(
+                geometry=distribution,
+                station_placement=config.station_placement,
+                density=config.density,
+                tech_pool=config.tech_pool,
+                cluster_sigma=config.cluster_sigma,
+                n_clusters=config.n_clusters,
+            )
+
+    depot_xy = (rng.uniform(10, 110), rng.uniform(10, 110))
+    geometry = config.geometry
+    if geometry == "random":
+        customer_xy = [(rng.uniform(0, 120), rng.uniform(0, 120)) for _ in range(size)]
+    else:
+        n_clusters = config.n_clusters or max(2, round(math.sqrt(size) / 1.5))
+        centers = [(rng.uniform(8, 112), rng.uniform(8, 112)) for _ in range(n_clusters)]
+        customer_xy = [
+            (
+                min(120, max(0, centers[k % n_clusters][0] + rng.gauss(0, config.cluster_sigma))),
+                min(120, max(0, centers[k % n_clusters][1] + rng.gauss(0, config.cluster_sigma))),
+            )
+            for k in range(size)
+        ]
+        if geometry == "mixed":
+            for k in range(size // 2):
+                customer_xy[k] = (rng.uniform(0, 120), rng.uniform(0, 120))
+
+    station_count = max(2, round(size * config.density))
+    demand = customer_xy + [depot_xy]
+    if config.station_placement == "pmedian_region":
+        station_xy = _region_pmedian_stations(station_count, rng, demand)
+    else:
+        station_xy = []
+        attempts = 0
+        while len(station_xy) < station_count and attempts < station_count * 40:
+            xy = (rng.uniform(2, 118), rng.uniform(2, 118))
+            attempts += 1
+            if all(math.hypot(xy[0] - sx, xy[1] - sy) > 1.0 for sx, sy in station_xy):
+                station_xy.append(xy)
+        while len(station_xy) < station_count:
+            station_xy.append((rng.uniform(5, 115), rng.uniform(5, 115)))
+
+    tech_pool = config.tech_pool
+    curve_times = {
+        "fast": (0.0, 0.31, 0.39, 0.51),
+        "normal": (0.0, 0.62, 0.77, 1.01),
+        "slow": (0.0, 1.26, 1.54, 2.04),
+    }
+    curves = {
+        technology: ChargingCurve(
+            technology, curve_times[technology], (0.0, 13600.0, 15200.0, 16000.0)
+        )
+        for technology in tech_pool
+    }
+
+    # Independent per-station technology assignment (not a fixed cycle only).
+    tech_assignment = [rng.choice(tech_pool) for _ in range(station_count)]
+
+    nodes = [Node(0, 0, *depot_xy)]
+    nodes.extend(Node(k + 1, 1, *xy) for k, xy in enumerate(customer_xy))
+    for k, xy in enumerate(station_xy):
+        nodes.append(Node(size + 1 + k, 2, *xy, station_type=tech_assignment[k]))
+    node_tuple = tuple(nodes)
+    service = tuple(0.5 if node.kind == 1 else 0.0 for node in node_tuple)
+    distances = tuple(
+        tuple(math.hypot(a.x - b.x, a.y - b.y) for b in node_tuple)
+        for a in node_tuple
+    )
+    travel = tuple(tuple(distance / 40.0 for distance in row) for row in distances)
+    energy = tuple(tuple(distance * 125.0 for distance in row) for row in distances)
+    tech_tag = "".join(t[0] for t in tech_pool)
+    place_tag = config.station_placement.replace("_", "-")
+    return Instance(
+        name=(
+            f"syn_v2_{geometry}_n{size}_{place_tag}"
+            f"_d{int(config.density*100)}_{tech_tag}_s{seed}"
+        ),
+        path=Path("<synthetic>"),
+        nodes=node_tuple,
+        depot=0,
+        customers=tuple(range(1, size + 1)),
+        stations=tuple(range(size + 1, len(node_tuple))),
+        service_times=service,
+        speed_kmph=40.0,
+        consumption_wh_per_km=125.0,
+        battery_wh=16000.0,
+        max_route_hours=10.0,
+        decimals=14,
+        curves=curves,
+        distances_km=distances,
+        travel_hours=travel,
+        energy_wh=energy,
+    )
+
+
+def _generate_synthetic_v1(
+    size: int, seed: int, distribution: str | None, rng: random.Random
+) -> Instance:
+    """Legacy coupled generator retained for ablation only."""
     distribution = distribution or ("random", "clustered", "mixed")[seed % 3]
     depot_xy = (rng.uniform(10, 110), rng.uniform(10, 110))
-
     if distribution == "random":
         customer_xy = [(rng.uniform(0, 120), rng.uniform(0, 120)) for _ in range(size)]
     else:
@@ -211,15 +414,16 @@ def generate_synthetic(size: int, seed: int, distribution: str | None = None) ->
             for k in range(size // 2):
                 clustered[k] = (rng.uniform(0, 120), rng.uniform(0, 120))
         customer_xy = clustered
-
     density = (0.10, 0.15, 0.20, 0.25)[seed % 4]
     station_count = max(2, round(size * density))
     if seed % 2 == 0:
         station_xy = _pmedian_stations(customer_xy + [depot_xy], station_count, rng)
+        place = "pmed"
     else:
         station_xy = [
             (rng.uniform(5, 115), rng.uniform(5, 115)) for _ in range(station_count)
         ]
+        place = "rand"
     technologies = ("fast", "normal", "slow")
     tech_pool = technologies[: 1 + (seed % 3)]
     curve_times = {
@@ -233,7 +437,6 @@ def generate_synthetic(size: int, seed: int, distribution: str | None = None) ->
         )
         for technology in tech_pool
     }
-
     nodes = [Node(0, 0, *depot_xy)]
     nodes.extend(Node(k + 1, 1, *xy) for k, xy in enumerate(customer_xy))
     for k, xy in enumerate(station_xy):
@@ -247,9 +450,8 @@ def generate_synthetic(size: int, seed: int, distribution: str | None = None) ->
     )
     travel = tuple(tuple(distance / 40.0 for distance in row) for row in distances)
     energy = tuple(tuple(distance * 125.0 for distance in row) for row in distances)
-    place = "pmed" if seed % 2 == 0 else "rand"
     return Instance(
-        name=f"syn_{distribution}_n{size}_{place}_s{seed}",
+        name=f"syn_v1_{distribution}_n{size}_{place}_s{seed}",
         path=Path("<synthetic>"),
         nodes=node_tuple,
         depot=0,

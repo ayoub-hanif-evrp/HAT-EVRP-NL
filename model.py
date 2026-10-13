@@ -22,6 +22,7 @@ class PolicyConfig:
     d_model: int = 128
     layers: int = 2
     heads: int = 4
+    deepsets_open_only: bool = False
 
 
 def plan_visit_features(instance: Instance, stops) -> list[tuple[int, list[float]]]:
@@ -223,8 +224,23 @@ class HATPolicy(nn.Module):
             if route_vectors
             else torch.empty((0, self.config.d_model), device=self.device)
         )
+        open_indices = [
+            index for index, route in enumerate(routes) if not route["closed"]
+        ]
         if self.config.deepsets and len(route_tensor):
-            fleet = self.fleet_rho(self.fleet_phi(route_tensor).sum(dim=0))
+            if self.config.deepsets_open_only:
+                if open_indices:
+                    fleet_input = route_tensor[open_indices]
+                else:
+                    fleet_input = torch.empty(
+                        (0, self.config.d_model), device=self.device
+                    )
+            else:
+                fleet_input = route_tensor
+            if len(fleet_input):
+                fleet = self.fleet_rho(self.fleet_phi(fleet_input).sum(dim=0))
+            else:
+                fleet = torch.zeros(self.config.d_model, device=self.device)
         else:
             fleet = torch.zeros(self.config.d_model, device=self.device)
         if unserved:
@@ -240,9 +256,6 @@ class HATPolicy(nn.Module):
             device=self.device,
         )
         context = self.global_fusion(torch.cat([fleet, unserved_pool, counts]))
-        open_indices = [
-            index for index, route in enumerate(routes) if not route["closed"]
-        ]
         return nodes, route_tensor, open_indices, context
 
     def route_logits(

@@ -9,7 +9,12 @@ import time
 
 from charging import FixedRouteOracle, RoutePlan, check_route, check_solution
 from data import Instance
-from solver_ls import SearchDiagnostics, local_search
+from solver_ls import (
+    SearchDiagnostics,
+    assemble_route_pool,
+    local_search,
+    ruin_and_repair,
+)
 
 
 @dataclass(frozen=True)
