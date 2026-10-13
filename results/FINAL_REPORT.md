@@ -1,36 +1,40 @@
-# HAT-EVRP-NL — Final authoritative report
+# HAT-EVRP-NL — Final authoritative numerical report
 
-**Status:** Project closed. Architecture and Cycle-3 checkpoints unchanged.  
+**Status:** Research frozen. Architecture and Cycle-3 checkpoints unchanged.  
+**Manuscript:** [`../paper_draft.md`](../paper_draft.md)  
+**Figures:** [`figures/`](figures/)  
 **Validation:** Independent Python forward simulation (`check_route` / `check_solution`) only. No Java / external DIMACS checker was run.
 
-## Correctness notes (retained)
+## Correctness notes
 
-1. Classical wall-clock RNG fixed via `deterministic_first` (superseded invalid file: `INVALID_wallclock_fair_seed42_c3.md`).
-2. Fair LS = best-of-N constructions, then **one** shared local search. Legacy `eqls` (LS on every neural sample) is **not** used in final conclusions.
-3. Paired comparisons use the **20 distinct instances** as units (seeds averaged within instance). Tie tolerance \(10^{-9}\). Wins + ties + losses = 100%.
+1. Classical wall-clock RNG fixed via `deterministic_first` (superseded: `INVALID_wallclock_fair_seed42_c3.md`).
+2. Fair LS = best-of-N constructions, then **one** shared local search. Legacy `eqls` is **not** final.
+3. Paired comparisons: **20 instances** as units (seeds averaged). Tie tolerance \(10^{-9}\). Wins+ties+losses = 100%.
+4. **Protocol A is not a uniform no-LS table:** neural rows are construction-only; **H0_strong still uses local search** and is a stronger reference baseline.
 
 ## Architecture
 
-Shared causal visit-history Transformer → dynamic state fusion → DeepSets → hierarchical route/customer decisions → `frvcpy` nonlinear charging → Python feasibility validation. Ablations H1–H4 unchanged. **H2 is the strongest efficient neural variant; H4 remains the full proposed architecture.**
+Shared causal visit-history Transformer → dynamic state fusion → DeepSets → hierarchical route/customer decisions → `frvcpy` → Python feasibility validation.  
+**H2** = strongest efficient neural variant; **H4** = complete proposed architecture (does **not** consistently beat H2).
 
-## Protocol A — Equal constructions (no LS)
+## Protocol A — Equal construction counts (neural without LS)
 
 Raw: `compare_size10_seed{42,43,44}_c3.csv` (60/60 feasible).
 
 | Method | Mean h | Median h | Routes | Charge stops | Charge h | Runtime s | Oracle |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | H0 | 22.063 | 22.698 | 2.867 | 4.300 | 1.863 | 0.117 | 315 |
-| H0_strong | **20.142** | 18.586 | 2.800 | 3.650 | 1.535 | 0.176 | 528 |
+| H0_strong† | **20.142** | 18.586 | 2.800 | 3.650 | 1.535 | 0.176 | 528 |
 | H1 | 21.249 | 19.333 | 3.000 | 3.900 | 1.761 | 0.460 | 515 |
 | H2 | 20.966 | 19.627 | 3.000 | 3.867 | 1.659 | 0.646 | 520 |
 | H3 | 22.131 | 21.060 | 3.000 | 4.083 | 1.871 | 0.490 | 497 |
 | H4 | 20.975 | 19.185 | 3.100 | 3.717 | 1.641 | 0.671 | 525 |
 
-Instance-paired (`construction_only`): H2 vs H0_strong 20%/0%/80%; H4−H2 40%/25%/35%.
+†Includes local search. Instance-paired (`construction_only`): H2 vs H0_strong 20%/0%/80%; H4−H2 40%/25%/35%.
 
 ## Protocol B — Fair one-shot local search (primary)
 
-Raw: `compare_size10_fairls_final_seed{42,43,44}_c3.csv` (60/60 feasible).
+Raw: `compare_size10_fairls_final_seed{42,43,44}_c3.csv` (60/60 feasible). Aggregate: `FINAL_n10_fairls.csv`.
 
 | Method | Mean h | Median h | Routes | Charge stops | Charge h | Runtime s | Oracle |
 |---|---:|---:|---:|---:|---:|---:|---:|
@@ -41,7 +45,7 @@ Raw: `compare_size10_fairls_final_seed{42,43,44}_c3.csv` (60/60 feasible).
 | H3 | 20.109 | 18.445 | 2.933 | 3.517 | 1.534 | 0.592 | 729 |
 | H4 | 19.886 | 18.586 | 3.033 | 3.350 | 1.414 | 0.753 | 753 |
 
-### Instance-paired comparisons (fair_one_shot_ls, n=20, seed-averaged)
+### Instance-paired (`fair_one_shot_ls`, n=20)
 
 | Pair | Mean Δ (h) | 95% CI | Wins | Ties | Losses |
 |---|---:|---|---:|---:|---:|
@@ -51,7 +55,7 @@ Raw: `compare_size10_fairls_final_seed{42,43,44}_c3.csv` (60/60 feasible).
 | H2−H0_strong | −0.329 | [−0.699, +0.041] | **65%** | **20%** | **15%** |
 | H4−H0_strong | −0.255 | [−0.631, +0.120] | **50%** | **20%** | **30%** |
 
-**H4 does not outperform H2** (mean slightly worse; mostly ties). History helps (H2≪H1). DeepSets alone does not (H3). With fair LS, H2 improves on H0_strong on 65% of instances (CI on mean Δ includes values near zero). Neural uses ~1.4× oracle calls and ~4–5× runtime vs H0_strong.
+**H4 does not outperform H2.** History helps; DeepSets does not. Neural ≈1.4× oracle and ≈4–5× runtime vs H0_strong.
 
 ## Protocol C — Corrected equal wall-clock (seed 42)
 
@@ -66,9 +70,7 @@ Raw: `compare_size10_wallclock_final_seed42_c3.csv`. Unique constructions: H0 �
 | H3 | 20.196 | 0.380 | 771 |
 | H4 | 19.840 | 0.458 | 745 |
 
-H2 remains best among these under matched measured time; H4 does not beat H2.
-
-## Scale (fair LS, seed 42) — verified from raw CSVs
+## Scale (fair LS)
 
 | Size | H0_strong | H2 | H4 | Feasible |
 |---|---:|---:|---:|---|
@@ -78,7 +80,9 @@ H2 remains best among these under matched measured time; H4 does not beat H2.
 
 160/320 not evaluated.
 
-## BKS gaps (Froger et al. 2021 Table 13; n=10 fair LS)
+## BKS gaps (Froger et al. 2022 / online 2021 Table 13; uncapacitated; n=10 fair LS)
+
+Provenance: `literature_bks_froger2021.csv` (spot-checked against HAL PDF of Froger et al., *Transportation Science* 2022). Gaps: `FINAL_n10_bks_gaps.csv`.
 
 | Method | Mean gap % | Median gap % |
 |---|---:|---:|
@@ -86,27 +90,27 @@ H2 remains best among these under matched measured time; H4 does not beat H2.
 | H2 | 42.7 | 38.7 |
 | H4 | 43.2 | 38.7 |
 
-Not competitive with specialized metaheuristics. BKS are not claimed as proven optima.
+Not competitive with specialized metaheuristics / published BKS.
 
 ## Direct CHARGE
 
-4/20 feasible (negative ablation). Hybrid neural routing + `frvcpy`: 20/20. Repair ≠ learned charging.
+4/20 feasible (`direct_charge_size10_seed42_c3.csv`). Hybrid `frvcpy`: 20/20. Repair ≠ learned charging.
 
 ## Independent Python validation
 
-- `evaluate.py --mode sanity` on `tc0c10s2cf1` executed.
-- Representative H2/H4 `c3` decode + one-shot LS: `check_solution` passed; objective equals sum of independently simulated route durations.
-- Aggregates in `FINAL_*.csv` recomputed from raw experiment CSVs.
-- **This is Python forward-simulation validation, not external checker certification.**
+- `evaluate.py --mode sanity` executed.
+- Representative H2/H4 `c3` decode + one-shot LS: `check_solution` passed; objective = sum of simulated route durations.
+- Final aggregates reproduce raw CSVs; paired W/T/L sum to 100%.
+- **Python forward-simulation validation, not external checker certification.**
 
 ## Scientific conclusion
 
-1. Transformer visit history improves neural routing (H2 vs H1).
-2. DeepSets does not consistently help (H4 ≉ better than H2; H3 ≉ better than H1).
-3. With fair one-shot LS (and corrected wall-clock), history-aware H2 is the strongest/most efficient neural variant and can beat the tested classical greedy+LS baseline on n=10–40, at higher compute cost and large BKS gaps.
+1. Transformer history improves neural routing (H2 vs H1).
+2. DeepSets does not consistently help (H4 ≉ better than H2).
+3. With fair one-shot LS, H2 is the strongest/most efficient neural variant and can beat the tested classical greedy+LS baseline on n=10–40, at higher cost and large BKS gaps.
 4. Hybrid `frvcpy` charging is required; direct learned charging is unreliable.
 
-**The DeepSets coordination hypothesis is not supported. HAT-EVRP-NL remains a valid, reproducible hybrid research implementation with honest negative findings on DeepSets and learned charging.**
+**DeepSets coordination hypothesis: not supported.** Project closed as a reproducible hybrid experimental study with honest negative findings on DeepSets and learned charging.
 
 ## Invalid / superseded (do not cite as final)
 
