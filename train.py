@@ -755,7 +755,16 @@ def decode(
     seed: int = 0,
     local_passes: int = 0,
     local_budget: int = 0,
+    cost_lambda: float = 0.0,
+    local_operators: str = "basic",
 ) -> dict:
+    """Greedy/sampled hierarchical decode with optional oracle-aware scoring.
+
+    When ``cost_lambda > 0``, customer pointer logits are adjusted by
+    ``logit - cost_lambda * (D(R⊕j) - D(R)) / T_max``, using FRVCP durations
+    already required for feasibility masks (cache hits; no redundant solves).
+    ``cost_lambda=0`` preserves the original Cycle-3 decode behavior.
+    """
     from solver import local_search
 
     start = time.perf_counter()
@@ -770,8 +779,11 @@ def decode(
     max_decisions = 3 * len(instance.customers) + 5
     nodes = model.encode_nodes(instance)
     history_cache: dict = {}
+    singleton_plans = {
+        customer: oracle.solve((customer,)) for customer in instance.customers
+    }
     singleton_ok = {
-        customer: oracle.solve((customer,)).feasible for customer in instance.customers
+        customer: plan.feasible for customer, plan in singleton_plans.items()
     }
 
     for decision in range(max_decisions):
@@ -813,15 +825,28 @@ def decode(
             allow_close=not is_new,
         )
         if is_new:
-            masks = [singleton_ok[candidate] for candidate in order]
+            candidate_plans = [singleton_plans[candidate] for candidate in order]
+            masks = [plan.feasible for plan in candidate_plans]
+            base_duration = 0.0
         else:
-            masks = [
-                oracle.solve((*prefix, candidate)).feasible for candidate in order
+            candidate_plans = [
+                oracle.solve((*prefix, candidate)) for candidate in order
             ]
+            masks = [plan.feasible for plan in candidate_plans]
             masks.append(True)
+            base_duration = float(routes[selected_index]["duration"])
         if not any(masks):
             reason = "selected route has no feasible action"
             break
+        if cost_lambda != 0.0:
+            adjusted = customer_scores.clone()
+            scale = max(instance.max_route_hours, 1e-6)
+            for index, plan in enumerate(candidate_plans):
+                if not plan.feasible:
+                    continue
+                marginal = (plan.duration_hours - base_duration) / scale
+                adjusted[index] = adjusted[index] - float(cost_lambda) * marginal
+            customer_scores = adjusted
         customer_scores = customer_scores.masked_fill(
             ~torch.tensor(masks, dtype=torch.bool, device=model.device),
             float("-inf"),
@@ -837,7 +862,11 @@ def decode(
             routes[selected_index]["closed"] = True
             continue
         customer = order[action]
-        plan = oracle.solve((*prefix, customer))
+        plan = (
+            singleton_plans[customer]
+            if is_new
+            else oracle.solve((*prefix, customer))
+        )
         if is_new:
             routes.append(route_state(instance, (customer,), plan))
         else:
@@ -853,7 +882,12 @@ def decode(
     improvements = 0
     if local_passes > 0 and local_budget > 0 and not unserved:
         customer_routes, plans, improvements = local_search(
-            customer_routes, plans, oracle, local_passes, local_budget
+            customer_routes,
+            plans,
+            oracle,
+            local_passes,
+            local_budget,
+            operators=local_operators,
         )
     valid, validation_reason = check_solution(instance, plans) if not unserved else (
         False,
@@ -861,10 +895,18 @@ def decode(
     )
     if not valid:
         reason = reason or validation_reason
+    from charging import literature_compatible_objective_hours
+
     objective = sum(plan.duration_hours for plan in plans) if valid else float("inf")
+    objective_lit = (
+        literature_compatible_objective_hours(instance, objective)
+        if valid
+        else float("inf")
+    )
     return {
         "feasible": valid,
         "objective": objective,
+        "objective_lit": objective_lit,
         "routes": tuple(customer_routes),
         "plans": plans,
         "runtime": time.perf_counter() - start,
@@ -874,6 +916,7 @@ def decode(
         "entropy": entropy / max(1, len(log_probs)),
         "decisions": decision + 1,
         "local_improvements": improvements,
+        "cost_lambda": float(cost_lambda),
     }
 
 

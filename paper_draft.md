@@ -311,15 +311,17 @@ Under fair LS, H2/H4 spend substantially more runtime and FRVCP calls than H0_st
 
 **Provenance.** Values in `literature_bks_froger2021.csv` are labeled from Froger et al. (2022 / online 2021) **Table 13** materials for the *uncapacitated* Montoya benchmark (not the capacitated E-VRP-NL-C variant). Spot checks against the public HAL PDF (e.g., `tc0c10s2cf1` = 19.75, `tc0c10s2ct1` = 12.30, `tc1c10s2cf2` = 9.03) agree. We still mark full table-wide independent re-extraction as **repository-curated literature references**, not a claim that every row was re-validated by us against publisher typesetting.
 
-**Gaps (n=10 fair LS vs that table):**
+**Objective convention.** Montoya et al. (2017) minimize travel + charging time; service time appears in the route-duration constraint. Our implementation reports full duration (travel + service + charging) for feasibility. For BKS comparison we also report literature-compatible duration = full − Σ customer service (constant once all customers are served; n=10 ⇒ −5.0 h). Evidence that published BKS omit service includes `tc2c40s5cf3` (BKS 19.65 h < 20 h total service).
 
-| Method | Mean gap % | Median gap % |
+**Gaps (n=10 fair LS Cycle-3 vs Table 13):**
+
+| Method | Incorrect naive gap (full vs BKS) | Corrected lit gap |
 |---|---:|---:|
-| H0_strong | 44.8 | 40.0 |
-| H2 | 42.7 | 38.7 |
-| H4 | 43.2 | 38.7 |
+| H0_strong | 44.8% | **7.1%** |
+| H2 | 42.7% | **5.0%** |
+| H4 | 43.2% | **5.4%** |
 
-Source: `FINAL_n10_bks_gaps.csv`. Gaps of ~43% preclude state-of-the-art competitiveness claims relative to specialized metaheuristics / published BKS.
+Sources: `FINAL_n10_bks_gaps.csv` (naive), `IMPROVEMENT_bks_gaps_corrected.csv`. Corrected gaps remain below specialized BKS but are far smaller than the earlier misaligned 43% figure. Optional post-freeze inference/search improvements (oracle-aware scoring, stronger LS) further reduce lit gaps; see `results/IMPROVEMENT_REPORT.md`.
 
 ---
 

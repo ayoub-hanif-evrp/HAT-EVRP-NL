@@ -12,6 +12,25 @@ from data import ChargingCurve, Instance
 ConcreteRoute = tuple[tuple[int, float | None], ...]
 
 
+def total_customer_service_hours(instance: Instance) -> float:
+    """Constant total service time over all customers (Montoya instances: 0.5 h each)."""
+    return float(sum(instance.service_times[customer] for customer in instance.customers))
+
+
+def literature_compatible_objective_hours(
+    instance: Instance, full_duration_hours: float
+) -> float:
+    """Travel + charging duration for literature BKS comparison.
+
+    Montoya et al. (2017) minimize travel + charging time in the objective, while
+    including service time only in the route-duration constraint. Our simulator
+    reports full duration (travel + service + charging). Subtracting the constant
+    total customer service time yields the literature-compatible objective when
+    every customer is served exactly once.
+    """
+    return float(full_duration_hours) - total_customer_service_hours(instance)
+
+
 @dataclass(frozen=True)
 class RoutePlan:
     feasible: bool

@@ -82,15 +82,18 @@ Raw: `compare_size10_wallclock_final_seed42_c3.csv`. Unique constructions: H0 �
 
 ## BKS gaps (Froger et al. 2022 / online 2021 Table 13; uncapacitated; n=10 fair LS)
 
-Provenance: `literature_bks_froger2021.csv` (spot-checked against HAL PDF of Froger et al., *Transportation Science* 2022). Gaps: `FINAL_n10_bks_gaps.csv`.
+Provenance: `literature_bks_froger2021.csv` (spot-checked against HAL PDF of Froger et al., *Transportation Science* 2022).
 
-| Method | Mean gap % | Median gap % |
+**Convention correction (2026-10-13):** Montoya’s objective is travel+charging; service enters \(T_{\max}\) only. Our `objective_h` is full duration (travel+service+charging). Literature-compatible objective = full − Σ service (n=10: −5.0 h). Naive gaps comparing full duration to BKS are **incorrect**.
+
+| Method | Naive gap (full vs BKS) | Corrected lit gap |
 |---|---:|---:|
-| H0_strong | 44.8 | 40.0 |
-| H2 | 42.7 | 38.7 |
-| H4 | 43.2 | 38.7 |
+| H0_strong | 44.8% | **7.1%** |
+| H2 | 42.7% | **5.0%** |
+| H4 | 43.2% | **5.4%** |
 
-Not competitive with specialized metaheuristics / published BKS.
+Sources: `FINAL_n10_bks_gaps.csv` (naive, retained), `IMPROVEMENT_bks_gaps_corrected.csv`.  
+Further optional inference/search gains: `IMPROVEMENT_REPORT.md` (cost-aware λ + strong LS; not part of frozen Cycle-3 baseline tables above).
 
 ## Direct CHARGE
 

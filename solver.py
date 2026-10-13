@@ -34,11 +34,30 @@ def local_search(
     oracle: FixedRouteOracle,
     max_passes: int,
     evaluation_budget: int,
+    operators: str = "basic",
 ) -> tuple[list[tuple[int, ...]], list[RoutePlan], int]:
-    """Best-improvement 2-opt and relocate using exact charging evaluations."""
+    """Best-improvement neighborhoods with exact FRVCP evaluations.
+
+    ``operators='basic'``: intra-route 2-opt + relocate (Cycle-3 default).
+    ``operators='strong'``: also inter-route 2-opt*, customer swap, and
+    single-route elimination with reinsertion. Same evaluation budget applies.
+    """
     improvements = 0
     evaluations = 0
     tolerance = 1e-10
+    use_strong = operators == "strong"
+
+    def consider(
+        candidate_routes: list[tuple[int, ...]],
+        candidate_plans: list[RoutePlan],
+        best_objective: float,
+        best_routes,
+        best_plans,
+    ):
+        objective = sum(plan.duration_hours for plan in candidate_plans)
+        if objective < best_objective - tolerance:
+            return objective, candidate_routes, candidate_plans
+        return best_objective, best_routes, best_plans
 
     for _ in range(max_passes):
         current_objective = sum(plan.duration_hours for plan in plans)
@@ -61,18 +80,13 @@ def local_search(
                     evaluations += 1
                     if not candidate_plan.feasible:
                         continue
-                    objective = (
-                        current_objective
-                        - plans[route_index].duration_hours
-                        + candidate_plan.duration_hours
+                    candidate_routes = routes.copy()
+                    candidate_plans = plans.copy()
+                    candidate_routes[route_index] = candidate_route
+                    candidate_plans[route_index] = candidate_plan
+                    best_objective, best_routes, best_plans = consider(
+                        candidate_routes, candidate_plans, best_objective, best_routes, best_plans
                     )
-                    if objective < best_objective - tolerance:
-                        candidate_routes = routes.copy()
-                        candidate_plans = plans.copy()
-                        candidate_routes[route_index] = candidate_route
-                        candidate_plans[route_index] = candidate_plan
-                        best_objective = objective
-                        best_routes, best_plans = candidate_routes, candidate_plans
                 if evaluations >= evaluation_budget:
                     break
             if evaluations >= evaluation_budget:
@@ -121,18 +135,149 @@ def local_search(
                                 else:
                                     del candidate_routes[source_index]
                                     del candidate_plans[source_index]
-                            objective = sum(
-                                candidate.duration_hours for candidate in candidate_plans
+                            best_objective, best_routes, best_plans = consider(
+                                candidate_routes,
+                                candidate_plans,
+                                best_objective,
+                                best_routes,
+                                best_plans,
                             )
-                            if objective < best_objective - tolerance:
-                                best_objective = objective
-                                best_routes, best_plans = candidate_routes, candidate_plans
                         if evaluations >= evaluation_budget:
                             break
                     if evaluations >= evaluation_budget:
                         break
                 if evaluations >= evaluation_budget:
                     break
+
+        # Strong operators: swap, 2-opt*, route elimination.
+        if use_strong and evaluations < evaluation_budget:
+            for i in range(len(routes)):
+                for j in range(i + 1, len(routes)):
+                    for ai, ca in enumerate(routes[i]):
+                        for bj, cb in enumerate(routes[j]):
+                            if evaluations >= evaluation_budget:
+                                break
+                            ri = routes[i][:ai] + (cb,) + routes[i][ai + 1 :]
+                            rj = routes[j][:bj] + (ca,) + routes[j][bj + 1 :]
+                            pi = oracle.solve(ri)
+                            evaluations += 1
+                            if not pi.feasible:
+                                continue
+                            pj = oracle.solve(rj)
+                            evaluations += 1
+                            if not pj.feasible:
+                                continue
+                            candidate_routes = routes.copy()
+                            candidate_plans = plans.copy()
+                            candidate_routes[i], candidate_routes[j] = ri, rj
+                            candidate_plans[i], candidate_plans[j] = pi, pj
+                            best_objective, best_routes, best_plans = consider(
+                                candidate_routes,
+                                candidate_plans,
+                                best_objective,
+                                best_routes,
+                                best_plans,
+                            )
+                        if evaluations >= evaluation_budget:
+                            break
+                    if evaluations >= evaluation_budget:
+                        break
+                if evaluations >= evaluation_budget:
+                    break
+
+        if use_strong and evaluations < evaluation_budget:
+            for i in range(len(routes)):
+                for j in range(i + 1, len(routes)):
+                    for cut_i in range(len(routes[i]) + 1):
+                        for cut_j in range(len(routes[j]) + 1):
+                            if evaluations >= evaluation_budget:
+                                break
+                            # Exchange tails (2-opt*).
+                            for a_tail, b_tail in (
+                                (routes[i][cut_i:], routes[j][cut_j:]),
+                                (tuple(reversed(routes[i][cut_i:])), routes[j][cut_j:]),
+                                (routes[i][cut_i:], tuple(reversed(routes[j][cut_j:]))),
+                            ):
+                                if evaluations >= evaluation_budget:
+                                    break
+                                ri = routes[i][:cut_i] + b_tail
+                                rj = routes[j][:cut_j] + a_tail
+                                if not ri or not rj:
+                                    continue
+                                if ri == routes[i] and rj == routes[j]:
+                                    continue
+                                pi = oracle.solve(ri)
+                                evaluations += 1
+                                if not pi.feasible:
+                                    continue
+                                pj = oracle.solve(rj)
+                                evaluations += 1
+                                if not pj.feasible:
+                                    continue
+                                candidate_routes = routes.copy()
+                                candidate_plans = plans.copy()
+                                candidate_routes[i], candidate_routes[j] = ri, rj
+                                candidate_plans[i], candidate_plans[j] = pi, pj
+                                best_objective, best_routes, best_plans = consider(
+                                    candidate_routes,
+                                    candidate_plans,
+                                    best_objective,
+                                    best_routes,
+                                    best_plans,
+                                )
+                        if evaluations >= evaluation_budget:
+                            break
+                    if evaluations >= evaluation_budget:
+                        break
+                if evaluations >= evaluation_budget:
+                    break
+
+        if use_strong and evaluations < evaluation_budget and len(routes) >= 2:
+            for victim in range(len(routes)):
+                if evaluations >= evaluation_budget:
+                    break
+                remaining = [r for k, r in enumerate(routes) if k != victim]
+                remaining_plans = [p for k, p in enumerate(plans) if k != victim]
+                customers = list(routes[victim])
+                tentative_routes = [list(r) for r in remaining]
+                tentative_plans = list(remaining_plans)
+                failed = False
+                for customer in customers:
+                    best_ins = None
+                    best_delta = float("inf")
+                    best_t = -1
+                    for t, target in enumerate(tentative_routes):
+                        for pos in range(len(target) + 1):
+                            if evaluations >= evaluation_budget:
+                                break
+                            inserted = tuple(target[:pos] + [customer] + target[pos:])
+                            plan = oracle.solve(inserted)
+                            evaluations += 1
+                            if not plan.feasible:
+                                continue
+                            delta = plan.duration_hours - tentative_plans[t].duration_hours
+                            if delta < best_delta - tolerance:
+                                best_delta = delta
+                                best_ins = inserted
+                                best_plan = plan
+                                best_t = t
+                        if evaluations >= evaluation_budget:
+                            break
+                    if best_ins is None:
+                        failed = True
+                        break
+                    tentative_routes[best_t] = list(best_ins)
+                    tentative_plans[best_t] = best_plan
+                if failed or evaluations >= evaluation_budget:
+                    continue
+                candidate_routes = [tuple(r) for r in tentative_routes]
+                best_objective, best_routes, best_plans = consider(
+                    candidate_routes,
+                    tentative_plans,
+                    best_objective,
+                    best_routes,
+                    best_plans,
+                )
 
         if best_routes is None or best_plans is None:
             break
@@ -149,6 +294,7 @@ def randomized_greedy(
     local_search_passes: int = 2,
     local_search_budget: int = 2000,
     deterministic_first: bool = True,
+    local_operators: str = "basic",
 ) -> BaselineResult:
     """Append customers by least feasible duration increase, with an RCL.
 
@@ -241,6 +387,7 @@ def randomized_greedy(
         oracle,
         max_passes=local_search_passes,
         evaluation_budget=local_search_budget,
+        operators=local_operators,
     )
     local_seconds = time.perf_counter() - local_start
     valid, reason = check_solution(instance, plans)

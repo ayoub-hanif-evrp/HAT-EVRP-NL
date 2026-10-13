@@ -238,7 +238,14 @@ def _append_method_row(
     oracle_calls,
     reason: str,
     unique_constructions: int | str = "",
+    objective_lit="",
+    cost_lambda: float | str = "",
 ) -> None:
+    from charging import literature_compatible_objective_hours
+
+    lit = objective_lit
+    if feasible and lit == "" and objective != "":
+        lit = literature_compatible_objective_hours(instance, float(objective))
     rows.append(
         {
             "instance": instance.name,
@@ -249,12 +256,14 @@ def _append_method_row(
             "samples": samples,
             "feasible": int(feasible),
             "objective_h": objective if feasible else "",
+            "objective_lit_h": lit if feasible else "",
             "routes": routes if feasible else "",
             "charging_stops": charging_stops if feasible else "",
             "charging_h": charging_hours if feasible else "",
             "runtime_s": runtime_s,
             "oracle_calls": oracle_calls,
             "unique_constructions": unique_constructions,
+            "cost_lambda": cost_lambda,
             "reason": reason,
         }
     )
@@ -266,6 +275,7 @@ def _refine_best_once(
     plans: list,
     local_passes: int,
     local_budget: int,
+    operators: str = "basic",
 ):
     """Apply identical one-shot local search used by H0_strong after best-of-N."""
     from charging import FixedRouteOracle
@@ -278,6 +288,7 @@ def _refine_best_once(
         oracle,
         max_passes=local_passes,
         evaluation_budget=local_budget,
+        operators=operators,
     )
     return refined_routes, refined_plans, improvements, oracle.calls
 
@@ -452,6 +463,8 @@ def run_compare(
     wallclock: bool = False,
     tag: str = "",
     fair_ls: bool = False,
+    cost_lambda: float = 0.0,
+    methods: tuple[str, ...] = ("H1", "H2", "H3", "H4"),
 ) -> None:
     """Evaluate H0-H4 with equal construction budgets and optional fair one-shot LS.
 
@@ -461,6 +474,9 @@ def run_compare(
     3. Apply identical ``local_search`` once with the same passes/budget.
     Previous Cycle-3 ``eqls`` runs applied LS to every neural sample and must
     not be treated as equal-effort comparisons.
+
+    ``cost_lambda`` enables optional oracle-aware pointer scoring at inference
+    (see ``train.decode``). Default 0 preserves Cycle-3 behavior.
     """
     import time
 
@@ -475,7 +491,7 @@ def run_compare(
     ][:limit]
     trained_size = checkpoint_size or size
     policies = {}
-    for method in ("H1", "H2", "H3", "H4"):
+    for method in methods:
         path = checkpoints_dir / f"{method}_n{trained_size}_seed{seed}_{version}.pt"
         if not path.exists():
             path = checkpoints_dir / f"{method}_n{trained_size}_seed{seed}_c2.pt"
@@ -508,6 +524,7 @@ def run_compare(
                             seed=seed * 1000 + sample_index,
                             local_passes=0 if fair_ls else neural_local_passes,
                             local_budget=0 if fair_ls else neural_local_budget,
+                            cost_lambda=cost_lambda,
                         )
                     )
                 neural_raw[method] = attempts
@@ -630,6 +647,7 @@ def run_compare(
                 h0.oracle_calls,
                 h0.reason,
                 n_unique,
+                cost_lambda=cost_lambda,
             )
         for method, result in neural_results.items():
             _append_method_row(
@@ -649,6 +667,7 @@ def run_compare(
                 result["oracle_calls"],
                 result["reason"],
                 "",
+                cost_lambda=cost_lambda,
             )
         print(
             f"evaluated {instance.name}"
@@ -945,6 +964,18 @@ def main() -> None:
         help="Best-of-N constructions then one shared local-search for every method",
     )
     parser.add_argument("--tag", type=str, default="")
+    parser.add_argument(
+        "--cost-lambda",
+        type=float,
+        default=0.0,
+        help="Optional oracle-aware pointer score weight (0 = Cycle-3 baseline)",
+    )
+    parser.add_argument(
+        "--methods",
+        type=str,
+        default="H1,H2,H3,H4",
+        help="Comma-separated neural methods to evaluate",
+    )
     args = parser.parse_args()
 
     if args.mode == "inspect":
@@ -980,6 +1011,8 @@ def main() -> None:
             args.wallclock,
             args.tag,
             args.fair_ls,
+            args.cost_lambda,
+            tuple(method.strip() for method in args.methods.split(",") if method.strip()),
         )
     elif args.mode == "direct":
         run_direct_comparison(

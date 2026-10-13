@@ -63,9 +63,20 @@ Do **not** cite legacy `*_eqls_*` or `*_wallclock_fair_*` as equal-effort result
 `data.py` · `charging.py` · `solver.py` · `model.py` · `train.py` · `evaluate.py`  
 `checkpoints/*_c3.pt` · `results/` · `dataset/` (read-only)
 
-## Verified principal findings
+## Verified principal findings (Cycle-3 baseline)
 
 - Fair LS n=10: H0_strong **20.142**, H1 **19.993**, **H2 19.813**, H3 **20.109**, H4 **19.886** h.
 - H4−H2: **20% / 60% / 20%** (no DeepSets win). History helps (H2≪H1).
 - Hybrid `frvcpy` required; direct CHARGE **4/20** feasible.
-- ~43% mean gap vs Froger et al. (2022) uncapacitated BKS Table 13.
+- **Corrected** lit BKS gaps (travel+charging vs Froger Table 13): H2 **~5%**, not ~43% (service-time convention). See `results/IMPROVEMENT_REPORT.md`.
+
+## Optional improved inference (post-freeze; same checkpoints)
+
+```bash
+# Oracle-aware pointer scoring (H2: λ=2, H4: λ=4) + fair LS
+python evaluate.py --mode compare --size 10 --limit 20 --samples 10 --seed 42 \
+  --version c3 --fair-ls --tag costaware --cost-lambda 2 --methods H2
+```
+
+Strong LS: `local_search(..., operators="strong")` under the same evaluation budget.  
+Details: [`results/IMPROVEMENT_REPORT.md`](results/IMPROVEMENT_REPORT.md).
