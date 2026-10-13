@@ -249,7 +249,17 @@ def make_fig_rl_effect() -> None:
 
 
 def make_fig_reward_unavailable() -> None:
-    """Explicit unavailable panel — do not invent reward histories."""
+    """Skip placeholder when real reward dynamics exist; otherwise archive-only notice."""
+    real = FIGURES / "fig_main07_reward_dynamics.png"
+    reward_csvs = list((RAW / "reward_learning").glob("reward_*_rl_from_bc_rq4.csv")) if (RAW / "reward_learning").exists() else []
+    if real.exists() or reward_csvs:
+        # Real RQ4 reward figure supersedes the historical placeholder.
+        placeholder = FIGURES / "fig14_reward_dynamics_unavailable.png"
+        if placeholder.exists():
+            dest = RESULTS / "archive" / "figures_legacy" / placeholder.name
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            placeholder.replace(dest)
+        return
     fig, ax = plt.subplots(figsize=(8, 3.5))
     ax.axis("off")
     ax.text(
@@ -258,7 +268,7 @@ def make_fig_reward_unavailable() -> None:
         "Reward dynamics figure unavailable\n\n"
         "Historical Cycle-3 training CSVs do not record sampled rewards,\n"
         "baselines, advantages, or infeasible-rollout counts.\n\n"
-        "Future runs log these fields (see train.py RL diagnostics).\n"
+        "Run scripts/experiments/run_bc_rl_controlled.py for real reward logs.\n"
         "Do not reconstruct rewards from validation objectives.",
         ha="center",
         va="center",
@@ -698,7 +708,7 @@ def write_learning_report() -> None:
             "- `fig11_training_supervision_flow.png`",
             "- `fig12_learning_curves_h1h4.png`",
             "- `fig13_rl_effect_h2_h4.png`",
-            "- `fig14_reward_dynamics_unavailable.png`",
+            "- `fig_main07_reward_dynamics.png` (real RQ4 logs; placeholder fig14 archived)",
             "- `fig15_bc_vs_rl_ablation.png`",
             "- `fig16_hierarchical_policy.png`",
             "- `fig17_history_deepsets_contribution.png`",

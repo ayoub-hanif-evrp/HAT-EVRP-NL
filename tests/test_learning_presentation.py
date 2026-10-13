@@ -104,10 +104,15 @@ class TableAndFigureTests(unittest.TestCase):
             "fig11_training_supervision_flow.png",
             "fig12_learning_curves_h1h4.png",
             "fig13_rl_effect_h2_h4.png",
-            "fig14_reward_dynamics_unavailable.png",
             "fig15_bc_vs_rl_ablation.png",
         ):
             self.assertTrue((figures / name).exists(), name)
+        # Real reward dynamics supersede the historical placeholder
+        self.assertTrue(
+            (figures / "fig_main07_reward_dynamics.png").exists()
+            or (figures / "fig14_reward_dynamics_unavailable.png").exists(),
+            "expected real reward dynamics or unavailable placeholder",
+        )
 
     def test_paper_links_resolve(self):
         paper = (ROOT / "paper_draft.md").read_text(encoding="utf-8")

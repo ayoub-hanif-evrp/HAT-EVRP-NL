@@ -1,0 +1,1 @@
+{"instance": "tc0c10s3ct1", "model": "TRUE-NL", "sequences": [[7, 4, 9, 5, 2], [8, 3, 1, 6, 10]], "stops": [[[0, null], [7, null], [4, null], [9, null], [13, 8538.340872797244], [5, null], [2, null], [0, null]], [[0, null], [8, null], [3, null], [1, null], [11, 11197.897681557504], [6, null], [10, null], [0, null]]], "full_h": 15.797117854389331}

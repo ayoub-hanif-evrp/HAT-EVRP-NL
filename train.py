@@ -1810,8 +1810,20 @@ def train_model(args: argparse.Namespace) -> None:
             model.train()
 
     pomo_k = int(getattr(args, "pomo_k", 0) or 0)
+    reward_rows: list[dict] = []
     for rl_step in range(1, args.rl_steps + 1):
         instance, _ = train_data[(rl_step - 1) % len(train_data)]
+        reward_diag = {
+            "mean_sampled_reward": "",
+            "baseline_reward": "",
+            "mean_advantage": "",
+            "sampled_full_h": "",
+            "rollout_feasible": "",
+            "n_infeasible_rollouts": "",
+            "grad_norm": "",
+            "learning_rate": float(args.lr),
+            "reward_config": "",
+        }
         if pomo_k > 0:
             rl_loss, sampled = pomo_reinforce_step(
                 model,
@@ -1820,6 +1832,21 @@ def train_model(args: argparse.Namespace) -> None:
                 k=min(pomo_k, len(instance.customers)),
                 seed=args.seed + rl_step,
                 cost_lambda=float(getattr(args, "cost_lambda", 0.0)),
+            )
+            # Approximate diagnostics from returned best rollout (full K means inside step).
+            reward_diag.update(
+                {
+                    "mean_sampled_reward": (
+                        -sampled["objective"] if sampled["feasible"] else -100.0
+                    ),
+                    "baseline_reward": "",
+                    "mean_advantage": "",
+                    "sampled_full_h": sampled["objective"] if sampled["feasible"] else "",
+                    "rollout_feasible": int(bool(sampled["feasible"])),
+                    "n_infeasible_rollouts": "",
+                    "grad_norm": "",
+                    "reward_config": "R=-Z_full else -100; baseline=mean POMO",
+                }
             )
         else:
             model.eval()
@@ -1841,20 +1868,29 @@ def train_model(args: argparse.Namespace) -> None:
             else:
                 rl_loss = torch.tensor(0.0)
                 grad_norm = 0.0
-                advantage = 0.0
-            # Lightweight reward diagnostics for future controlled runs (not
-            # back-filled into historical Cycle-3 logs).
-            reward_diag = {
-                "mean_sampled_reward": sampled_reward,
-                "baseline_reward": greedy_reward,
-                "mean_advantage": advantage,
-                "sampled_full_h": sampled["objective"] if sampled["feasible"] else "",
-                "rollout_feasible": int(bool(sampled["feasible"])),
-                "n_infeasible_rollouts": int(not sampled["feasible"]),
-                "grad_norm": grad_norm,
-                "learning_rate": float(args.lr),
-                "reward_config": "R=-Z_full else -100; baseline=greedy",
+            reward_diag.update(
+                {
+                    "mean_sampled_reward": sampled_reward,
+                    "baseline_reward": greedy_reward,
+                    "mean_advantage": advantage,
+                    "sampled_full_h": sampled["objective"] if sampled["feasible"] else "",
+                    "rollout_feasible": int(bool(sampled["feasible"])),
+                    "n_infeasible_rollouts": int(not sampled["feasible"]),
+                    "grad_norm": grad_norm,
+                    "reward_config": "R=-Z_full else -100; baseline=greedy",
+                }
+            )
+        reward_rows.append(
+            {
+                "stage": "rl_pomo" if pomo_k > 0 else "rl",
+                "step": rl_step,
+                "loss": float(rl_loss.detach())
+                if hasattr(rl_loss, "detach")
+                else float(rl_loss),
+                "entropy": float(sampled.get("entropy") or 0.0),
+                **reward_diag,
             }
+        )
         if rl_step == args.rl_steps or (
             args.eval_every > 0 and rl_step % args.eval_every == 0
         ):
@@ -1877,8 +1913,7 @@ def train_model(args: argparse.Namespace) -> None:
                 "greedy0_objective": metrics["greedy0_objective"],
                 "val_cost_lambda": metrics["val_cost_lambda"],
             }
-            if pomo_k <= 0:
-                row.update(reward_diag)
+            row.update(reward_diag)
             rows.append(row)
             print(row)
             score = (row["feasible_rate"], -row["validation_objective"])
@@ -1963,6 +1998,16 @@ def train_model(args: argparse.Namespace) -> None:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
         writer.writeheader()
         writer.writerows(rows)
+    if reward_rows:
+        reward_path = (
+            args.results
+            / f"reward_{args.model}_n{args.size}_seed{args.seed}_{version}.csv"
+        )
+        with reward_path.open("w", newline="", encoding="utf-8") as handle:
+            writer = csv.DictWriter(handle, fieldnames=list(reward_rows[0].keys()))
+            writer.writeheader()
+            writer.writerows(reward_rows)
+        print(f"saved reward log {reward_path}")
     print(
         f"saved {checkpoint} and {log_path}; total {time.perf_counter() - start:.2f}s"
     )

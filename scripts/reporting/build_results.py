@@ -1328,10 +1328,18 @@ def archive_legacy_figures() -> None:
         "fig12_learning_curves_h1h4.png",
         "fig12b_bc_and_rl_losses_separate.png",
         "fig13_rl_effect_h2_h4.png",
-        "fig14_reward_dynamics_unavailable.png",
         "fig15_bc_vs_rl_ablation.png",
         "fig16_hierarchical_policy.png",
         "fig17_history_deepsets_contribution.png",
+        # RQ3 / RQ4 main-paper figures
+        "fig_main02_nonlinear_vs_linear_curves.png",
+        "fig_main03_linear_plan_true_feasibility.png",
+        "fig_main03b_paired_charging_time_deltas.png",
+        "fig_main03c_e2e_true_feasibility.png",
+        "fig_main03d_schedule_comparison_example.png",
+        "fig_main04_objective_decomposition_nl.png",
+        "fig_main07_reward_dynamics.png",
+        "fig_main07b_bc_vs_rl_official.png",
     }
     for path in list(FIGURES.iterdir()):
         if path.name in keep:
@@ -1380,6 +1388,9 @@ def main() -> None:
     from learning_presentation import build_all_learning
 
     build_all_learning()
+    from charging_and_reward_figures import main as build_charging_and_reward
+
+    build_charging_and_reward()
     write_index()
     checkpoint_manifest()
     dataset_hashes()

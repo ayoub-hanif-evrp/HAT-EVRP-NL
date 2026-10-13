@@ -1,0 +1,25 @@
+experiment,size,charging_model,method,n_instances,feasible_under_planner,feasible_under_true_physics,duration_violations,mean_true_charging_h_feasible_only,mean_full_h_true_feasible_only,mean_energy_kwh_feasible_only,mean_n_charges_feasible_only,note
+fixed_route,10,LINEAR-EARLY-RATE,plan_LINEAR-EARLY-RATE,20,20,16,4,1.8524776485990242,20.36098230640949,26.567936335710503,3.4375,feasible-only means exclude infeasible; do not rank by them when feas rates differ
+fixed_route,10,LINEAR-EARLY-RATE,repair_TRUE-NL_after_LINEAR-EARLY-RATE,20,20,20,0,1.519579224347648,20.403061434950576,28.24978486065413,3.6,feasible-only means exclude infeasible; do not rank by them when feas rates differ
+fixed_route,10,LINEAR-SECANT,plan_LINEAR-SECANT,20,17,16,1,1.8524776485990242,20.36098230640949,26.567936335710503,3.4375,feasible-only means exclude infeasible; do not rank by them when feas rates differ
+fixed_route,10,LINEAR-SECANT,repair_TRUE-NL_after_LINEAR-SECANT,20,20,20,0,1.519579224347648,20.403061434950576,28.24978486065413,3.6,feasible-only means exclude infeasible; do not rank by them when feas rates differ
+fixed_route,10,TRUE-NL,plan_TRUE-NL,20,20,20,0,1.519579224347648,20.403061434950576,28.24978486065413,3.6,feasible-only means exclude infeasible; do not rank by them when feas rates differ
+fixed_route,20,LINEAR-EARLY-RATE,plan_LINEAR-EARLY-RATE,20,16,12,4,1.5865838490123314,30.10087908915794,31.663431843854784,4.583333333333333,feasible-only means exclude infeasible; do not rank by them when feas rates differ
+fixed_route,20,LINEAR-EARLY-RATE,repair_TRUE-NL_after_LINEAR-EARLY-RATE,20,20,20,0,1.606501095604758,31.589608997192254,37.83124350659986,5.25,feasible-only means exclude infeasible; do not rank by them when feas rates differ
+fixed_route,20,LINEAR-SECANT,plan_LINEAR-SECANT,20,12,12,0,1.5835118541350253,30.10130703573513,31.68093155112726,4.583333333333333,feasible-only means exclude infeasible; do not rank by them when feas rates differ
+fixed_route,20,LINEAR-SECANT,repair_TRUE-NL_after_LINEAR-SECANT,20,20,20,0,1.606501095604758,31.589608997192254,37.83124350659986,5.25,feasible-only means exclude infeasible; do not rank by them when feas rates differ
+fixed_route,20,TRUE-NL,plan_TRUE-NL,20,20,20,0,1.606501095604758,31.589608997192254,37.83124350659986,5.25,feasible-only means exclude infeasible; do not rank by them when feas rates differ
+fixed_route,40,LINEAR-EARLY-RATE,plan_LINEAR-EARLY-RATE,20,20,11,9,2.5150038655730724,49.81379715203005,34.42951308761031,7.818181818181818,feasible-only means exclude infeasible; do not rank by them when feas rates differ
+fixed_route,40,LINEAR-EARLY-RATE,repair_TRUE-NL_after_LINEAR-EARLY-RATE,20,20,20,0,3.0265421344175047,57.11328887600024,59.2560923050393,9.8,feasible-only means exclude infeasible; do not rank by them when feas rates differ
+fixed_route,40,LINEAR-SECANT,plan_LINEAR-SECANT,20,12,11,1,2.5150038655730724,49.81379715203005,34.42951308761031,7.818181818181818,feasible-only means exclude infeasible; do not rank by them when feas rates differ
+fixed_route,40,LINEAR-SECANT,repair_TRUE-NL_after_LINEAR-SECANT,20,20,20,0,3.0265421344175047,57.11328887600024,59.2560923050393,9.8,feasible-only means exclude infeasible; do not rank by them when feas rates differ
+fixed_route,40,TRUE-NL,plan_TRUE-NL,20,20,20,0,3.0265421344175047,57.11328887600024,59.2560923050393,9.8,feasible-only means exclude infeasible; do not rank by them when feas rates differ
+end_to_end,10,LINEAR-EARLY-RATE,e2e,20,20,15,5,1.5967219945824782,21.488387211186254,28.389312307170034,3.6,feasible-only means exclude infeasible; do not rank by them when feas rates differ
+end_to_end,10,LINEAR-SECANT,e2e,20,20,19,1,2.220990030707061,23.019204427142505,30.541161364508866,4.0,feasible-only means exclude infeasible; do not rank by them when feas rates differ
+end_to_end,10,TRUE-NL,e2e,20,20,20,0,1.675622871682192,21.844411635860418,29.816528734106193,4.0,feasible-only means exclude infeasible; do not rank by them when feas rates differ
+end_to_end,20,LINEAR-EARLY-RATE,e2e,20,20,17,3,2.078301035556217,35.14001529079013,45.579207836784114,5.647058823529412,feasible-only means exclude infeasible; do not rank by them when feas rates differ
+end_to_end,20,LINEAR-SECANT,e2e,20,20,19,1,2.1426544506864458,35.41654456557777,45.447648567603565,5.7894736842105265,feasible-only means exclude infeasible; do not rank by them when feas rates differ
+end_to_end,20,TRUE-NL,e2e,20,20,20,0,1.7618625862166417,33.70797862633661,41.55486829408941,6.0,feasible-only means exclude infeasible; do not rank by them when feas rates differ
+end_to_end,40,LINEAR-EARLY-RATE,e2e,20,20,9,11,3.060933558358066,57.13028731065098,59.42500021277218,9.222222222222221,feasible-only means exclude infeasible; do not rank by them when feas rates differ
+end_to_end,40,LINEAR-SECANT,e2e,20,19,11,8,4.442215554824364,64.03267492831812,76.65266805490229,11.0,feasible-only means exclude infeasible; do not rank by them when feas rates differ
+end_to_end,40,TRUE-NL,e2e,20,20,20,0,3.3864552148649714,59.717249907189924,67.35575153465412,10.75,feasible-only means exclude infeasible; do not rank by them when feas rates differ

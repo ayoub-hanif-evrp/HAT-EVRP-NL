@@ -133,8 +133,9 @@ All-infeasible repair batches can produce near-zero advantages and little learni
 Rewards were **not** changed in this presentation task.
 
 Historical Cycle-3 CSVs **do not** store sampled reward distributions; do not
-invent them from validation objectives. Future RL rows may include diagnostic
-fields (`mean_sampled_reward`, `baseline_reward`, …) added in `train.py`.
+invent them from validation objectives. Controlled RQ4 runs write per-step
+`reward_*.csv` with `mean_sampled_reward`, `baseline_reward`, `mean_advantage`,
+rollout feasibility, grad norm, etc. (`results/raw/reward_learning/`).
 
 ## 5. What Cycle-3 logs show (seed 42 example)
 
@@ -149,8 +150,19 @@ to ≈31 h). Checkpoint selection keeps the best validation score, so **deployed
 H4 Cycle-3 weights are BC-selected**. H2 seed 42’s RL endpoint is better than
 BC-best, but that is not a robust multi-seed finding.
 
-**Conclusion:** Cycle-3 does **not** support claiming that RL improves HAT-EVRP-NL
-(H4), nor a general claim that RL reliably improves H2.
+**Conclusion:** Cycle-3 synthetic-val endpoints do **not** support claiming that RL
+improves deployed HAT-EVRP-NL (H4), nor a general claim that RL reliably improves H2.
+
+### Controlled RQ4 (separate; does not overwrite Cycle-3)
+
+Fresh `*_bc_only_rq4.pt` → 40-step REINFORCE → `*_rl_from_bc_rq4.pt`, evaluated
+construction-only on official n=10:
+
+- H2: RL better on **1/3** seeds (mean BC 22.157 h vs RL 22.880 h).
+- H4: RL better on **3/3** seeds (mean BC 22.477 h vs RL 21.636 h).
+
+These numbers are **not** Cycle-3 fair-LS quality. See
+`results/REWARD_AND_LEARNING_STUDY.md`.
 
 ## 6. Training size vs evaluation size
 
@@ -169,7 +181,11 @@ They are **not** the Cycle-3 primary story and must be labeled separately.
 python train.py --model H2 --size 10 --steps 400 --rl-steps 40 \
   --train-instances 120 --val-instances 12 --eval-every 40 --seed 42 --version c3
 
-# Derive learning tables/figures
+# Controlled BC vs RL (does not overwrite *_c3.pt)
+python scripts/experiments/run_bc_rl_controlled.py --stage all --models H2,H4 --seeds 42,43,44
+
+# Derive learning / charging tables/figures
 python scripts/reporting/analyze_training_logs.py
+python scripts/reporting/charging_and_reward_figures.py
 python scripts/reporting/build_results.py --all --skip-decomp
 ```

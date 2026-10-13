@@ -1,0 +1,4 @@
+station_type,model,definition,breakpoints_t,breakpoints_e_wh,constant_rate_wh_per_h,note
+fast,TRUE-NL,piecewise-linear Montoya F_s(q),0.0;0.31;0.39;0.51,0.0;13600.0;15200.0;16000.0,,ground-truth XML curve
+fast,LINEAR-SECANT,secant 0→Q,0.0;0.51,0.0;16000.0,31372.549020,chord average empty→full
+fast,LINEAR-EARLY-RATE,first-segment rate extrapolated to Q,0.0;0.36470588235294116,0.0;16000.0,43870.967742,optimistic vs concave high-SOC region

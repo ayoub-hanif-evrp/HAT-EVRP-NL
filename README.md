@@ -70,6 +70,30 @@ python evaluate.py --mode compare --size 10 --limit 20 --samples 10 --seed 42 \
 python scripts/experiments/run_regression_recovery.py --stage pipeline
 ```
 
+## Research questions
+
+1. **RQ1** — Does causal route history improve over state-only neural routing?
+2. **RQ2** — Does DeepSets improve upon the history Transformer?
+3. **RQ3** — Does nonlinear charging matter vs linear surrogates under true physics?
+4. **RQ4** — Does REINFORCE improve upon behavior cloning?
+
+## Nonlinear charging study (RQ3)
+
+```bash
+python scripts/experiments/run_nonlinear_charging_study.py --stage all
+python scripts/reporting/charging_and_reward_figures.py
+```
+
+Report: [`results/NONLINEAR_CHARGING_STUDY.md`](results/NONLINEAR_CHARGING_STUDY.md) · Table: [`results/tables/table15_nonlinear_vs_linear_charging.md`](results/tables/table15_nonlinear_vs_linear_charging.md)
+
+## Controlled BC vs RL (RQ4; does not overwrite Cycle-3)
+
+```bash
+python scripts/experiments/run_bc_rl_controlled.py --stage all --models H2,H4 --seeds 42,43,44
+```
+
+Report: [`results/REWARD_AND_LEARNING_STUDY.md`](results/REWARD_AND_LEARNING_STUDY.md)
+
 ## Generate all figures and tables
 
 ```bash
@@ -81,6 +105,7 @@ Outputs:
 - [`results/README.md`](results/README.md) — definitive results index
 - [`results/figures/`](results/figures/) — publication PNGs
 - [`results/tables/`](results/tables/) — publication Markdown tables
+- [`paper_draft.md`](paper_draft.md) — manuscript structured around RQ1–RQ4
 
 ## Current strongest supported results
 
@@ -129,16 +154,16 @@ paper_draft.md
 
 ## Learning note
 
-Cycle-3 uses **400 BC + 40 standard REINFORCE** steps on synthetic n=10. RL endpoints beat best-BC on only **1/3 H2 seeds** and **0/3 H4 seeds**; **H4’s RL stage is unstable** and deployed H4 retains BC weights. Do **not** claim RL improves HAT-EVRP-NL without a controlled BC-vs-RL weight comparison. Details: [`docs/TRAINING_AND_REWARD_METHODOLOGY.md`](docs/TRAINING_AND_REWARD_METHODOLOGY.md), [`results/LEARNING_RESULTS_REPORT.md`](results/LEARNING_RESULTS_REPORT.md).
+Cycle-3 uses **400 BC + 40 standard REINFORCE** on synthetic n=10. Historical synthetic-val RL endpoints beat best-BC on **1/3 H2** and **0/3 H4** seeds; deployed H4 often retains BC-selected weights. A separate controlled RQ4 bake-off (construction-only official n=10) shows H4 RL improving on 3/3 seeds and H2 on 1/3 — protocol-dependent, not a claim that RL always helps deployed Cycle-3 H4. Details: [`docs/TRAINING_AND_REWARD_METHODOLOGY.md`](docs/TRAINING_AND_REWARD_METHODOLOGY.md), [`results/REWARD_AND_LEARNING_STUDY.md`](results/REWARD_AND_LEARNING_STUDY.md).
 
 ## Documents
 
 | Document | Role |
 |---|---|
-| [`paper_draft.md`](paper_draft.md) | Manuscript draft |
-| [`results/README.md`](results/README.md) | Current vs historical results index |
-| [`results/LEARNING_RESULTS_REPORT.md`](results/LEARNING_RESULTS_REPORT.md) | BC/RL learning evidence |
+| [`paper_draft.md`](paper_draft.md) | Manuscript (RQ1–RQ4) |
+| [`results/NONLINEAR_CHARGING_STUDY.md`](results/NONLINEAR_CHARGING_STUDY.md) | Linear vs nonlinear under true physics |
+| [`results/REWARD_AND_LEARNING_STUDY.md`](results/REWARD_AND_LEARNING_STUDY.md) | BC/RL + reward logs |
+| [`results/README.md`](results/README.md) | Results index |
 | [`docs/TRAINING_AND_REWARD_METHODOLOGY.md`](docs/TRAINING_AND_REWARD_METHODOLOGY.md) | Training + reward specification |
 | [`results/FINAL_REPORT.md`](results/FINAL_REPORT.md) | Cycle-3 baseline tables |
 | [`results/REGRESSION_RECOVERY_REPORT.md`](results/REGRESSION_RECOVERY_REPORT.md) | n40 recovery audit |
-| [`docs/CLEANUP_AUDIT.md`](docs/CLEANUP_AUDIT.md) | Cleanup / retention audit |
