@@ -1,0 +1,5 @@
+model,n_seeds,mean_bc_best_val_h,std_bc_best_val_h,mean_rl_end_val_h,std_rl_end_val_h,mean_rl_minus_bc_best_h,std_rl_minus_bc_best_h,seeds_rl_improved,seeds_deployed_from_bc,seeds_deployed_from_rl,protocol,reward_traces
+H1,3,15.546417935437473,1.7421534921755186,17.85342566903369,3.768204930263521,2.3070077335962185,2.5763438405911967,0,3,0,"Cycle-3 synthetic validation (n=10, 12 val instances); log-based",unavailable in historical logs
+H2,3,15.423484035444698,1.671766099552848,22.08447245938945,12.454623760763196,6.660988423944751,11.144958504160211,1,2,1,"Cycle-3 synthetic validation (n=10, 12 val instances); log-based",unavailable in historical logs
+H3,3,15.616846441908425,1.869361073230959,22.06318430297024,7.735991075390304,6.4463378610618145,9.451240805323778,0,3,0,"Cycle-3 synthetic validation (n=10, 12 val instances); log-based",unavailable in historical logs
+H4,3,15.432471151365965,1.7458923181932369,26.401290854891652,7.511269929241063,10.968819703525687,8.919850237104589,0,3,0,"Cycle-3 synthetic validation (n=10, 12 val instances); log-based",unavailable in historical logs

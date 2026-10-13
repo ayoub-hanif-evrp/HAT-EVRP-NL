@@ -116,12 +116,29 @@ docs/CLEANUP_AUDIT.md
 paper_draft.md
 ```
 
+## Method display names
+
+| Key | Name |
+|---|---|
+| H0 | Randomized Greedy Routing |
+| H0_strong | Randomized Greedy + Local Search |
+| H1 | State-Only Hierarchical Pointer |
+| H2 | History Transformer Routing |
+| H3 | DeepSets Fleet Routing |
+| H4 | History Transformer + DeepSets (HAT-EVRP-NL) |
+
+## Learning note
+
+Cycle-3 uses **400 BC + 40 standard REINFORCE** steps on synthetic n=10. RL endpoints beat best-BC on only **1/3 H2 seeds** and **0/3 H4 seeds**; **H4’s RL stage is unstable** and deployed H4 retains BC weights. Do **not** claim RL improves HAT-EVRP-NL without a controlled BC-vs-RL weight comparison. Details: [`docs/TRAINING_AND_REWARD_METHODOLOGY.md`](docs/TRAINING_AND_REWARD_METHODOLOGY.md), [`results/LEARNING_RESULTS_REPORT.md`](results/LEARNING_RESULTS_REPORT.md).
+
 ## Documents
 
 | Document | Role |
 |---|---|
 | [`paper_draft.md`](paper_draft.md) | Manuscript draft |
 | [`results/README.md`](results/README.md) | Current vs historical results index |
+| [`results/LEARNING_RESULTS_REPORT.md`](results/LEARNING_RESULTS_REPORT.md) | BC/RL learning evidence |
+| [`docs/TRAINING_AND_REWARD_METHODOLOGY.md`](docs/TRAINING_AND_REWARD_METHODOLOGY.md) | Training + reward specification |
 | [`results/FINAL_REPORT.md`](results/FINAL_REPORT.md) | Cycle-3 baseline tables |
 | [`results/REGRESSION_RECOVERY_REPORT.md`](results/REGRESSION_RECOVERY_REPORT.md) | n40 recovery audit |
 | [`docs/CLEANUP_AUDIT.md`](docs/CLEANUP_AUDIT.md) | Cleanup / retention audit |

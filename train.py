@@ -1834,10 +1834,27 @@ def train_model(args: argparse.Namespace) -> None:
                 optimizer.zero_grad()
                 rl_loss = -advantage * sampled["log_prob"]
                 rl_loss.backward()
-                torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                grad_norm = float(
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                )
                 optimizer.step()
             else:
                 rl_loss = torch.tensor(0.0)
+                grad_norm = 0.0
+                advantage = 0.0
+            # Lightweight reward diagnostics for future controlled runs (not
+            # back-filled into historical Cycle-3 logs).
+            reward_diag = {
+                "mean_sampled_reward": sampled_reward,
+                "baseline_reward": greedy_reward,
+                "mean_advantage": advantage,
+                "sampled_full_h": sampled["objective"] if sampled["feasible"] else "",
+                "rollout_feasible": int(bool(sampled["feasible"])),
+                "n_infeasible_rollouts": int(not sampled["feasible"]),
+                "grad_norm": grad_norm,
+                "learning_rate": float(args.lr),
+                "reward_config": "R=-Z_full else -100; baseline=greedy",
+            }
         if rl_step == args.rl_steps or (
             args.eval_every > 0 and rl_step % args.eval_every == 0
         ):
@@ -1860,6 +1877,8 @@ def train_model(args: argparse.Namespace) -> None:
                 "greedy0_objective": metrics["greedy0_objective"],
                 "val_cost_lambda": metrics["val_cost_lambda"],
             }
+            if pomo_k <= 0:
+                row.update(reward_diag)
             rows.append(row)
             print(row)
             score = (row["feasible_rate"], -row["validation_objective"])

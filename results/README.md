@@ -34,6 +34,14 @@ This directory separates **presentation** (`figures/`, `tables/`) from **evidenc
 - [`figures/fig08_search_ablation_n40_recovered.png`](figures/fig08_search_ablation_n40_recovered.png)
 - [`figures/fig09_h2_vs_h4_n40_hybrid.png`](figures/fig09_h2_vs_h4_n40_hybrid.png)
 - [`figures/fig10_charging_ablation_feasibility.png`](figures/fig10_charging_ablation_feasibility.png)
+- [`figures/fig11_training_supervision_flow.png`](figures/fig11_training_supervision_flow.png)
+- [`figures/fig12_learning_curves_h1h4.png`](figures/fig12_learning_curves_h1h4.png)
+- [`figures/fig12b_bc_and_rl_losses_separate.png`](figures/fig12b_bc_and_rl_losses_separate.png)
+- [`figures/fig13_rl_effect_h2_h4.png`](figures/fig13_rl_effect_h2_h4.png)
+- [`figures/fig14_reward_dynamics_unavailable.png`](figures/fig14_reward_dynamics_unavailable.png)
+- [`figures/fig15_bc_vs_rl_ablation.png`](figures/fig15_bc_vs_rl_ablation.png)
+- [`figures/fig16_hierarchical_policy.png`](figures/fig16_hierarchical_policy.png)
+- [`figures/fig17_history_deepsets_contribution.png`](figures/fig17_history_deepsets_contribution.png)
 
 ## Tables (Markdown)
 
@@ -46,6 +54,11 @@ This directory separates **presentation** (`figures/`, `tables/`) from **evidenc
 - [`tables/table07_charging_analysis.md`](tables/table07_charging_analysis.md)
 - [`tables/table08_bks_comparison.md`](tables/table08_bks_comparison.md)
 - [`tables/table09_reproducibility.md`](tables/table09_reproducibility.md)
+- [`tables/table10_training_configuration.md`](tables/table10_training_configuration.md)
+- [`tables/table11_reward_functions.md`](tables/table11_reward_functions.md)
+- [`tables/table12_bc_vs_rl.md`](tables/table12_bc_vs_rl.md)
+- [`tables/table13_training_diagnostics.md`](tables/table13_training_diagnostics.md)
+- [`tables/table14_neural_vs_search_contribution.md`](tables/table14_neural_vs_search_contribution.md)
 
 ## Raw evidence
 
@@ -59,9 +72,11 @@ This directory separates **presentation** (`figures/`, `tables/`) from **evidenc
 - [`REGRESSION_RECOVERY_REPORT.md`](REGRESSION_RECOVERY_REPORT.md)
 - [`FINAL_REPORT.md`](FINAL_REPORT.md) (Cycle-3 baseline)
 - [`INSERTION_REPAIR_REPORT.md`](INSERTION_REPAIR_REPORT.md)
+- [`LEARNING_RESULTS_REPORT.md`](LEARNING_RESULTS_REPORT.md)
+- [`../docs/TRAINING_AND_REWARD_METHODOLOGY.md`](../docs/TRAINING_AND_REWARD_METHODOLOGY.md)
 
 ## Regenerate
 
 ```bash
-python scripts/reporting/build_results.py --all
+python scripts/reporting/build_results.py --all --skip-decomp
 ```

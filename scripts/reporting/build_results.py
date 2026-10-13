@@ -28,6 +28,7 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from presentation_names import method_label, search_label, wrap_label  # noqa: E402
 from reporting_paths import (  # noqa: E402
     ARCHIVE,
     AUTH_N40_DECOMP,
@@ -201,24 +202,72 @@ def _row_objective(row: dict) -> float | None:
 
 def make_main_quality_and_scale() -> None:
     n10 = _find("FINAL_n10_fairls.csv")
-    if n10:
+    # Prefer per-instance multi-seed CSV for uncertainty.
+    paired_paths = [
+        _find(f"compare_size10_fairls_final_seed{s}_c3.csv") for s in (42, 43, 44)
+    ]
+    paired_paths = [p for p in paired_paths if p]
+    if paired_paths:
+        by = defaultdict(list)
+        for path in paired_paths:
+            for r in _read_csv(path):
+                if r.get("objective_h") and r.get("method") in (
+                    "H0_strong",
+                    "H1",
+                    "H2",
+                    "H3",
+                    "H4",
+                ):
+                    by[r["method"]].append(float(r["objective_h"]))
+        methods = [m for m in ("H0_strong", "H1", "H2", "H3", "H4") if m in by]
+        means = [_mean(by[m]) for m in methods]
+        # Layout-aware SE approximation: std over 60 instance-seeds / sqrt(n)
+        errs = [
+            (statistics.stdev(by[m]) / math.sqrt(len(by[m]))) if len(by[m]) > 1 else 0.0
+            for m in methods
+        ]
+        if methods:
+            fig, ax = plt.subplots(figsize=(8.8, 5.0))
+            y = np.arange(len(methods))
+            ax.errorbar(means, y, xerr=errs, fmt="o", color="#4c78a8", capsize=3, ms=8)
+            ax.set_yticks(y)
+            ax.set_yticklabels(
+                [wrap_label(method_label(m, short=True), 28) for m in methods],
+                fontsize=8,
+            )
+            ax.set_xlabel("Mean full duration (h) ± SE over instance-seeds")
+            ax.set_title(
+                "n=10 fair-LS Cycle-3 — matched best-of-10 + one-shot basic LS "
+                "(20 instances × 3 seeds)"
+            )
+            ax.grid(True, axis="x", alpha=0.3)
+            lo = min(means) - 0.4
+            ax.set_xlim(lo, max(means) + 0.4)
+            fig_save(FIGURES / "fig06_main_benchmark_n10_fairls.png")
+    elif n10:
         rows = _read_csv(n10)
-        methods = []
-        means = []
+        methods, means = [], []
         for m in ("H0_strong", "H1", "H2", "H3", "H4"):
             match = [r for r in rows if r.get("method") == m]
             if match and _row_objective(match[0]) is not None:
                 methods.append(m)
                 means.append(_row_objective(match[0]))
         if methods:
-            fig, ax = plt.subplots(figsize=(7.2, 4.2))
-            ax.bar(methods, means, color="#4c78a8")
-            ax.set_ylabel("Mean full duration (h)")
+            fig, ax = plt.subplots(figsize=(8.5, 4.5))
+            y = np.arange(len(methods))
+            ax.plot(means, y, "o", color="#4c78a8", ms=9)
+            ax.set_yticks(y)
+            ax.set_yticklabels(
+                [wrap_label(method_label(m, short=True), 28) for m in methods],
+                fontsize=8,
+            )
+            ax.set_xlabel("Mean full duration (h)")
             ax.set_title("n=10 fair-LS Cycle-3 (matched protocol)")
-            ax.grid(True, axis="y", alpha=0.3)
+            ax.grid(True, axis="x", alpha=0.3)
             fig_save(FIGURES / "fig06_main_benchmark_n10_fairls.png")
 
     size_means = {"H2": {}, "H4": {}}
+    size_n = {}
     for size, name in (
         (10, "FINAL_n10_fairls.csv"),
         (20, "FINAL_n20_fairls.csv"),
@@ -233,17 +282,36 @@ def make_main_quality_and_scale() -> None:
             match = [r for r in rows if r.get("method") == method]
             if match and _row_objective(match[0]) is not None:
                 size_means[method][size] = _row_objective(match[0])
+                size_n[size] = match[0].get("feasible", "")
     sizes = sorted(set(size_means["H2"]) | set(size_means["H4"]))
     if sizes:
-        fig, ax = plt.subplots(figsize=(7.2, 4.2))
+        fig, ax = plt.subplots(figsize=(7.5, 4.4))
         for method, style in (("H2", "o-"), ("H4", "s-")):
             xs = [s for s in sizes if s in size_means[method]]
             ys = [size_means[method][s] for s in xs]
-            ax.plot(xs, ys, style, label=f"{method} fair-LS")
-        ax.set_xlabel("Customers (test size; checkpoints trained at n=10)")
+            ax.plot(
+                xs,
+                ys,
+                style,
+                label=method_label(method, short=True),
+            )
+        for s in sizes:
+            note = size_n.get(s, "")
+            ax.annotate(
+                str(note),
+                (s, size_means["H2"].get(s, size_means["H4"].get(s, 0))),
+                textcoords="offset points",
+                xytext=(0, 8),
+                ha="center",
+                fontsize=7,
+                color="#666",
+            )
+        ax.set_xlabel("Evaluation customers (training size fixed at n=10)")
         ax.set_ylabel("Mean full duration (h)")
-        ax.set_title("Scaling under Cycle-3 fair-LS transfer")
-        ax.legend()
+        ax.set_title(
+            "Scaling under Cycle-3 fair-LS transfer (annotate feasible counts; n=80 is 3 instances)"
+        )
+        ax.legend(fontsize=8)
         ax.grid(True, alpha=0.3)
         fig_save(FIGURES / "fig07_scaling_fairls.png")
 
@@ -254,43 +322,84 @@ def make_search_and_h2h4() -> None:
         return
     rows = _read_csv(pipe)
     stages = ["basic_ls", "strong_ls", "classical_ruin", "neural_insert", "hybrid_insert"]
-    fig, ax = plt.subplots(figsize=(8.2, 4.6))
+    # Dual panel: quality + oracle executions
+    fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(11.5, 4.8))
     x = np.arange(len(stages))
     width = 0.35
     for i, method in enumerate(("H2", "H4")):
-        means = []
+        means, execs = [], []
         for stage in stages:
-            objs = [
-                float(r["objective_h"])
+            group = [
+                r
                 for r in rows
                 if r["method"] == method and r["stage"] == stage and r["feasible"] == "1"
             ]
-            means.append(_mean(objs))
-        ax.bar(x + (i - 0.5) * width, means, width, label=method)
-    ax.set_xticks(x)
-    ax.set_xticklabels(stages, rotation=20, ha="right")
-    ax.set_ylabel("Mean full duration (h)")
-    ax.set_title("n=40 recovered ordinary λ=0 starts (matched; unequal search compute)")
-    ax.legend()
-    ax.grid(True, axis="y", alpha=0.3)
+            means.append(_mean([float(r["objective_h"]) for r in group]))
+            execs.append(
+                _mean(
+                    [
+                        float(r["oracle_solver_executions"])
+                        for r in group
+                        if r.get("oracle_solver_executions") not in ("", None)
+                    ]
+                )
+            )
+        ax0.bar(x + (i - 0.5) * width, means, width, label=method_label(method, short=True))
+        ax1.bar(x + (i - 0.5) * width, execs, width, label=method_label(method, short=True))
+    labels = [wrap_label(search_label(s, short=True), 16) for s in stages]
+    for ax, ylab, title in (
+        (ax0, "Mean full duration (h)", "Solution quality"),
+        (ax1, "Mean frvcpy solver executions", "Compute cost (unequal)"),
+    ):
+        ax.set_xticks(x)
+        ax.set_xticklabels(labels, rotation=25, ha="right", fontsize=7)
+        ax.set_ylabel(ylab)
+        ax.set_title(title)
+        ax.legend(fontsize=7)
+        ax.grid(True, axis="y", alpha=0.3)
+    fig.suptitle(
+        "n=40 recovered ordinary λ=0 starts — matched starts, unequal realized search compute",
+        fontsize=11,
+    )
     fig_save(FIGURES / "fig08_search_ablation_n40_recovered.png")
 
     by_inst = defaultdict(dict)
     for r in rows:
         if r["stage"] == "hybrid_insert" and r["feasible"] == "1":
             by_inst[r["instance"]][r["method"]] = float(r["objective_h"])
-    paired = [d["H4"] - d["H2"] for d in by_inst.values() if "H2" in d and "H4" in d]
+    paired = [
+        (inst, d["H2"], d["H4"], d["H4"] - d["H2"])
+        for inst, d in sorted(by_inst.items())
+        if "H2" in d and "H4" in d
+    ]
     if paired:
-        fig, ax = plt.subplots(figsize=(6.8, 4.2))
-        ax.hist(paired, bins=10, color="#59a14f", edgecolor="white")
+        deltas = [d for *_, d in paired]
+        fig, ax = plt.subplots(figsize=(8.2, 4.5))
+        ax.errorbar(
+            [_mean(deltas)],
+            [0],
+            xerr=[statistics.stdev(deltas) / math.sqrt(len(deltas))],
+            fmt="o",
+            color="#e15759",
+            capsize=4,
+            ms=8,
+            label="mean H4−H2 ± SE",
+        )
+        ax.scatter(deltas, np.linspace(-0.3, 0.3, len(deltas)), alpha=0.55, s=28, color="#59a14f")
         ax.axvline(0, color="black", lw=1)
-        ax.axvline(_mean(paired), color="#e15759", ls="--", label=f"mean={_mean(paired):.3f}")
-        wins = sum(1 for d in paired if d < -1e-9)
-        losses = sum(1 for d in paired if d > 1e-9)
-        ties = len(paired) - wins - losses
-        ax.set_xlabel("H4 − H2 full duration (h)")
-        ax.set_title(f"n=40 hybrid_insert paired (W/T/L = {wins}/{ties}/{losses})")
-        ax.legend()
+        wins = sum(1 for d in deltas if d < -1e-9)
+        losses = sum(1 for d in deltas if d > 1e-9)
+        ties = len(deltas) - wins - losses
+        ax.set_yticks([])
+        ax.set_xlabel(
+            "Full duration difference (h): History+DeepSets (H4) − History (H2)"
+        )
+        ax.set_title(
+            f"n=40 Classical+Neural Insertion — paired (W/T/L={wins}/{ties}/{losses}); "
+            f"single seed 42; exploratory"
+        )
+        ax.legend(fontsize=8)
+        ax.grid(True, axis="x", alpha=0.3)
         fig_save(FIGURES / "fig09_h2_vs_h4_n40_hybrid.png")
 
 
@@ -343,7 +452,7 @@ def make_objective_decomposition_figure(decomp_rows: list[dict]) -> None:
     bottom2 = [a + b for a, b in zip(travel, service)]
     ax.bar(x, charge, bottom=bottom2, label="Nonlinear charging", color="#59a14f")
     ax.set_xticks(x)
-    ax.set_xticklabels(methods)
+    ax.set_xticklabels([wrap_label(method_label(m, short=True), 18) for m in methods], fontsize=8)
     ax.set_ylabel("Mean hours")
     ax.set_title(title)
     ax.legend()
@@ -670,33 +779,64 @@ def build_tables(decomp_rows: list[dict]) -> None:
     from data import instance_files, parse_instance
 
     files = instance_files(DATASET)
-    counts = Counter(len(parse_instance(p).customers) for p in files)
+    by_n: dict[int, list] = defaultdict(list)
+    for path in files:
+        inst = parse_instance(path)
+        by_n[len(inst.customers)].append(inst)
     sample = parse_instance(files[0])
+    # Derive speed/consumption from travel/energy if available via notes (40 km/h, 125 Wh/km).
+    table01_rows = []
+    for n in sorted(by_n):
+        insts = by_n[n]
+        n_stations = [sum(1 for node in i.nodes if node.kind == 2) for i in insts]
+        families = sorted({i.name[:3] for i in insts})
+        charger_types = sorted({t for i in insts for t in i.curves})
+        svc = [
+            sum(i.service_times[c] for c in i.customers) / max(1, len(i.customers))
+            for i in insts
+        ]
+        table01_rows.append(
+            [
+                n,
+                len(insts),
+                f"{min(n_stations)}–{max(n_stations)}",
+                ",".join(families),
+                ",".join(charger_types),
+                "40 km/h (Montoya)",
+                "125 Wh/km (Montoya)",
+                f"{sample.battery_wh/1000:.1f}",
+                f"{sample.max_route_hours:.1f}",
+                f"{_mean(svc):.2f}",
+            ]
+        )
     write_table(
         "table01_benchmark_overview.md",
         "Montoya E-VRP-NL benchmark overview",
         {
             "objective": "Full = travel+service+nonlinear charging; lit = travel+charging",
-            "units": "hours / Wh",
+            "units": "hours / Wh / km/h",
             "size": "10–320 customers",
-            "n_instances": sum(counts.values()),
+            "n_instances": sum(len(v) for v in by_n.values()),
             "methods": "dataset only",
             "protocol": "official XML (read-only)",
             "seeds": "n/a",
             "source": "dataset/montoya-et-al-2017",
         },
-        ["n_customers", "n_instances", "battery_kWh", "Tmax_h", "note"],
         [
-            [
-                n,
-                counts[n],
-                f"{sample.battery_wh/1000:.1f}",
-                f"{sample.max_route_hours:.1f}",
-                "layouts/stations vary by family",
-            ]
-            for n in sorted(counts)
+            "Customers",
+            "Instances",
+            "Stations (range)",
+            "Layout families",
+            "Charger types",
+            "Speed",
+            "Consumption",
+            "Battery kWh",
+            "Route limit h",
+            "Mean service h/cust",
         ],
-        "Official Montoya testbed retained read-only. Station counts and charger mixes vary by tc0/tc1/tc2 families.",
+        table01_rows,
+        "Official Montoya testbed retained read-only. Speed/consumption follow the published "
+        "Montoya parameterization used by the XML instances.",
     )
 
     n10 = _find("FINAL_n10_fairls.csv")
@@ -708,7 +848,13 @@ def build_tables(decomp_rows: list[dict]) -> None:
             if match and _row_objective(match[0]) is not None:
                 feas = match[0].get("feasible", "60/60")
                 table_rows.append(
-                    [m, f"{_row_objective(match[0]):.4f}", feas, "Cycle-3 fair-LS"]
+                    [
+                        method_label(m, short=True),
+                        m,
+                        f"{_row_objective(match[0]):.4f}",
+                        feas,
+                        "Cycle-3 fair-LS",
+                    ]
                 )
         write_table(
             "table03_main_models.md",
@@ -717,15 +863,17 @@ def build_tables(decomp_rows: list[dict]) -> None:
                 "objective": "Full duration (travel+service+charging)",
                 "units": "hours",
                 "size": 10,
-                "n_instances": 20,
+                "n_instances": "20 instances × up to 3 seeds (see feasible column)",
                 "methods": "H0–H4 Cycle-3 n10 checkpoints",
                 "protocol": "best-of-10 constructions + one-shot basic LS",
                 "seeds": "42–44 aggregated where present",
                 "source": str(n10.relative_to(ROOT)).replace("\\", "/"),
             },
-            ["Method", "Mean full h", "Feasible", "Protocol"],
+            ["Display name", "Key", "Mean full h", "Feasible", "Protocol"],
             table_rows,
-            "H2 is the strongest efficient neural ablation; H4 is the full DeepSets architecture. Do not mix with hybrid-search rows.",
+            "History Transformer Routing (H2) is the strongest efficient neural ablation under "
+            "matched fair-LS; HAT-EVRP-NL (H4) is the full architecture without a consistent "
+            "multi-seed DeepSets win. Do not mix with hybrid-search rows.",
         )
 
     pipe = _find("RECOVERY_n40_recovered_pipeline.csv")
@@ -740,7 +888,16 @@ def build_tables(decomp_rows: list[dict]) -> None:
                     if r["method"] == method and r["stage"] == stage and r["feasible"] == "1"
                 ]
                 if objs:
-                    table_rows.append([method, stage, f"{_mean(objs):.4f}", len(objs)])
+                    table_rows.append(
+                        [
+                            method_label(method, short=True),
+                            method,
+                            search_label(stage, short=True),
+                            stage,
+                            f"{_mean(objs):.4f}",
+                            len(objs),
+                        ]
+                    )
         write_table(
             "table04_search_ablation.md",
             "Search ablation on recovered n=40 constructions",
@@ -749,14 +906,15 @@ def build_tables(decomp_rows: list[dict]) -> None:
                 "units": "hours",
                 "size": 40,
                 "n_instances": 20,
-                "methods": "H2/H4 Cycle-3",
+                "methods": "History Transformer (H2) / HAT-EVRP-NL (H4) Cycle-3",
                 "protocol": "ordinary λ=0 starts; matched starts; unequal realized search compute",
                 "seeds": "42",
                 "source": str(pipe.relative_to(ROOT)).replace("\\", "/"),
             },
-            ["Method", "Stage", "Mean full h", "N"],
+            ["Model", "Key", "Search stage", "Stage key", "Mean full h", "N"],
             table_rows,
-            "Hybrid_insert beats historical fair-LS. Not an equal-oracle-budget experiment.",
+            "Classical + Neural Insertion Repair beats historical fair-LS. "
+            "Not an equal-oracle-budget experiment.",
         )
 
         by_inst = defaultdict(dict)
@@ -784,10 +942,16 @@ def build_tables(decomp_rows: list[dict]) -> None:
                 "seeds": "42 (single seed)",
                 "source": str(pipe.relative_to(ROOT)).replace("\\", "/"),
             },
-            ["Instance", "H2 h", "H4 h", "H4−H2"],
+            [
+                "Instance",
+                "History Transformer (H2) h",
+                "HAT-EVRP-NL (H4) h",
+                "H4−H2",
+            ],
             [[a, f"{b:.4f}", f"{c:.4f}", f"{d:+.4f}"] for a, b, c, d in paired],
             f"Wins(H4 better)/ties/losses = {wins}/{ties}/{losses}. "
-            f"Mean H4−H2 = {_mean([d for *_, d in paired]):+.4f} h. Single-seed; not a general DeepSets claim.",
+            f"Mean H4−H2 = {_mean([d for *_, d in paired]):+.4f} h. "
+            "Single-seed recovered hybrid; not a general DeepSets claim.",
         )
 
     hybrid = [
@@ -803,6 +967,7 @@ def build_tables(decomp_rows: list[dict]) -> None:
         for m, group in sorted(by.items()):
             rows_out.append(
                 [
+                    method_label(m, short=True),
                     m,
                     f"{_mean([float(r['travel_h']) for r in group]):.4f}",
                     f"{_mean([float(r['service_h']) for r in group]):.4f}",
@@ -827,7 +992,8 @@ def build_tables(decomp_rows: list[dict]) -> None:
                 "source": "results/raw/regression_recovery/RECOVERY_n40_objective_decomposition.csv",
             },
             [
-                "Method",
+                "Model",
+                "Key",
                 "Travel h",
                 "Service h",
                 "Nonlinear charge h",
@@ -838,7 +1004,8 @@ def build_tables(decomp_rows: list[dict]) -> None:
             ],
             rows_out,
             "Charging hours come from exact F_s(q_out)-F_s(q_in) on validated RoutePlan.stops. "
-            "frvcpy optimizes the fixed-route charging subproblem only.",
+            "frvcpy optimizes the fixed-route charging subproblem only. "
+            "H4’s better full duration is driven mainly by lower travel despite slightly higher mean charging.",
         )
         write_table(
             "table07_charging_analysis.md",
@@ -905,24 +1072,48 @@ def build_tables(decomp_rows: list[dict]) -> None:
     corr = _find("IMPROVEMENT_bks_gaps_corrected.csv")
     if corr and LITERATURE_BKS.exists():
         rows = _read_csv(corr)
-        headers = list(rows[0].keys()) if rows else ["note"]
+        # Summary CSV: one row per method; column `n` = instances per method (typically 20).
+        n_inst = int(float(rows[0]["n"])) if rows and rows[0].get("n") else 20
+        pretty = []
+        for r in rows:
+            key = r.get("method", "")
+            pretty.append(
+                [
+                    method_label(key, short=True),
+                    key,
+                    f"{float(r['mean_gap_lit_pct']):.2f}",
+                    f"{float(r['median_gap_lit_pct']):.2f}",
+                    f"{float(r['mean_gap_full_pct']):.2f}",
+                    f"{float(r['median_gap_full_pct']):.2f}",
+                    int(float(r["n"])),
+                ]
+            )
         write_table(
             "table08_bks_comparison.md",
             "Literature-compatible BKS gaps (corrected service convention)",
             {
-                "objective": "Lit duration = full − Σ service vs Froger Table 13",
-                "units": "% gap / hours",
-                "size": "primarily n=10",
-                "n_instances": str(len(rows)),
-                "methods": "as in source CSV",
-                "protocol": "documented in IMPROVEMENT report",
-                "seeds": "see source",
+                "objective": "Lit gap uses (full − Σ service) vs Froger Table 13 travel+charging BKS",
+                "units": "% gap",
+                "size": "n=10",
+                "n_instances": f"{n_inst} official instances per method "
+                f"({len(rows)} method-summary rows — not {len(rows)} instances)",
+                "methods": ", ".join(r["method"] for r in rows),
+                "protocol": "fair-LS Cycle-3; service-time correction applied",
+                "seeds": "see IMPROVEMENT report / FINAL fair-LS aggregates",
                 "source": str(corr.relative_to(ROOT)).replace("\\", "/"),
             },
-            headers,
-            [list(r.values()) for r in rows[:40]] if rows else [["unavailable"]],
-            "Do not mix full-duration objectives with travel+charging BKS. "
-            "The obsolete ~43% figure used full duration vs lit BKS.",
+            [
+                "Display name",
+                "Key",
+                "Mean lit gap %",
+                "Median lit gap %",
+                "Mean naive gap % (full vs BKS)",
+                "Median naive gap %",
+                "N instances",
+            ],
+            pretty,
+            "Cite **lit gap** columns only. Naive gaps (~43%) wrongly compare full duration to "
+            f"literature BKS. Each row summarizes {n_inst} benchmark instances.",
         )
 
     rows_out = []
@@ -1053,11 +1244,13 @@ def write_index() -> None:
             "- [`REGRESSION_RECOVERY_REPORT.md`](REGRESSION_RECOVERY_REPORT.md)",
             "- [`FINAL_REPORT.md`](FINAL_REPORT.md) (Cycle-3 baseline)",
             "- [`INSERTION_REPAIR_REPORT.md`](INSERTION_REPAIR_REPORT.md)",
+            "- [`LEARNING_RESULTS_REPORT.md`](LEARNING_RESULTS_REPORT.md)",
+            "- [`../docs/TRAINING_AND_REWARD_METHODOLOGY.md`](../docs/TRAINING_AND_REWARD_METHODOLOGY.md)",
             "",
             "## Regenerate",
             "",
             "```bash",
-            "python scripts/reporting/build_results.py --all",
+            "python scripts/reporting/build_results.py --all --skip-decomp",
             "```",
             "",
         ]
@@ -1131,6 +1324,14 @@ def archive_legacy_figures() -> None:
         "fig08_search_ablation_n40_recovered.png",
         "fig09_h2_vs_h4_n40_hybrid.png",
         "fig10_charging_ablation_feasibility.png",
+        "fig11_training_supervision_flow.png",
+        "fig12_learning_curves_h1h4.png",
+        "fig12b_bc_and_rl_losses_separate.png",
+        "fig13_rl_effect_h2_h4.png",
+        "fig14_reward_dynamics_unavailable.png",
+        "fig15_bc_vs_rl_ablation.png",
+        "fig16_hierarchical_policy.png",
+        "fig17_history_deepsets_contribution.png",
     }
     for path in list(FIGURES.iterdir()):
         if path.name in keep:
@@ -1173,6 +1374,12 @@ def main() -> None:
     make_search_and_h2h4()
     make_direct_charge_figure()
     build_tables(decomp_rows)
+    reporting_dir = str(ROOT / "scripts" / "reporting")
+    if reporting_dir not in sys.path:
+        sys.path.insert(0, reporting_dir)
+    from learning_presentation import build_all_learning
+
+    build_all_learning()
     write_index()
     checkpoint_manifest()
     dataset_hashes()

@@ -9,7 +9,7 @@
 - Seeds: 42 (single seed)
 - Source raw: `results/raw/regression_recovery/RECOVERY_n40_recovered_pipeline.csv`
 
-| Instance | H2 h | H4 h | H4−H2 |
+| Instance | History Transformer (H2) h | HAT-EVRP-NL (H4) h | H4−H2 |
 |---|---|---|---|
 | tc0c40s5cf0 | 57.3243 | 57.9150 | +0.5907 |
 | tc0c40s5cf4 | 57.0618 | 53.6167 | -3.4451 |
@@ -34,4 +34,4 @@
 
 ## Interpretation
 
-Wins(H4 better)/ties/losses = 7/4/9. Mean H4−H2 = -0.4355 h. Single-seed; not a general DeepSets claim.
+Wins(H4 better)/ties/losses = 7/4/9. Mean H4−H2 = -0.4355 h. Single-seed recovered hybrid; not a general DeepSets claim.

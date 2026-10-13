@@ -9,11 +9,11 @@
 - Seeds: 42
 - Source raw: `results/raw/regression_recovery/RECOVERY_n40_objective_decomposition.csv`
 
-| Method | Travel h | Service h | Nonlinear charge h | Full h | Lit h | Mean charge visits | Charge share |
-|---|---|---|---|---|---|---|---|
-| H2 | 33.7454 | 20.0000 | 3.0601 | 56.8055 | 36.8055 | 9.85 | 4.9% |
-| H4 | 33.2189 | 20.0000 | 3.1511 | 56.3700 | 36.3700 | 9.65 | 5.2% |
+| Model | Key | Travel h | Service h | Nonlinear charge h | Full h | Lit h | Mean charge visits | Charge share |
+|---|---|---|---|---|---|---|---|---|
+| History Transformer Routing (H2) | H2 | 33.7454 | 20.0000 | 3.0601 | 56.8055 | 36.8055 | 9.85 | 4.9% |
+| History Transformer + DeepSets (HAT-EVRP-NL) (H4) | H4 | 33.2189 | 20.0000 | 3.1511 | 56.3700 | 36.3700 | 9.65 | 5.2% |
 
 ## Interpretation
 
-Charging hours come from exact F_s(q_out)-F_s(q_in) on validated RoutePlan.stops. frvcpy optimizes the fixed-route charging subproblem only.
+Charging hours come from exact F_s(q_out)-F_s(q_in) on validated RoutePlan.stops. frvcpy optimizes the fixed-route charging subproblem only. H4’s better full duration is driven mainly by lower travel despite slightly higher mean charging.

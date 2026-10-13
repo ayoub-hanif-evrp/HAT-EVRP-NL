@@ -149,37 +149,69 @@ For a fixed customer order, FRVCP inserts stations/charges minimizing route dura
 
 `charging.check_route` / `check_solution` independently forward-simulate depot departures/returns, unique customer coverage, SOC, nonlinear charging time, and \(T_{\max}\). Reported objectives equal sums of simulated route durations when checks pass. This is **same-project Python validation**, not an external Java/DIMACS certification.
 
-### 4.9 Ablations
+### 4.9 Ablations (display names)
 
-| ID | History Transformer | DeepSets | Role |
+| Key | Display name | History | DeepSets |
 |---|---|---|---|
-| H1 | no | no | state-only neural baseline |
-| H2 | yes | no | history-aware (strongest efficient neural) |
-| H3 | no | yes | DeepSets without history |
-| H4 | yes | yes | **complete proposed architecture** |
+| H1 | State-Only Hierarchical Pointer | no | no |
+| H2 | History Transformer Routing | yes | no |
+| H3 | DeepSets Fleet Routing | no | yes |
+| H4 | History Transformer + DeepSets (HAT-EVRP-NL) | yes | yes |
 
-Classical references: **H0** (greedy construction; no/minimal local search as configured) and **H0_strong** (randomized greedy + local search). In Protocol A below, H0_strong still uses local search while neural rows are construction-only—so H0_strong is a *stronger reference*, not an equal unrefined peer.
+Classical references: **H0** = Randomized Greedy Routing; **H0_strong** = Randomized Greedy + Local Search. In Protocol A, H0_strong still uses local search while neural rows are construction-only.
+
+![Architecture](results/figures/fig01_architecture.png)
 
 ---
 
-## 5. Training Methodology
+## 5. Training Methodology and Rewards
 
-Training uses **independent synthetic instances**; official Montoya instances are held out for evaluation.
+Full reference: [`docs/TRAINING_AND_REWARD_METHODOLOGY.md`](docs/TRAINING_AND_REWARD_METHODOLOGY.md) and [`results/LEARNING_RESULTS_REPORT.md`](results/LEARNING_RESULTS_REPORT.md).
 
-**Teachers.** Feasible greedy/local-search teachers provide expert multi-route constructions. Cycle-3 used interleaved multi-open-route imitation (`interleaved_actions`): per-route customer order is preserved while deciding among open routes, so DeepSets receives multi-open training signals when enabled.
+Training uses **independent synthetic instances** (n=10). Official Montoya n=20/40/80 evaluations are **transfer tests**, not training sizes.
 
-**Losses.** Behavior cloning on masked categorical decisions; optional short REINFORCE fine-tuning. Best validation checkpoint is retained (not necessarily the last RL iterate).
+### 5.1 Supervision flow
 
-**Hyperparameters (implemented defaults / Cycle-3 commands in `results/notes.md`).**
+Synthetic instance → greedy/LS teacher + `frvcpy` → masked hierarchical behavior cloning → optional REINFORCE rollouts (again evaluated with `frvcpy`) → best synthetic-validation checkpoint. **`frvcpy` is not differentiable and is not trained.**
 
-- Embedding \(d=128\), Transformer layers \(=2\), heads \(=4\).
-- Cycle-3 routing: `--steps 400 --rl-steps 40 --train-instances 120 --val-instances 12 --eval-every 40`, seeds \(\{42,43,44\}\), version `c3`.
-- Direct CHARGE controller: separately trained (`--steps 3000 --train-instances 120`, seed 42).
-- Device: **CPU** (training logs record `device=cpu`).
-- No extensive hyperparameter search was performed; scale is modest relative to industrial metaheuristics.
+![Training flow](results/figures/fig11_training_supervision_flow.png)
+
+### 5.2 Cycle-3 stages actually used
+
+| Stage | Used for H1–H4 Cycle-3? | Setting |
+|---|---|---|
+| Behavior cloning | **Yes** | 400 steps |
+| Standard REINFORCE | **Yes** | 40 steps, greedy baseline |
+| POMO REINFORCE | No | `pomo_k=0` |
+| Repair REINFORCE | No | `repair_rl_steps=0` |
+| Multi-target BC / fleet counterfactual | No | defaults off |
+
+Commands (also in `results/archive/reports/notes.md`): `--steps 400 --rl-steps 40 --train-instances 120 --val-instances 12 --eval-every 40`, seeds \(\{42,43,44\}\), version `c3`. Embedding \(d=128\), 2 layers, 4 heads. Device: CPU.
+
+### 5.3 Reward function (standard REINFORCE)
+
+For a sampled construction:
+
+- Feasible: \(R = -Z_\text{full}\) with \(Z_\text{full}=\text{travel}+\text{service}+\text{nonlinear charging}\).
+- Infeasible: \(R = -100\).
+- Baseline: greedy rollout reward \(b\).
+- Loss: \(L_\text{RL}=-(R-b)\sum_t\log\pi(a_t)\).
+
+Over complete feasible solutions, service is constant, so maximizing \(R\) is equivalent to minimizing the literature travel+charging objective. Repair RL (not used in Cycle-3) uses \(R=Z_\text{before}-Z_\text{after}\) or \(-50\) if infeasible. Fixed penalties were not re-tuned by size.
+
+**Checkpoint selection** keeps the best logged `(feasibility, −validation objective)` — **not** the final RL iterate. Historical logs do **not** store sampled reward distributions.
+
+### 5.4 Observed RL outcome (synthetic validation)
+
+![Learning curves](results/figures/fig12_learning_curves_h1h4.png)
+
+![RL effect](results/figures/fig13_rl_effect_h2_h4.png)
+
+Across three seeds, RL **endpoints** beat best-BC validation on only **1/3 H2 seeds** and **0/3 H4 seeds**. H4 frequently **collapses** (e.g., seed 42: BC-best ≈15.71 h → RL-end ≈31.02 h); checkpoint selection retains **BC weights**. **We do not claim that RL improves H4 or reliably improves H2.**
+
+![BC vs RL](results/figures/fig15_bc_vs_rl_ablation.png)
 
 Checkpoints: `checkpoints/{H1,H2,H3,H4}_n10_seed{42,43,44}_c3.pt`.
-
 ---
 
 ## 6. Experimental Setup
@@ -192,7 +224,7 @@ Checkpoints: `checkpoints/{H1,H2,H3,H4}_n10_seed{42,43,44}_c3.pt`.
 
 Neural methods: \(N\) sampled constructions **without** local search.  
 **H0_strong still applies local search** and must be read as a stronger classical reference, not as “no LS.”  
-Raw: `compare_size10_seed{42,43,44}_c3.csv`.
+Raw: `results/raw/cycle3/compare_size10_seed{42,43,44}_c3.csv`.
 
 ### Protocol B — Fair one-shot local search (primary)
 
@@ -200,14 +232,14 @@ Raw: `compare_size10_seed{42,43,44}_c3.csv`.
 2. Apply **identical** `local_search` once (same passes/budget) to each method’s best construction.  
 
 This equalizes local-search *applications*, not total oracle calls or wall time. Neural methods still incur construction-sample oracle cost.  
-Raw: `compare_size10_fairls_final_seed{42,43,44}_c3.csv`.
+Raw: `results/raw/cycle3/compare_size10_fairls_final_seed{42,43,44}_c3.csv`.
 
 ### Protocol C — Corrected measured wall-clock
 
-Match measured neural runtime; classical uses genuine multi-restart randomization (`deterministic_first` once). Superseded non-randomized wall-clock files are excluded (`results/INVALID_wallclock_fair_seed42_c3.md`).  
-Raw: `compare_size10_wallclock_final_seed42_c3.csv` (seed 42 only).
+Match measured neural runtime; classical uses genuine multi-restart randomization (`deterministic_first` once). Superseded non-randomized wall-clock files are excluded (`results/archive/reports/INVALID_wallclock_fair_seed42_c3.md`).  
+Raw: `results/raw/cycle3/compare_size10_wallclock_final_seed42_c3.csv` (seed 42 only).
 
-**Statistics.** Instance-paired comparisons average seeds within each of the 20 instances. Tie tolerance \(10^{-9}\) on mean duration. Wins+ties+losses = 100%. File: `results/FINAL_paired_by_instance.csv`.
+**Statistics.** Instance-paired comparisons average seeds within each of the 20 instances. Tie tolerance \(10^{-9}\) on mean duration. Wins+ties+losses = 100%. File: `results/raw/cycle3/FINAL_paired_by_instance.csv`.
 
 **Validation.** Python forward simulator only. No Java / external checker installation.
 
@@ -241,11 +273,11 @@ Lower mean duration is better. Means use full CSV precision; tables round to thr
 | H3 | 20.109 | 18.445 | 2.933 | 3.517 | 1.534 | 0.592 | 729 | 60/60 |
 | H4 | 19.886 | 18.586 | 3.033 | 3.350 | 1.414 | 0.753 | 753 | 60/60 |
 
-Source: `FINAL_n10_fairls.csv` (H0_strong 20.141634… → 20.142; H2 19.812660… → 19.813; H4 19.886265… → 19.886).
+Source: `results/raw/cycle3/FINAL_n10_fairls.csv` (H0_strong 20.141634… → 20.142; H2 19.812660… → 19.813; H4 19.886265… → 19.886).
 
 Neural fair-LS uses ~1.4× oracle calls and ~4–5× runtime vs H0_strong.
 
-![Fair LS objectives](results/figures/fig_fairls_objectives_n10.png)
+![Fair LS objectives](results/figures/fig06_main_benchmark_n10_fairls.png)
 
 ### 7.3 Protocol C — Corrected wall-clock (n=10, seed 42)
 
@@ -268,9 +300,9 @@ Unique classical constructions ≈40+ per instance under the fixed RNG protocol.
 | n=40 | 60.195 | 57.173 | 57.506 | 20/20 | seed 42 |
 | n=80 | 95.506 | 88.151 | 88.151 | 3/3 | **3-instance sample only** |
 
-![Scale](results/figures/fig_scale_fairls.png)
+![Scale](results/figures/fig07_scaling_fairls.png)
 
-![Runtime vs quality](results/figures/fig_runtime_vs_quality_fairls.png)
+![Runtime vs quality](results/archive/figures_legacy/fig_runtime_vs_quality_fairls.png)
 
 ---
 
@@ -288,13 +320,15 @@ Fundamental comparison: **H4 vs H2** (DeepSets incremental value given history).
 | H2−H0_strong | −0.329 | [−0.699, +0.041] | 65% | 20% | 15% |
 | H4−H0_strong | −0.255 | [−0.631, +0.120] | 50% | 20% | 30% |
 
-Source: `FINAL_paired_by_instance.csv` (`fair_one_shot_ls`). Δ = left − right in the pair label (e.g., H4−H2 > 0 means H4 worse).
+Source: `results/raw/cycle3/FINAL_paired_by_instance.csv` (`fair_one_shot_ls`). Δ = left − right in the pair label (e.g., H4−H2 > 0 means H4 worse).
 
 **Supported:** history helps (H2 vs H1 CI excludes 0).  
 **Not supported:** DeepSets benefit (H4−H2 CI includes 0; mostly ties). H3 does not beat H1.  
 **Qualified:** H2 beats H0_strong on 65% of instances, but the mean-Δ CI includes values near zero—treat as suggestive under this budget, not a sweeping dominance claim.
 
-![Paired H4−H2](results/figures/fig_paired_H4_minus_H2_fairls.png)
+![Paired H4−H2](results/archive/figures_legacy/fig_paired_H4_minus_H2_fairls.png)
+
+![History vs DeepSets contribution](results/figures/fig17_history_deepsets_contribution.png)
 
 ### 8.2 Hypotheses for the null DeepSets effect (not demonstrated facts)
 
@@ -304,7 +338,7 @@ On this *static offline* benchmark with unlimited fleet and exact post-hoc charg
 
 Under fair LS, H2/H4 spend substantially more runtime and FRVCP calls than H0_strong for modest mean gains. Efficiency favors H2 over H4 when quality is comparable.
 
-![Learning curves](results/archive/figures_legacy/fig_learning_curves_c3_seed42.png)
+![Hierarchical policy](results/figures/fig16_hierarchical_policy.png)
 
 ---
 
@@ -322,7 +356,7 @@ Under fair LS, H2/H4 spend substantially more runtime and FRVCP calls than H0_st
 | H2 | 42.7% | **5.0%** |
 | H4 | 43.2% | **5.4%** |
 
-Sources: `results/raw/cycle3/FINAL_n10_bks_gaps.csv` (naive), `results/raw/cost_aware/IMPROVEMENT_bks_gaps_corrected.csv`. Corrected gaps remain below specialized BKS but are far smaller than the earlier misaligned 43% figure. Optional post-freeze inference/search improvements (oracle-aware scoring, stronger LS, recovered hybrid) further reduce objectives; see `results/archive/reports/IMPROVEMENT_REPORT.md` and `results/REGRESSION_RECOVERY_REPORT.md`.
+Sources: `results/raw/cycle3/FINAL_n10_bks_gaps.csv` (naive), `results/raw/cost_aware/IMPROVEMENT_bks_gaps_corrected.csv`, `results/tables/table08_bks_comparison.md`. Corrected gaps remain below specialized BKS but are far smaller than the earlier misaligned 43% figure. Optional post-freeze inference/search improvements (oracle-aware scoring, stronger LS, recovered hybrid) further reduce objectives; see `results/archive/reports/IMPROVEMENT_REPORT.md` and `results/REGRESSION_RECOVERY_REPORT.md`. Objective decomposition (travel / fixed service / nonlinear charging) is in `results/tables/table02_objective_and_charging.md` and `results/figures/fig04_objective_decomposition_n40.png`.
 
 **Matched-λ caveat.** Comparing H2 at λ=2 with H4 at λ=4 confounds architecture with the inference weight. Under identical λ ∈ {0,2,4} and identical strong LS, layout-clustered H4−H2 intervals include zero; at λ=4, H2 achieves the best mean (19.335 h, ~0.60% lit gap). The 20 official n=10 instances comprise only five customer layouts. Details: `results/archive/reports/TARGETED_IMPROVEMENT_REPORT.md`.
 
@@ -362,7 +396,7 @@ Source: `results/raw/misc/direct_charge_size10_seed42_c3.csv`. Feasible-only obj
 
 HAT-EVRP-NL demonstrates that **causal Transformer visit histories** improve neural hybrid construction for Montoya E-VRP-NL relative to a state-only neural policy, when charging is handled by an exact FRVCP solver. **DeepSets fleet aggregation**—though implemented and trained with multi-open signals—does **not** consistently improve over history-only H2; H4 must not be described as superior to H2. With fair one-shot local search, history-aware policies can improve upon the tested classical greedy+LS baseline on n=10–40 instances, at higher computational cost, while remaining far from published best-known solutions. Direct learned charging is not reliable. The primary DeepSets coordination hypothesis is **negative**; the history hypothesis is **supported**. The project is a completed experimental study of history-aware hybrid neural routing with nonlinear charging optimization—not an SOTA E-VRP solver.
 
-**Definitive files:** `paper_draft.md` (this manuscript), `results/FINAL_REPORT.md`, `results/FINAL_*.csv`, `results/figures/`.
+**Definitive files:** `paper_draft.md`, `results/README.md`, `results/LEARNING_RESULTS_REPORT.md`, `docs/TRAINING_AND_REWARD_METHODOLOGY.md`, `results/tables/`, `results/figures/`, `results/raw/`.
 
 ---
 
@@ -386,4 +420,4 @@ HAT-EVRP-NL demonstrates that **causal Transformer visit histories** improve neu
 
 ## Architecture diagram
 
-![Architecture](results/figures/fig_architecture.svg)
+![Architecture](results/figures/fig01_architecture.png)

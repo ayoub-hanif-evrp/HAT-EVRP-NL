@@ -1,22 +1,22 @@
 # Literature-compatible BKS gaps (corrected service convention)
 
-- Objective convention: Lit duration = full − Σ service vs Froger Table 13
-- Units: % gap / hours
-- Benchmark size: primarily n=10
-- Instance count: 5
-- Methods / checkpoints: as in source CSV
-- Search protocol: documented in IMPROVEMENT report
-- Seeds: see source
+- Objective convention: Lit gap uses (full − Σ service) vs Froger Table 13 travel+charging BKS
+- Units: % gap
+- Benchmark size: n=10
+- Instance count: 20 official instances per method (5 method-summary rows — not 5 instances)
+- Methods / checkpoints: H0_strong, H1, H2, H3, H4
+- Search protocol: fair-LS Cycle-3; service-time correction applied
+- Seeds: see IMPROVEMENT report / FINAL fair-LS aggregates
 - Source raw: `results/raw/cost_aware/IMPROVEMENT_bks_gaps_corrected.csv`
 
-| method | mean_gap_full_pct | median_gap_full_pct | mean_gap_lit_pct | median_gap_lit_pct | n |
-|---|---|---|---|---|---|
-| H0_strong | 44.825781474275736 | 39.95195944068533 | 7.08637262279732 | 4.899427014525678 | 20 |
-| H1 | 43.78136823394151 | 39.96801469991044 | 6.041959382463088 | 4.6082826631518286 | 20 |
-| H2 | 42.73200117508547 | 38.65149562505397 | 4.99259232360705 | 2.8135631149049076 | 20 |
-| H3 | 44.00105679735583 | 41.038372326962815 | 6.261647945877411 | 6.050052888483865 | 20 |
-| H4 | 43.18415174339934 | 38.65149562505397 | 5.444742891920921 | 2.8135631149049076 | 20 |
+| Display name | Key | Mean lit gap % | Median lit gap % | Mean naive gap % (full vs BKS) | Median naive gap % | N instances |
+|---|---|---|---|---|---|---|
+| Randomized Greedy + Local Search (H0_strong) | H0_strong | 7.09 | 4.90 | 44.83 | 39.95 | 20 |
+| State-Only Hierarchical Pointer (H1) | H1 | 6.04 | 4.61 | 43.78 | 39.97 | 20 |
+| History Transformer Routing (H2) | H2 | 4.99 | 2.81 | 42.73 | 38.65 | 20 |
+| DeepSets Fleet Routing (H3) | H3 | 6.26 | 6.05 | 44.00 | 41.04 | 20 |
+| History Transformer + DeepSets (HAT-EVRP-NL) (H4) | H4 | 5.44 | 2.81 | 43.18 | 38.65 | 20 |
 
 ## Interpretation
 
-Do not mix full-duration objectives with travel+charging BKS. The obsolete ~43% figure used full duration vs lit BKS.
+Cite **lit gap** columns only. Naive gaps (~43%) wrongly compare full duration to literature BKS. Each row summarizes 20 benchmark instances.
