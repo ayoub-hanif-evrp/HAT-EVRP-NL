@@ -143,11 +143,27 @@ class FixedRouteOracle:
         self._oracle_instance = to_frvcpy(instance)
         self._terminal_helper = len(instance.nodes)
         self._cache: dict[tuple[int, ...], RoutePlan] = {}
-        self.calls = 0
+        self.calls = 0  # actual frvcpy solver executions (cache misses)
+        self.requests = 0  # logical solve requests including cache hits
+        self.cache_hits = 0
+
+    @property
+    def solver_executions(self) -> int:
+        """Alias: true charging-optimizer runs (not cache hits)."""
+        return self.calls
+
+    def stats(self) -> dict:
+        return {
+            "oracle_requests": self.requests,
+            "oracle_cache_hits": self.cache_hits,
+            "oracle_solver_executions": self.calls,
+        }
 
     def solve(self, customers: tuple[int, ...] | list[int]) -> RoutePlan:
         customer_sequence = tuple(customers)
+        self.requests += 1
         if customer_sequence in self._cache:
+            self.cache_hits += 1
             return self._cache[customer_sequence]
         if (
             len(set(customer_sequence)) != len(customer_sequence)

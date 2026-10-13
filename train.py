@@ -822,6 +822,73 @@ def teacher_loss(
     return torch.stack(losses).mean(), decisions, stats
 
 
+def best_feasible_insertion(
+    oracle: FixedRouteOracle,
+    route: tuple[int, ...],
+    customer: int,
+    insertion_cache: dict | None = None,
+) -> dict | None:
+    """Evaluate every insertion position; return the best frvcpy-feasible one.
+
+    Preserves relative order of customers already on ``route``. Tie-break:
+    smaller marginal duration, then smaller position, then lexicographic sequence.
+    Does not mutate the incumbent route.
+    """
+    route = tuple(route)
+    cache_key = (route, int(customer))
+    if insertion_cache is not None and cache_key in insertion_cache:
+        return insertion_cache[cache_key]
+    if customer in route:
+        result = None
+        if insertion_cache is not None:
+            insertion_cache[cache_key] = result
+        return result
+    if route:
+        base = oracle.solve(route)
+        base_duration = base.duration_hours if base.feasible else 0.0
+    else:
+        base_duration = 0.0
+    best: tuple[float, int, tuple[int, ...], RoutePlan] | None = None
+    for position in range(len(route) + 1):
+        candidate = route[:position] + (customer,) + route[position:]
+        plan = oracle.solve(candidate)
+        if not plan.feasible:
+            continue
+        marginal = plan.duration_hours - base_duration
+        rank = (marginal, position, candidate)
+        if best is None or rank < (best[0], best[1], best[2]):
+            best = (marginal, position, candidate, plan)
+    if best is None:
+        result = None
+    else:
+        marginal, position, candidate, plan = best
+        result = {
+            "position": position,
+            "customers": candidate,
+            "plan": plan,
+            "marginal": marginal,
+            "is_end": position == len(route),
+            "is_interior": 0 < position < len(route),
+        }
+    if insertion_cache is not None:
+        insertion_cache[cache_key] = result
+    return result
+
+
+def _empty_repair_diagnostics() -> dict:
+    return {
+        "repair_attempts": 0,
+        "successful_repairs": 0,
+        "existing_route_insertions": 0,
+        "new_route_assignments": 0,
+        "interior_position_insertions": 0,
+        "end_position_insertions": 0,
+        "infeasible_proposals": 0,
+        "accepted_objective_improvements": 0,
+        "duration_deltas": [],
+    }
+
+
 def _partial_after_destroy(
     instance: Instance,
     routes: list[tuple[int, ...]],
@@ -890,19 +957,23 @@ def neural_lns(
     destroy_min: int = 2,
     destroy_max: int = 4,
     seed_classical: bool = False,
+    repair_insertion: bool = True,
+    oracle: FixedRouteOracle | None = None,
 ) -> tuple[list[tuple[int, ...]], list, int, dict]:
-    """Ruin + insertion-capable neural-policy repair (search-labeled).
+    """Ruin + position-aware neural-policy repair (search-labeled).
 
-    Surviving routes stay open so the hierarchical decoder may append removed
-    customers onto existing routes (preserving relative order) or open new
-    routes. Falls back to the incumbent if repair fails or worsens the objective.
+    With ``repair_insertion=True`` (default), the policy chooses route/customer
+    while frvcpy selects the best insertion position. Append-only mode is
+    available for ablations via ``repair_insertion=False``.
     """
     rng = random.Random(seed)
-    oracle = FixedRouteOracle(instance)
+    oracle = oracle or FixedRouteOracle(instance)
     best_routes = [tuple(r) for r in routes]
     best_plans = list(plans)
     best_obj = sum(p.duration_hours for p in best_plans)
     improvements = 0
+    diag = _empty_repair_diagnostics()
+    diag["repair_insertion"] = bool(repair_insertion)
     if seed_classical:
         from solver_ls import ruin_and_repair
 
@@ -926,6 +997,7 @@ def neural_lns(
             break
         k = min(len(customers), rng.randint(destroy_min, destroy_max))
         removed = set(rng.sample(customers, k))
+        diag["repair_attempts"] += 1
         partial = _partial_after_destroy(
             instance, best_routes, best_plans, removed, oracle, keep_open=True
         )
@@ -941,18 +1013,39 @@ def neural_lns(
             cost_lambda=cost_lambda,
             initial_routes=copy.deepcopy(kept_routes),
             only_customers=set(removed),
+            repair_insertion=repair_insertion,
+            oracle=oracle,
         )
+        rd = repaired.get("repair_diagnostics") or {}
+        for key in (
+            "existing_route_insertions",
+            "new_route_assignments",
+            "interior_position_insertions",
+            "end_position_insertions",
+            "infeasible_proposals",
+        ):
+            diag[key] += int(rd.get(key, 0))
+        prev_obj = best_obj
         best_routes, best_plans, best_obj, improved = _accept_repaired(
             instance, repaired, best_obj, best_routes, best_plans
         )
         if improved:
             improvements += 1
-    return (
-        best_routes,
-        best_plans,
-        improvements,
-        {"schedule": "neural_lns_search", "improvements": improvements},
+            diag["successful_repairs"] += 1
+            diag["accepted_objective_improvements"] += 1
+            diag["duration_deltas"].append(best_obj - prev_obj)
+    deltas = diag["duration_deltas"]
+    diag.update(
+        {
+            "schedule": "neural_lns_search",
+            "improvements": improvements,
+            "mean_duration_delta": (
+                sum(deltas) / len(deltas) if deltas else 0.0
+            ),
+            **oracle.stats(),
+        }
     )
+    return best_routes, best_plans, improvements, diag
 
 
 def hybrid_lns(
@@ -967,16 +1060,14 @@ def hybrid_lns(
     destroy_max: int = 4,
     classical_iterations: int = 6,
     classical_budget: int = 600,
+    repair_insertion: bool = True,
+    oracle: FixedRouteOracle | None = None,
 ) -> tuple[list[tuple[int, ...]], list, int, dict]:
-    """Classical ruin first, then insertion-capable neural repair; keep best.
-
-    Search-labeled. Classical ruin establishes a floor under a matched budget;
-    neural attempts may only improve further via open-route reinsertion.
-    """
+    """Classical ruin first, then position-aware neural repair; keep best."""
     from solver_ls import ruin_and_repair
 
     rng = random.Random(seed)
-    oracle = FixedRouteOracle(instance)
+    oracle = oracle or FixedRouteOracle(instance)
     best_routes = [tuple(r) for r in routes]
     best_plans = list(plans)
     best_routes, best_plans, classical_imp, _ = ruin_and_repair(
@@ -993,6 +1084,9 @@ def hybrid_lns(
     improvements = classical_imp
     best_obj = sum(p.duration_hours for p in best_plans)
     neural_imp = 0
+    diag = _empty_repair_diagnostics()
+    diag["repair_insertion"] = bool(repair_insertion)
+    diag["classical_improvements"] = classical_imp
 
     for it in range(max_iterations):
         customers = [c for r in best_routes for c in r]
@@ -1000,6 +1094,7 @@ def hybrid_lns(
             break
         k = min(len(customers), rng.randint(destroy_min, destroy_max))
         removed = set(rng.sample(customers, k))
+        diag["repair_attempts"] += 1
         partial = _partial_after_destroy(
             instance, best_routes, best_plans, removed, oracle, keep_open=True
         )
@@ -1014,24 +1109,41 @@ def hybrid_lns(
             cost_lambda=cost_lambda,
             initial_routes=copy.deepcopy(kept_routes),
             only_customers=set(removed),
+            repair_insertion=repair_insertion,
+            oracle=oracle,
         )
+        rd = repaired.get("repair_diagnostics") or {}
+        for key in (
+            "existing_route_insertions",
+            "new_route_assignments",
+            "interior_position_insertions",
+            "end_position_insertions",
+            "infeasible_proposals",
+        ):
+            diag[key] += int(rd.get(key, 0))
+        prev_obj = best_obj
         best_routes, best_plans, best_obj, improved = _accept_repaired(
             instance, repaired, best_obj, best_routes, best_plans
         )
         if improved:
             improvements += 1
             neural_imp += 1
-    return (
-        best_routes,
-        best_plans,
-        improvements,
+            diag["successful_repairs"] += 1
+            diag["accepted_objective_improvements"] += 1
+            diag["duration_deltas"].append(best_obj - prev_obj)
+    deltas = diag["duration_deltas"]
+    diag.update(
         {
             "schedule": "hybrid_lns_search",
             "improvements": improvements,
             "neural_improvements": neural_imp,
-            "classical_improvements": classical_imp,
-        },
+            "mean_duration_delta": (
+                sum(deltas) / len(deltas) if deltas else 0.0
+            ),
+            **oracle.stats(),
+        }
     )
+    return best_routes, best_plans, improvements, diag
 
 
 def repair_reinforce_step(
@@ -1043,12 +1155,9 @@ def repair_reinforce_step(
     cost_lambda: float = 4.0,
     destroy_min: int = 2,
     destroy_max: int = 4,
+    repair_insertion: bool = True,
 ) -> tuple[torch.Tensor, dict]:
-    """POMO-style REINFORCE on the repair task after random destroy.
-
-    Builds a greedy construction, destroys a customer subset, then samples
-    K repair trajectories with a shared mean baseline.
-    """
+    """POMO-style REINFORCE on position-aware (or append-only) repair."""
     model.eval()
     with torch.no_grad():
         base = decode(
@@ -1064,7 +1173,8 @@ def repair_reinforce_step(
         return torch.tensor(0.0), base
     k = min(len(customers), rng.randint(destroy_min, destroy_max))
     removed = set(rng.sample(customers, k))
-    partial = _partial_after_destroy(instance, routes, plans, removed)
+    oracle = FixedRouteOracle(instance)
+    partial = _partial_after_destroy(instance, routes, plans, removed, oracle)
     if partial is None:
         return torch.tensor(0.0), base
     kept_routes, _ = partial
@@ -1081,9 +1191,10 @@ def repair_reinforce_step(
             cost_lambda=cost_lambda,
             initial_routes=copy.deepcopy(kept_routes),
             only_customers=set(removed),
+            repair_insertion=repair_insertion,
+            oracle=oracle,
         )
         if result["feasible"]:
-            # Reward improvement over the pre-destroy solution.
             reward = base_obj - result["objective"]
         else:
             reward = -50.0
@@ -1229,6 +1340,8 @@ def decode(
     force_first_customer: int | None = None,
     initial_routes: list[dict] | None = None,
     only_customers: set[int] | None = None,
+    repair_insertion: bool = False,
+    oracle: FixedRouteOracle | None = None,
 ) -> dict:
     """Greedy/sampled hierarchical decode with optional oracle-aware scoring.
 
@@ -1240,13 +1353,19 @@ def decode(
     feasible one-customer extension potential among a shortlist of top learned
     route candidates (plus NEW_ROUTE). ``route_lambda=0`` and ``cost_lambda=0``
     preserve Cycle-3 decode behavior.
+
+    When ``repair_insertion=True``, the policy still chooses route/customer/new,
+    but the position inside an existing route is the best frvcpy-feasible
+    insertion (preserving survivors' relative order). Ordinary construction
+    (``repair_insertion=False``) remains append-only.
     """
     from solver import local_search
 
     start = time.perf_counter()
     if sample:
         torch.manual_seed(seed)
-    oracle = FixedRouteOracle(instance)
+    owns_oracle = oracle is None
+    oracle = oracle or FixedRouteOracle(instance)
     routes: list[dict] = list(initial_routes) if initial_routes else []
     if only_customers is not None:
         unserved = set(only_customers)
@@ -1259,6 +1378,8 @@ def decode(
     max_decisions = 3 * len(instance.customers) + 5
     nodes = model.encode_nodes(instance)
     history_cache: dict = {}
+    insertion_cache: dict = {}
+    repair_diag = _empty_repair_diagnostics()
     singleton_plans = {
         customer: oracle.solve((customer,)) for customer in instance.customers
     }
@@ -1279,7 +1400,21 @@ def decode(
         new_feasible = bool(unserved) and any(
             singleton_ok[customer] for customer in unserved
         )
-        route_mask = [True] * len(open_indices) + [new_feasible]
+        if repair_insertion and unserved:
+            route_mask = []
+            for open_pos, route_index in enumerate(open_indices):
+                prefix = routes[route_index]["customers"]
+                feasible_here = any(
+                    best_feasible_insertion(
+                        oracle, prefix, customer, insertion_cache
+                    )
+                    is not None
+                    for customer in unserved
+                )
+                route_mask.append(feasible_here)
+            route_mask.append(new_feasible)
+        else:
+            route_mask = [True] * len(open_indices) + [new_feasible]
         if forced_first_pending and not routes:
             # POMO-style: force NEW_ROUTE then the designated first customer.
             route_mask = [False] * len(open_indices) + [new_feasible]
@@ -1355,10 +1490,37 @@ def decode(
             order,
             allow_close=not is_new,
         )
+        insertion_results: list[dict | None] = [None] * len(order)
         if is_new:
             candidate_plans = [singleton_plans[candidate] for candidate in order]
             masks = [plan.feasible for plan in candidate_plans]
             base_duration = 0.0
+            marginals = [
+                plan.duration_hours if plan.feasible else math.inf
+                for plan in candidate_plans
+            ]
+        elif repair_insertion:
+            base_duration = float(routes[selected_index]["duration"])
+            candidate_plans = []
+            masks = []
+            marginals = []
+            for cand_i, candidate in enumerate(order):
+                insertion = best_feasible_insertion(
+                    oracle, prefix, candidate, insertion_cache
+                )
+                insertion_results[cand_i] = insertion
+                if insertion is None:
+                    candidate_plans.append(
+                        RoutePlan(False, math.inf, None, "no feasible insertion")
+                    )
+                    masks.append(False)
+                    marginals.append(math.inf)
+                    repair_diag["infeasible_proposals"] += 1
+                else:
+                    candidate_plans.append(insertion["plan"])
+                    masks.append(True)
+                    marginals.append(float(insertion["marginal"]))
+            masks.append(True)  # CLOSE
         else:
             candidate_plans = [
                 oracle.solve((*prefix, candidate)) for candidate in order
@@ -1366,17 +1528,22 @@ def decode(
             masks = [plan.feasible for plan in candidate_plans]
             masks.append(True)
             base_duration = float(routes[selected_index]["duration"])
+            marginals = [
+                (plan.duration_hours - base_duration) if plan.feasible else math.inf
+                for plan in candidate_plans
+            ]
         if not any(masks):
             reason = "selected route has no feasible action"
             break
         if cost_lambda != 0.0:
             adjusted = customer_scores.clone()
             scale = max(instance.max_route_hours, 1e-6)
-            for index, plan in enumerate(candidate_plans):
-                if not plan.feasible:
+            for index in range(len(order)):
+                if not masks[index]:
                     continue
-                marginal = (plan.duration_hours - base_duration) / scale
-                adjusted[index] = adjusted[index] - float(cost_lambda) * marginal
+                adjusted[index] = (
+                    adjusted[index] - float(cost_lambda) * marginals[index] / scale
+                )
             customer_scores = adjusted
         customer_scores = customer_scores.masked_fill(
             ~torch.tensor(masks, dtype=torch.bool, device=model.device),
@@ -1403,14 +1570,30 @@ def decode(
             routes[selected_index]["closed"] = True
             continue
         customer = order[action]
-        plan = (
-            singleton_plans[customer]
-            if is_new
-            else oracle.solve((*prefix, customer))
-        )
         if is_new:
+            plan = singleton_plans[customer]
             routes.append(route_state(instance, (customer,), plan))
+            if repair_insertion:
+                repair_diag["new_route_assignments"] += 1
+        elif repair_insertion:
+            insertion = insertion_results[action]
+            if insertion is None:
+                # Should be masked; treat as failure.
+                reason = "selected infeasible insertion"
+                repair_diag["infeasible_proposals"] += 1
+                break
+            # Clear history cache for rebuilt route sequence.
+            history_cache.clear()
+            routes[selected_index] = route_state(
+                instance, insertion["customers"], insertion["plan"]
+            )
+            repair_diag["existing_route_insertions"] += 1
+            if insertion["is_interior"]:
+                repair_diag["interior_position_insertions"] += 1
+            if insertion["is_end"]:
+                repair_diag["end_position_insertions"] += 1
         else:
+            plan = oracle.solve((*prefix, customer))
             routes[selected_index] = route_state(
                 instance, (*prefix, customer), plan
             )
@@ -1459,6 +1642,7 @@ def decode(
         if valid
         else float("inf")
     )
+    oracle_stats = oracle.stats()
     return {
         "feasible": valid,
         "objective": objective,
@@ -1467,6 +1651,9 @@ def decode(
         "plans": plans,
         "runtime": time.perf_counter() - start,
         "oracle_calls": oracle.calls,
+        "oracle_requests": oracle_stats["oracle_requests"],
+        "oracle_cache_hits": oracle_stats["oracle_cache_hits"],
+        "oracle_solver_executions": oracle_stats["oracle_solver_executions"],
         "reason": reason,
         "log_prob": torch.stack(log_probs).sum() if log_probs else None,
         "entropy": entropy / max(1, len(log_probs)),
@@ -1474,8 +1661,11 @@ def decode(
         "local_improvements": improvements,
         "cost_lambda": float(cost_lambda),
         "route_lambda": float(route_lambda),
+        "repair_insertion": bool(repair_insertion),
+        "repair_diagnostics": repair_diag if repair_insertion else None,
         "search_diagnostics": None if search_diag is None else search_diag.as_dict(),
         "ruin_diagnostics": None if ruin_diag is None else ruin_diag.as_dict(),
+        "_owns_oracle": owns_oracle,
     }
 
 
