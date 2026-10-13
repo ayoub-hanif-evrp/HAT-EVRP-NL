@@ -817,6 +817,33 @@ def teacher_loss(
     return torch.stack(losses).mean(), decisions, stats
 
 
+def _partial_after_destroy(
+    instance: Instance,
+    routes: list[tuple[int, ...]],
+    plans: list,
+    removed: set[int],
+    oracle: FixedRouteOracle | None = None,
+) -> tuple[list[dict], list] | None:
+    """Rebuild kept routes as closed states after removing customers."""
+    oracle = oracle or FixedRouteOracle(instance)
+    kept_routes: list[dict] = []
+    kept_plans: list = []
+    for route, _plan in zip(routes, plans):
+        kept = tuple(c for c in route if c not in removed)
+        if not kept:
+            continue
+        rebuilt = oracle.solve(kept)
+        if rebuilt is None or not rebuilt.feasible:
+            return None
+        state = route_state(instance, kept, rebuilt)
+        state["closed"] = True
+        kept_routes.append(state)
+        kept_plans.append(rebuilt)
+    if not kept_routes and removed != {c for r in routes for c in r}:
+        return None
+    return kept_routes, kept_plans
+
+
 def neural_lns(
     model: HATPolicy,
     instance: Instance,
@@ -833,7 +860,6 @@ def neural_lns(
     Destroy customers with classical operators; repair by decoding the policy
     only on removed customers while keeping surviving routes closed.
     """
-    from charging import FixedRouteOracle, check_solution
     from solver_ls import ruin_and_repair
 
     rng = random.Random(seed)
@@ -863,22 +889,12 @@ def neural_lns(
             break
         k = min(len(customers), rng.randint(destroy_min, destroy_max))
         removed = set(rng.sample(customers, k))
-        kept_routes = []
-        kept_plans = []
-        for route, plan in zip(best_routes, best_plans):
-            kept = tuple(c for c in route if c not in removed)
-            if not kept:
-                continue
-            rebuilt = oracle.solve(kept)
-            if rebuilt is None or not rebuilt.feasible:
-                kept_routes = []
-                break
-            state = route_state(instance, kept, rebuilt)
-            state["closed"] = True
-            kept_routes.append(state)
-            kept_plans.append(rebuilt)
-        if not kept_routes and removed != set(customers):
+        partial = _partial_after_destroy(
+            instance, best_routes, best_plans, removed, oracle
+        )
+        if partial is None:
             continue
+        kept_routes, _ = partial
         repaired = decode(
             model,
             instance,
@@ -907,6 +923,169 @@ def neural_lns(
         improvements,
         {"schedule": "neural_lns_search", "improvements": improvements},
     )
+
+
+def hybrid_lns(
+    model: HATPolicy,
+    instance: Instance,
+    routes: list[tuple[int, ...]],
+    plans: list,
+    max_iterations: int = 6,
+    seed: int = 0,
+    cost_lambda: float = 4.0,
+    destroy_min: int = 2,
+    destroy_max: int = 4,
+    classical_iterations: int = 6,
+    classical_budget: int = 600,
+) -> tuple[list[tuple[int, ...]], list, int, dict]:
+    """Classical ruin first, then neural repair attempts; keep best-so-far.
+
+    Guarantees quality ≥ pure classical ruin under the same classical budget
+    (search-labeled; not an architectural claim).
+    """
+    from solver_ls import ruin_and_repair
+
+    rng = random.Random(seed)
+    oracle = FixedRouteOracle(instance)
+    best_routes = [tuple(r) for r in routes]
+    best_plans = list(plans)
+    best_routes, best_plans, classical_imp, _ = ruin_and_repair(
+        best_routes,
+        best_plans,
+        oracle,
+        instance,
+        max_iterations=classical_iterations,
+        evaluation_budget=classical_budget,
+        seed=seed,
+        destroy_min=destroy_min,
+        destroy_max=destroy_max,
+    )
+    improvements = classical_imp
+    best_obj = sum(p.duration_hours for p in best_plans)
+    neural_imp = 0
+
+    for it in range(max_iterations):
+        customers = [c for r in best_routes for c in r]
+        if len(customers) < 2:
+            break
+        k = min(len(customers), rng.randint(destroy_min, destroy_max))
+        removed = set(rng.sample(customers, k))
+        partial = _partial_after_destroy(
+            instance, best_routes, best_plans, removed, oracle
+        )
+        if partial is None:
+            continue
+        kept_routes, _ = partial
+        repaired = decode(
+            model,
+            instance,
+            sample=True,
+            seed=seed + 31 + it,
+            cost_lambda=cost_lambda,
+            initial_routes=kept_routes,
+            only_customers=removed,
+        )
+        if not repaired["feasible"]:
+            continue
+        cand_routes = list(repaired["routes"])
+        cand_plans = list(repaired["plans"])
+        valid, _ = check_solution(instance, cand_plans)
+        if not valid:
+            continue
+        obj = sum(p.duration_hours for p in cand_plans)
+        if obj < best_obj - 1e-10:
+            best_obj = obj
+            best_routes = [tuple(r) for r in cand_routes]
+            best_plans = cand_plans
+            improvements += 1
+            neural_imp += 1
+    return (
+        best_routes,
+        best_plans,
+        improvements,
+        {
+            "schedule": "hybrid_lns_search",
+            "improvements": improvements,
+            "neural_improvements": neural_imp,
+            "classical_improvements": classical_imp,
+        },
+    )
+
+
+def repair_reinforce_step(
+    model: HATPolicy,
+    instance: Instance,
+    optimizer: torch.optim.Optimizer,
+    k_repairs: int = 4,
+    seed: int = 0,
+    cost_lambda: float = 4.0,
+    destroy_min: int = 2,
+    destroy_max: int = 4,
+) -> tuple[torch.Tensor, dict]:
+    """POMO-style REINFORCE on the repair task after random destroy.
+
+    Builds a greedy construction, destroys a customer subset, then samples
+    K repair trajectories with a shared mean baseline.
+    """
+    model.eval()
+    with torch.no_grad():
+        base = decode(
+            model, instance, sample=False, seed=seed, cost_lambda=cost_lambda
+        )
+    if not base["feasible"]:
+        return torch.tensor(0.0), base
+    rng = random.Random(seed + 7)
+    routes = [tuple(r) for r in base["routes"]]
+    plans = list(base["plans"])
+    customers = [c for r in routes for c in r]
+    if len(customers) < 2:
+        return torch.tensor(0.0), base
+    k = min(len(customers), rng.randint(destroy_min, destroy_max))
+    removed = set(rng.sample(customers, k))
+    partial = _partial_after_destroy(instance, routes, plans, removed)
+    if partial is None:
+        return torch.tensor(0.0), base
+    kept_routes, _ = partial
+    base_obj = sum(p.duration_hours for p in plans)
+
+    model.train()
+    rollouts = []
+    for index in range(max(1, k_repairs)):
+        result = decode(
+            model,
+            instance,
+            sample=True,
+            seed=seed * 100 + index,
+            cost_lambda=cost_lambda,
+            initial_routes=copy.deepcopy(kept_routes),
+            only_customers=set(removed),
+        )
+        if result["feasible"]:
+            # Reward improvement over the pre-destroy solution.
+            reward = base_obj - result["objective"]
+        else:
+            reward = -50.0
+        rollouts.append((result, reward))
+    rewards = [reward for _, reward in rollouts]
+    baseline = sum(rewards) / max(1, len(rewards))
+    optimizer.zero_grad()
+    losses = []
+    for result, reward in rollouts:
+        if result["log_prob"] is None:
+            continue
+        advantage = reward - baseline
+        if abs(advantage) < 1e-9:
+            continue
+        losses.append(-advantage * result["log_prob"])
+    if losses:
+        loss = torch.stack(losses).mean()
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+        optimizer.step()
+    else:
+        loss = torch.tensor(0.0)
+    best = max(rollouts, key=lambda item: item[1])[0]
+    return loss, best
 
 
 def pomo_reinforce_step(
@@ -1309,6 +1488,14 @@ def train_model(args: argparse.Namespace) -> None:
         generator_version=generator_version,
     )
     model = HATPolicy(VARIANTS[args.model]).to(device)
+    init_ckpt = getattr(args, "init_checkpoint", None)
+    if init_ckpt:
+        init_path = Path(init_ckpt)
+        if not init_path.exists():
+            raise FileNotFoundError(f"init checkpoint not found: {init_path}")
+        payload = torch.load(init_path, map_location=device, weights_only=False)
+        model.load_state_dict(payload["state_dict"])
+        print({"warm_start": str(init_path), "from_version": payload.get("version")})
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     rows = []
     start = time.perf_counter()
@@ -1326,6 +1513,7 @@ def train_model(args: argparse.Namespace) -> None:
             "multi_target": multi_target,
             "fleet_counterfactual": fleet_counterfactual,
             "train_seed_start": train_seed_start,
+            "init_checkpoint": str(init_ckpt) if init_ckpt else None,
         }
     )
 
@@ -1445,6 +1633,57 @@ def train_model(args: argparse.Namespace) -> None:
                 best_state = copy.deepcopy(model.state_dict())
             model.train()
 
+    repair_rl_steps = int(getattr(args, "repair_rl_steps", 0) or 0)
+    repair_k = int(getattr(args, "repair_k", 4) or 4)
+    for repair_step in range(1, repair_rl_steps + 1):
+        instance, _ = train_data[(repair_step - 1) % len(train_data)]
+        rl_loss, sampled = repair_reinforce_step(
+            model,
+            instance,
+            optimizer,
+            k_repairs=min(repair_k, max(2, len(instance.customers) // 2)),
+            seed=args.seed + 5000 + repair_step,
+            cost_lambda=float(getattr(args, "cost_lambda", 0.0)),
+        )
+        if repair_step == repair_rl_steps or (
+            args.eval_every > 0 and repair_step % args.eval_every == 0
+        ):
+            model.eval()
+            with torch.no_grad():
+                decoded = [
+                    decode(model, val_instance) for val_instance, _ in validation
+                ]
+            feasible = [result for result in decoded if result["feasible"]]
+            mean_objective = (
+                sum(result["objective"] for result in feasible) / len(feasible)
+                if feasible
+                else float("nan")
+            )
+            row = {
+                "stage": "rl_repair",
+                "step": repair_step,
+                "loss": float(rl_loss.detach())
+                if hasattr(rl_loss, "detach")
+                else float(rl_loss),
+                "feasible_rate": len(feasible) / len(decoded),
+                "validation_objective": mean_objective,
+                "entropy": sum(result["entropy"] for result in decoded)
+                / len(decoded),
+                "elapsed_s": time.perf_counter() - start,
+                "device": str(device),
+                "decisions": sampled.get("decisions", ""),
+                "multi_open_frac": multi_open_sum / max(1, args.steps),
+                "competing_frac": "",
+                "fleet_cf_frac": "",
+            }
+            rows.append(row)
+            print(row)
+            score = (row["feasible_rate"], -mean_objective)
+            if score > best_score:
+                best_score = score
+                best_state = copy.deepcopy(model.state_dict())
+            model.train()
+
     model.load_state_dict(best_state)
     final_diag = diagnose_deepsets(model, validation[0][0])
     print({"final_diagnostics": final_diag})
@@ -1464,6 +1703,8 @@ def train_model(args: argparse.Namespace) -> None:
             "generator": generator_version,
             "multi_target": multi_target,
             "fleet_counterfactual": fleet_counterfactual,
+            "init_checkpoint": str(init_ckpt) if init_ckpt else None,
+            "repair_rl_steps": repair_rl_steps,
             "diagnostics": final_diag,
         },
         checkpoint,
@@ -1537,6 +1778,24 @@ def main() -> None:
         type=float,
         default=0.0,
         help="Optional cost-aware decode weight during POMO RL",
+    )
+    parser.add_argument(
+        "--init-checkpoint",
+        type=Path,
+        default=None,
+        help="Warm-start weights from an existing checkpoint (no official XML)",
+    )
+    parser.add_argument(
+        "--repair-rl-steps",
+        type=int,
+        default=0,
+        help="After POMO, fine-tune with destroy/repair REINFORCE",
+    )
+    parser.add_argument(
+        "--repair-k",
+        type=int,
+        default=4,
+        help="Number of repair rollouts per repair-RL step",
     )
     parser.add_argument("--results", type=Path, default=Path("results"))
     parser.add_argument("--checkpoints", type=Path, default=Path("checkpoints"))
