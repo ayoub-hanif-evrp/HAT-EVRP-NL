@@ -524,15 +524,13 @@ def make_schedule_comparison_figure():
 
 
 def main():
-    make_curve_comparison_figure()
-    make_feasibility_figure()
-    make_charge_time_paired_figure()
-    make_objective_decomposition_figure()
-    make_e2e_feasibility_figure()
-    make_schedule_comparison_figure()
+    """Tables only. Main-paper figures are built by publication_figures.py."""
     write_table15()
-    make_reward_figures()
     write_bc_rl_table()
+    print(
+        "charging_and_reward_figures: wrote Markdown tables only; "
+        "run scripts/reporting/publication_figures.py for main PNGs"
+    )
 
 
 if __name__ == "__main__":

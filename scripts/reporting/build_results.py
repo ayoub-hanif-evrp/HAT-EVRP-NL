@@ -37,8 +37,10 @@ from reporting_paths import (  # noqa: E402
     DATASET,
     FIGURES,
     LITERATURE_BKS,
+    MAIN_FIGURES,
     RAW,
     RESULTS,
+    SUPP_FIGURES,
     TABLES,
 )
 
@@ -116,11 +118,13 @@ def write_table(name: str, title: str, meta: dict, headers: list[str], rows: lis
 
 
 def fig_save(path: Path) -> None:
-    FIGURES.mkdir(parents=True, exist_ok=True)
+    """Legacy builders write to supplementary/ only; main PNGs come from publication_figures."""
+    dest = SUPP_FIGURES / path.name
+    dest.parent.mkdir(parents=True, exist_ok=True)
     plt.tight_layout()
-    plt.savefig(path, dpi=DPI, bbox_inches="tight")
+    plt.savefig(dest, dpi=DPI, bbox_inches="tight", facecolor="white")
     plt.close()
-    print(f"wrote {path}")
+    print(f"wrote {dest}")
 
 
 def make_architecture_png() -> None:
@@ -1221,12 +1225,25 @@ def write_index() -> None:
         "- Official benchmark evaluation was revisited repeatedly; treat recent search results as exploratory.",
         "- `frvcpy` is exact for the **fixed-route** charging subproblem, not a proof of global VRP optimality.",
         "",
-        "## Figures (PNG only)",
+        "## Main-paper figures (exactly 8 PNGs)",
+        "",
+        "See [`../docs/FIGURE_AUDIT.md`](../docs/FIGURE_AUDIT.md).",
         "",
     ]
     for p in sorted(FIGURES.glob("*.png")):
         lines.append(f"- [`figures/{p.name}`](figures/{p.name})")
-    lines.extend(["", "## Tables (Markdown)", ""])
+    lines.extend(
+        [
+            "",
+            "## Supplementary figures",
+            "",
+            "Supporting plots live in [`supplementary/figures/`](supplementary/figures/).",
+            "Superseded plots live in [`archive/figures_legacy/`](archive/figures_legacy/).",
+            "",
+            "## Tables (Markdown)",
+            "",
+        ]
+    )
     for p in sorted(TABLES.glob("*.md")):
         lines.append(f"- [`tables/{p.name}`](tables/{p.name})")
     lines.extend(
@@ -1235,21 +1252,22 @@ def write_index() -> None:
             "## Raw evidence",
             "",
             "- `raw/cycle3/` — Cycle-3 fair-LS CSVs",
+            "- `raw/nonlinear_charging/` — RQ3 linear vs nonlinear study",
+            "- `raw/reward_learning/` — controlled RQ4 BC/RL + reward logs",
             "- `raw/regression_recovery/` — recovered construction + hybrid",
-            "- `raw/insertion_repair/` — invalid forced-start insertion runs (kept as evidence)",
-            "- `archive/reports/` — historical Markdown reports",
             "",
             "## Key reports",
             "",
-            "- [`REGRESSION_RECOVERY_REPORT.md`](REGRESSION_RECOVERY_REPORT.md)",
+            "- [`NONLINEAR_CHARGING_STUDY.md`](NONLINEAR_CHARGING_STUDY.md)",
+            "- [`REWARD_AND_LEARNING_STUDY.md`](REWARD_AND_LEARNING_STUDY.md)",
             "- [`FINAL_REPORT.md`](FINAL_REPORT.md) (Cycle-3 baseline)",
-            "- [`INSERTION_REPAIR_REPORT.md`](INSERTION_REPAIR_REPORT.md)",
-            "- [`LEARNING_RESULTS_REPORT.md`](LEARNING_RESULTS_REPORT.md)",
+            "- [`../docs/FIGURE_AUDIT.md`](../docs/FIGURE_AUDIT.md)",
             "- [`../docs/TRAINING_AND_REWARD_METHODOLOGY.md`](../docs/TRAINING_AND_REWARD_METHODOLOGY.md)",
             "",
             "## Regenerate",
             "",
             "```bash",
+            "python scripts/reporting/publication_figures.py",
             "python scripts/reporting/build_results.py --all --skip-decomp",
             "```",
             "",
@@ -1310,46 +1328,13 @@ def dataset_hashes() -> None:
 
 
 def archive_legacy_figures() -> None:
-    FIGURES.mkdir(parents=True, exist_ok=True)
-    legacy_dir = ARCHIVE / "figures_legacy"
-    legacy_dir.mkdir(parents=True, exist_ok=True)
-    keep = {
-        "fig01_architecture.png",
-        "fig02_problem_example.png",
-        "fig03_charging_curves.png",
-        "fig04_objective_decomposition_n40.png",
-        "fig05_soc_charging_trace.png",
-        "fig06_main_benchmark_n10_fairls.png",
-        "fig07_scaling_fairls.png",
-        "fig08_search_ablation_n40_recovered.png",
-        "fig09_h2_vs_h4_n40_hybrid.png",
-        "fig10_charging_ablation_feasibility.png",
-        "fig11_training_supervision_flow.png",
-        "fig12_learning_curves_h1h4.png",
-        "fig12b_bc_and_rl_losses_separate.png",
-        "fig13_rl_effect_h2_h4.png",
-        "fig15_bc_vs_rl_ablation.png",
-        "fig16_hierarchical_policy.png",
-        "fig17_history_deepsets_contribution.png",
-        # RQ3 / RQ4 main-paper figures
-        "fig_main02_nonlinear_vs_linear_curves.png",
-        "fig_main03_linear_plan_true_feasibility.png",
-        "fig_main03b_paired_charging_time_deltas.png",
-        "fig_main03c_e2e_true_feasibility.png",
-        "fig_main03d_schedule_comparison_example.png",
-        "fig_main04_objective_decomposition_nl.png",
-        "fig_main07_reward_dynamics.png",
-        "fig_main07b_bc_vs_rl_official.png",
-    }
-    for path in list(FIGURES.iterdir()):
-        if path.name in keep:
-            continue
-        if path.suffix.lower() in {".png", ".svg", ".pdf", ".eps"}:
-            dest = legacy_dir / path.name
-            if dest.exists():
-                dest = legacy_dir / f"moved_{path.name}"
-            path.replace(dest)
-            print(f"archived legacy figure -> {dest}")
+    """Delegate to publication_figures allowlist enforcement."""
+    reporting_dir = str(ROOT / "scripts" / "reporting")
+    if reporting_dir not in sys.path:
+        sys.path.insert(0, reporting_dir)
+    from publication_figures import enforce_figure_layout
+
+    enforce_figure_layout()
 
 
 def main() -> None:
@@ -1362,6 +1347,7 @@ def main() -> None:
         parser.error("pass --all or --decomp-only")
 
     FIGURES.mkdir(parents=True, exist_ok=True)
+    SUPP_FIGURES.mkdir(parents=True, exist_ok=True)
     TABLES.mkdir(parents=True, exist_ok=True)
 
     decomp_rows: list[dict] = []
@@ -1373,6 +1359,7 @@ def main() -> None:
     if args.decomp_only:
         return
 
+    # Legacy / supporting plots → supplementary only
     make_architecture_png()
     make_routing_example()
     make_charging_curves()
@@ -1391,10 +1378,13 @@ def main() -> None:
     from charging_and_reward_figures import main as build_charging_and_reward
 
     build_charging_and_reward()
+    from publication_figures import build_all_main_figures
+
+    build_all_main_figures()
     write_index()
     checkpoint_manifest()
     dataset_hashes()
-    archive_legacy_figures()
+    print("main figure allowlist:", ", ".join(MAIN_FIGURES))
 
 
 if __name__ == "__main__":

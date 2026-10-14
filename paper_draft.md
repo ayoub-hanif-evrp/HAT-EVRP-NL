@@ -107,6 +107,10 @@ Components, in order:
 
 Classical reference: Randomized Greedy Routing (H0) and Randomized Greedy + Local Search (H0_strong).
 
+![Figure 1. HAT-EVRP-NL hybrid architecture](results/figures/fig01_architecture.png)
+
+**Figure 1.** Hybrid HAT-EVRP-NL architecture. Blue blocks are learned neural components (node encoder, causal history Transformer, dynamic state fusion, optional DeepSets fleet aggregation, hierarchical route/customer policy). Orange blocks are algorithmic: `frvcpy` fixed-route nonlinear charging optimization and an independent Python physical checker. The lower path summarizes training: synthetic expert data → behavior cloning → optional REINFORCE → validation-selected checkpoint. H1–H4 ablate history and DeepSets; charging always uses `frvcpy`.
+
 ---
 
 ## 5. Training Methodology
@@ -173,37 +177,42 @@ Unequal-compute protocols are labeled and never mixed with matched fair-LS claim
 
 ## 7. Results — Nonlinear Charging (RQ3)
 
-*Major section.* Full study: `results/NONLINEAR_CHARGING_STUDY.md`. Table: `table15_nonlinear_vs_linear_charging.md`. Figures: `fig_main02_*`–`fig_main04_*`.
+*Major section.* Full study: `results/NONLINEAR_CHARGING_STUDY.md`. Table: `results/tables/table15_nonlinear_vs_linear_charging.md`.
 
 ### 7.1 Charging curves and physical interpretation
 
-Station technologies (slow / normal / fast) have distinct concave PWL curves. **LINEAR-SECANT** uses the empty→full chord (average rate). **LINEAR-EARLY-RATE** extrapolates the first segment (optimistic on concave curves). Figure 2 compares curves on a representative instance.
+Station technologies (slow / normal / fast) have distinct concave PWL curves. **LINEAR-SECANT** uses the empty→full chord (average rate). **LINEAR-EARLY-RATE** extrapolates the first segment (optimistic on concave curves).
 
-### 7.2 Linear versus nonlinear planning assumptions
+![Figure 2. Nonlinear vs linear charging curves](results/figures/fig02_nonlinear_charging_curves.png)
 
-On **matched customer sequences** (fixed-route protocol):
+**Figure 2.** Actual Montoya piecewise-linear charging curves versus LINEAR-SECANT and LINEAR-EARLY-RATE surrogates for slow, normal, and fast technologies on a representative official instance. Shaded bands mark the late-SOC region where true charging slows relative to the early-rate linear extrapolation. Units: hours vs kWh. Original XML breakpoints are preserved; surrogates never modify dataset files.
 
-| n | TRUE-NL feasible (true physics) | LINEAR-SECANT | LINEAR-EARLY-RATE |
-|---:|---:|---:|---:|
-| 10 | 20/20 | 16/20 | 16/20 |
-| 20 | 20/20 | 12/20 | 12/20 |
-| 40 | 20/20 | 11/20 | 11/20 |
+### 7.2–7.3 Feasibility under true charging physics
 
-TRUE-NL re-optimization after a linear plan (`repair_TRUE-NL_after_*`) restores 20/20 feasibility and is reported as a **separate** repaired method.
+On **matched customer sequences** (fixed-route) and **end-to-end** routing with frozen H2 weights, all plans are re-evaluated under TRUE-NL:
 
-### 7.3 Feasibility under true charging physics
+| Protocol | n | TRUE-NL | LINEAR-SECANT | LINEAR-EARLY-RATE |
+|---|---:|---:|---:|---:|
+| Fixed-route | 10 | 20/20 | 16/20 | 16/20 |
+| Fixed-route | 20 | 20/20 | 12/20 | 12/20 |
+| Fixed-route | 40 | 20/20 | 11/20 | 11/20 |
+| End-to-end | 40 | 20/20 | 11/20 | 9/20 |
 
-**LINEAR-EARLY-RATE** often plans successfully under the surrogate but fails true-physics duration checks (e.g., 9 duration violations at n=40 fixed-route). **LINEAR-SECANT** frequently fails already under the planner. End-to-end routing with frozen H2 weights shows the same qualitative pattern: at n=40, TRUE-NL 20/20 vs LINEAR-SECANT 11/20 vs LINEAR-EARLY-RATE 9/20 under true physics.
+Equal overall true-feasibility counts for SECANT and EARLY at fixed-route n=40 (**11/20**) hide different mechanisms: SECANT is often **planner-rejected**; EARLY is often **planner-accepted then true-physics infeasible**.
 
-### 7.4 Charging duration and SOC behavior
+![Figure 3. Charging-model feasibility](results/figures/fig03_charging_model_feasibility.png)
 
-Among instances where both TRUE-NL and a linear plan remain true-feasible, paired true charging-time deltas are reported in `fig_main03b_*`. Feasible-only means must not be used to rank methods when feasibility rates differ.
+**Figure 3.** Physical feasibility of charging plans under true nonlinear and two linear models on the Montoya benchmark (20 instances per customer-size group). Left: fixed customer sequences with independent charging optimization. Right: full neural route construction. Stacked bars distinguish (green) true-physics feasible, (orange) planner-OK but true-physics fail, and (grey) planner rejection / missing stops. Numbers above bars are true-feasible counts. Do not rank survivors by mean duration when feasibility rates differ.
 
-### 7.5 Impact on routing objective and decisions
+### 7.4 Charging schedule / SOC case
 
-End-to-end fingerprints (`end_to_end_decision_changes.csv`) show that the assumed charging law changes route sequences and charger usage. Objective decomposition under TRUE-NL fixed-route plans separates travel, service, and nonlinear charging (`fig_main04_*`).
+![Figure 4. Charging schedule SOC comparison](results/figures/fig04_charging_schedule_case.png)
 
-**Answer to RQ3.** Nonlinear charging matters in practice: linear surrogates produce plans that are frequently infeasible (or planner-rejected) when evaluated under true Montoya physics, with the failure rate growing with instance size. This is a feasibility result first, not a mean-duration ranking among survivors.
+**Figure 4.** Same fixed customer sequence on `tc0c10s2cf1` (route 2): SOC versus elapsed time under the TRUE-NL plan (left) versus a LINEAR-EARLY-RATE plan replayed on true Montoya curves (right). Shaded intervals are charging visits (F = fast). The dashed line is \(T_{\max}=10\) h. The linear plan underestimates true charging duration and violates the route-duration limit when executed under nonlinear physics. Stop lists and energy quantities: `results/tables/table_fig04_schedule_case.md`.
+
+Paired charging-time deltas among dual-feasible survivors only (selection-biased) are in supplementary `supp_paired_charging_time_by_size.png`.
+
+**Answer to RQ3.** Nonlinear charging matters in practice: linear surrogates produce plans that are frequently infeasible (or planner-rejected) under true Montoya physics, with failure rates growing with instance size.
 
 **Limitation.** Fixed-route sequences come from one H2+LS seed; surrogates are two explicit linear models, not every approximation in the literature.
 
@@ -238,13 +247,23 @@ Objective decomposition (same FRVCP for both):
 | History Transformer | 33.745 | 20.000 | 3.060 | 56.806 |
 | History Transformer + DeepSets | 33.219 | 20.000 | 3.151 | 56.370 |
 
-For the 40-customer recovered-hybrid experiment, both neural variants are evaluated using the same exact fixed-route nonlinear charging procedure. The Transformer–DeepSets configuration achieves a lower mean full duration than the history-only Transformer, predominantly through reduced travel time, despite slightly greater charging duration. Hence this particular result does not demonstrate superior charging optimization by the DeepSets architecture.
+![Figure 5. Objective decomposition](results/figures/fig05_objective_decomposition.png)
+
+**Figure 5.** Mean full-duration decomposition (travel + service + nonlinear charging) for the recovered n=40 hybrid_insert experiment (20 official instances, seed 42). History Transformer: 56.806 h; History Transformer + DeepSets: 56.370 h. The full model improves mainly by reducing travel time despite slightly greater charging time. Both use the same `frvcpy` fixed-route optimizer—this is **not** evidence of superior charging optimization by DeepSets. Distinct from the H2 fixed-route nonlinear-versus-linear study in Section 7.
+
+![Figure 6. Architecture ablation](results/figures/fig06_architecture_ablation.png)
+
+**Figure 6.** Matched n=10 Cycle-3 fair one-shot local search architecture comparison (20 official instances × 3 seeds). Points are seed means with ±1 std across seeds; ticks mark individual seeds. Axis zoomed to the data range. History Transformer Routing (19.813±0.227 h) improves on state-only (19.993±0.201 h) and greedy+LS (20.142±0.223 h). DeepSets does not consistently improve upon history alone (HAT-EVRP-NL 19.886±0.156 h). Full duration hours.
 
 ### 8.3 Classical baseline comparison
 
 Under fair-LS, neural history-aware construction improves on randomized greedy+LS on n=10 (above). Scaling tables: `table05_scalability.md`.
 
 ### 8.4–8.6 Scaling, compute, and search
+
+![Figure 8. Quality versus compute](results/figures/fig08_quality_compute.png)
+
+**Figure 8.** Recovered n=40 History Transformer (H2) search modes: mean full duration versus mean stage-level `frvcpy` oracle executions (20 instances, seed 42). Lower duration is better (inverted vertical axis). Runtimes in the legend are stage-level where measured. **Not** an equal-budget experiment—aggregate end-state means only; no invented anytime trajectories.
 
 Post-search gains must not be attributed to architecture alone. Direct learned charging (no `frvcpy`) achieves feasible complete solutions on only **4/20** official n=10 cases versus **20/20** for the frvcpy hybrid in that experiment—supporting an exact charging component, but **not** substituting for the linear-versus-nonlinear study in Section 7.
 
@@ -262,7 +281,11 @@ Cycle-3 BC reduces validation duration over 400 steps (see `fig12_*`). Expert ac
 
 ### 9.2 REINFORCE reward dynamics
 
-Historical Cycle-3 CSVs lack per-step sampled reward trajectories. The controlled RQ4 run instruments reward, greedy baseline, advantage, feasibility, PG loss, entropy, and grad norm (`results/raw/reward_learning/reward_*.csv`). Publication figure: `fig_main07_reward_dynamics.png`. The former placeholder `fig14_reward_dynamics_unavailable.png` is archived and is **not** a publication figure.
+Historical Cycle-3 CSVs lack per-step sampled reward trajectories. The controlled RQ4 run instruments reward, greedy baseline, advantage, feasibility, PG loss, entropy, and grad norm (`results/raw/reward_learning/reward_*.csv`).
+
+![Figure 7. Learning and reward](results/figures/fig07_learning_and_reward.png)
+
+**Figure 7.** Learning evidence with protocols kept distinct. (A) Cycle-3 behavior-cloning synthetic-validation duration for H2/H4 (seed 42 bold; other seeds faint). (B) Controlled RQ4 paired BC-only versus RL-from-BC mean full duration on official n=10 construction-only (20/20 feasible each); H2 improves on 1/3 seeds, H4 on 3/3. (C) Actual RL sampled rewards with rolling median (window=5); faint lines are per-seed raw rewards. Constant 100% feasibility traces are omitted as uninformative. Reward formula: \(R=-Z_\mathrm{full}\) if feasible else \(-100\).
 
 ### 9.3 BC-only versus RL fine-tuning
 
@@ -339,28 +362,18 @@ We do not claim end-to-end global optimality, reliable H4 dominance over H2, or 
 
 ---
 
-## Main figures and tables (publication set)
+## Manuscript figure index
 
-| Fig | File | Content |
+| Fig | File | Takeaway |
 |---|---|---|
-| 1 | `fig11_training_supervision_flow.png` / architecture figs | Architecture and training/inference paths |
-| 2 | `fig_main02_nonlinear_vs_linear_curves.png` | Nonlinear vs linear charging curves |
-| 3 | `fig_main03_linear_plan_true_feasibility.png` (+ e2e/paired) | Feasibility under true physics |
-| 4 | `fig_main04_objective_decomposition_nl.png` | Travel + service + NL charging |
-| 5 | Matched neural comparison (Cycle-3 figures) | Descriptive method names |
-| 6 | `fig12_*` learning curves | BC and RL separated |
-| 7 | `fig_main07_reward_dynamics.png` | Real reward logs (when available) |
-| 8 | Quality vs compute figures | Budgeted search |
+| 1 | `results/figures/fig01_architecture.png` | Hybrid neural + `frvcpy` pipeline |
+| 2 | `results/figures/fig02_nonlinear_charging_curves.png` | Late-SOC nonlinearity vs linear surrogates |
+| 3 | `results/figures/fig03_charging_model_feasibility.png` | Linear plans often fail true physics |
+| 4 | `results/figures/fig04_charging_schedule_case.png` | SOC case: early-rate plan violates \(T_{\max}\) |
+| 5 | `results/figures/fig05_objective_decomposition.png` | n40 hybrid: travel drives H4 vs H2 |
+| 6 | `results/figures/fig06_architecture_ablation.png` | History helps; DeepSets not consistent |
+| 7 | `results/figures/fig07_learning_and_reward.png` | BC vs RL is protocol-dependent |
+| 8 | `results/figures/fig08_quality_compute.png` | Quality vs oracle effort (unequal budgets) |
 
-| Table | File |
-|---|---|
-| 1 | `table01_benchmark_overview.md` |
-| 2 | `table10_training_configuration.md` |
-| 3 | `table03_main_models.md` |
-| 4 | `table15_nonlinear_vs_linear_charging.md` |
-| 5 | `table02_objective_and_charging.md` |
-| 6 | `table06_bc_vs_rl.md` / `table12_bc_vs_rl.md` |
-| 7 | Architecture/search ablations |
-| 8 | Runtime / oracle counts |
-
-Secondary plots remain under `results/figures/` or archive; do not treat chronological experiment dumps as main-paper evidence.
+Audit / disposition of former plots: `docs/FIGURE_AUDIT.md`.  
+Supplementary: `results/supplementary/figures/`. Archive: `results/archive/figures_legacy/`.

@@ -1,83 +1,83 @@
 # Results index (publication layer)
 
-Presentation (`figures/`, `tables/`) is separated from evidence (`raw/`, `archive/`).
-Manuscript: [`../paper_draft.md`](../paper_draft.md).
+This directory separates **presentation** (`figures/`, `tables/`) from **evidence** (`raw/`, `archive/`).
 
-## Research questions — key evidence
-
-| RQ | Question | Primary evidence |
-|---|---|---|
-| RQ1 | History vs state-only | `table03_main_models.md` — H2 19.813 vs H1 19.993 h (n10 fair-LS) |
-| RQ2 | DeepSets vs history | Same table — H4 19.886 vs H2 19.813; n40 hybrid inconclusive |
-| RQ3 | Nonlinear vs linear charging | [`NONLINEAR_CHARGING_STUDY.md`](NONLINEAR_CHARGING_STUDY.md), `table15_*` |
-| RQ4 | BC vs RL | [`REWARD_AND_LEARNING_STUDY.md`](REWARD_AND_LEARNING_STUDY.md), `table06_bc_vs_rl.md` |
-
-## Current strongest supported routing results
+## Current strongest supported results
 
 | Setting | Configuration | Mean full h | Notes |
 |---|---|---:|---|
-| n=40 | H4 Cycle-3 + ordinary λ=0 + hybrid_insert | **56.370** | Single seed; unequal search compute |
-| n=40 | H2 Cycle-3 + ordinary λ=0 + hybrid_insert | **56.806** | Same protocol as H4 row |
+| n=40 | H4 Cycle-3 + ordinary λ=0 + hybrid_insert | **56.370** | Beats hist fair-LS 57.506; single seed |
+| n=40 | H2 Cycle-3 + ordinary λ=0 + hybrid_insert | **56.806** | Beats hist fair-LS 57.173 |
 | n=10 | H2 Cycle-3 fair-LS | **19.813** | Multi-seed Cycle-3 baseline |
 
-## Nonlinear charging (RQ3) — executed full coverage
+## Do not cite as current best
 
-Fixed-route plans feasible under **true** Montoya physics:
+- INSERTION forced+λ4 n40 hybrid (~63.8 / 66.9 h): construction regression.
+- Naive ~43% BKS gaps: wrong objective convention (full vs lit).
 
-| n | TRUE-NL | LINEAR-SECANT | LINEAR-EARLY-RATE |
-|---:|---:|---:|---:|
-| 10 | 20/20 | 16/20 | 16/20 |
-| 20 | 20/20 | 12/20 | 12/20 |
-| 40 | 20/20 | 11/20 | 11/20 |
+## Important limitations
 
-## Learning (RQ4)
+- H4’s better n40 mean in the recovered single-seed experiment does **not** establish a reliable general DeepSets advantage.
+- Equal wall-clock neural-search superiority has **not** been established.
+- Official benchmark evaluation was revisited repeatedly; treat recent search results as exploratory.
+- `frvcpy` is exact for the **fixed-route** charging subproblem, not a proof of global VRP optimality.
 
-- Historical Cycle-3 synth-val: RL improves best-BC on 1/3 H2, 0/3 H4 seeds.
-- Controlled RQ4 construction-only official n10: H4 RL better 3/3; H2 1/3.
-- Do not mix these protocols.
+## Main-paper figures (exactly 8 PNGs)
 
-## Main publication figures (prefer these)
+See [`../docs/FIGURE_AUDIT.md`](../docs/FIGURE_AUDIT.md).
 
-| Fig | File |
-|---|---|
-| Architecture / training | `fig11_training_supervision_flow.png`, `fig01_architecture.png` |
-| NL vs linear curves | `fig_main02_nonlinear_vs_linear_curves.png` |
-| True-physics feasibility | `fig_main03_linear_plan_true_feasibility.png`, `fig_main03c_e2e_true_feasibility.png` |
-| Objective decomposition | `fig_main04_objective_decomposition_nl.png`, `fig04_objective_decomposition_n40.png` |
-| Matched neural quality | `fig06_main_benchmark_n10_fairls.png`, `fig17_history_deepsets_contribution.png` |
-| Learning curves | `fig12_learning_curves_h1h4.png`, `fig12b_bc_and_rl_losses_separate.png` |
-| Reward dynamics (real logs) | `fig_main07_reward_dynamics.png`, `fig_main07b_bc_vs_rl_official.png` |
-| Quality vs compute | `fig08_search_ablation_n40_recovered.png` |
+- [`figures/fig01_architecture.png`](figures/fig01_architecture.png)
+- [`figures/fig02_nonlinear_charging_curves.png`](figures/fig02_nonlinear_charging_curves.png)
+- [`figures/fig03_charging_model_feasibility.png`](figures/fig03_charging_model_feasibility.png)
+- [`figures/fig04_charging_schedule_case.png`](figures/fig04_charging_schedule_case.png)
+- [`figures/fig05_objective_decomposition.png`](figures/fig05_objective_decomposition.png)
+- [`figures/fig06_architecture_ablation.png`](figures/fig06_architecture_ablation.png)
+- [`figures/fig07_learning_and_reward.png`](figures/fig07_learning_and_reward.png)
+- [`figures/fig08_quality_compute.png`](figures/fig08_quality_compute.png)
 
-Secondary / legacy plots remain in `figures/` or `archive/`. **Do not** cite `fig14_reward_dynamics_unavailable.png` (archived placeholder).
+## Supplementary figures
 
-## Main tables
+Supporting plots live in [`supplementary/figures/`](supplementary/figures/).
+Superseded plots live in [`archive/figures_legacy/`](archive/figures_legacy/).
 
-- `table01`–`table03` — benchmark, objectives, main models
-- `table15_nonlinear_vs_linear_charging.md` — **RQ3**
-- `table06_bc_vs_rl.md` / `table12_bc_vs_rl.md` — **RQ4**
-- `table08_bks_comparison.md` — literature \(Z_\mathrm{lit}\) gaps
-- Architecture/search ablations: `table04`, `table06_h2_vs_h4`, `table14`
+## Tables (Markdown)
+
+- [`tables/table01_benchmark_overview.md`](tables/table01_benchmark_overview.md)
+- [`tables/table02_objective_and_charging.md`](tables/table02_objective_and_charging.md)
+- [`tables/table03_main_models.md`](tables/table03_main_models.md)
+- [`tables/table04_search_ablation.md`](tables/table04_search_ablation.md)
+- [`tables/table05_scalability.md`](tables/table05_scalability.md)
+- [`tables/table06_bc_vs_rl.md`](tables/table06_bc_vs_rl.md)
+- [`tables/table06_h2_vs_h4.md`](tables/table06_h2_vs_h4.md)
+- [`tables/table07_charging_analysis.md`](tables/table07_charging_analysis.md)
+- [`tables/table08_bks_comparison.md`](tables/table08_bks_comparison.md)
+- [`tables/table09_reproducibility.md`](tables/table09_reproducibility.md)
+- [`tables/table10_training_configuration.md`](tables/table10_training_configuration.md)
+- [`tables/table11_reward_functions.md`](tables/table11_reward_functions.md)
+- [`tables/table12_bc_vs_rl.md`](tables/table12_bc_vs_rl.md)
+- [`tables/table13_training_diagnostics.md`](tables/table13_training_diagnostics.md)
+- [`tables/table14_neural_vs_search_contribution.md`](tables/table14_neural_vs_search_contribution.md)
+- [`tables/table15_nonlinear_vs_linear_charging.md`](tables/table15_nonlinear_vs_linear_charging.md)
+- [`tables/table_fig04_schedule_case.md`](tables/table_fig04_schedule_case.md)
 
 ## Raw evidence
 
-- `raw/nonlinear_charging/` — fixed-route + e2e charging study
-- `raw/reward_learning/` — controlled BC/RL + reward CSVs
-- `raw/cycle3/` — Cycle-3 fair-LS
-- `raw/regression_recovery/` — n40 recovery
-- `raw/training_logs/` — Cycle-3 training CSVs + derived aggregates
+- `raw/cycle3/` — Cycle-3 fair-LS CSVs
+- `raw/nonlinear_charging/` — RQ3 linear vs nonlinear study
+- `raw/reward_learning/` — controlled RQ4 BC/RL + reward logs
+- `raw/regression_recovery/` — recovered construction + hybrid
 
 ## Key reports
 
 - [`NONLINEAR_CHARGING_STUDY.md`](NONLINEAR_CHARGING_STUDY.md)
 - [`REWARD_AND_LEARNING_STUDY.md`](REWARD_AND_LEARNING_STUDY.md)
-- [`FINAL_REPORT.md`](FINAL_REPORT.md)
-- [`LEARNING_RESULTS_REPORT.md`](LEARNING_RESULTS_REPORT.md)
+- [`FINAL_REPORT.md`](FINAL_REPORT.md) (Cycle-3 baseline)
+- [`../docs/FIGURE_AUDIT.md`](../docs/FIGURE_AUDIT.md)
 - [`../docs/TRAINING_AND_REWARD_METHODOLOGY.md`](../docs/TRAINING_AND_REWARD_METHODOLOGY.md)
 
 ## Regenerate
 
 ```bash
-python scripts/reporting/charging_and_reward_figures.py
+python scripts/reporting/publication_figures.py
 python scripts/reporting/build_results.py --all --skip-decomp
 ```

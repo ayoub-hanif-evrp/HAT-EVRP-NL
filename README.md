@@ -97,15 +97,14 @@ Report: [`results/REWARD_AND_LEARNING_STUDY.md`](results/REWARD_AND_LEARNING_STU
 ## Generate all figures and tables
 
 ```bash
-python scripts/reporting/build_results.py --all
+python scripts/reporting/publication_figures.py   # exactly 8 main-paper PNGs
+python scripts/reporting/build_results.py --all --skip-decomp
 ```
 
-Outputs:
-
-- [`results/README.md`](results/README.md) — definitive results index
-- [`results/figures/`](results/figures/) — publication PNGs
-- [`results/tables/`](results/tables/) — publication Markdown tables
-- [`paper_draft.md`](paper_draft.md) — manuscript structured around RQ1–RQ4
+- [`results/figures/`](results/figures/) — **only** the 8 main-paper PNGs (`docs/FIGURE_AUDIT.md`)
+- [`results/supplementary/figures/`](results/supplementary/figures/) — supporting plots
+- [`results/tables/`](results/tables/) — Markdown tables
+- [`paper_draft.md`](paper_draft.md) — manuscript with embedded figures
 
 ## Current strongest supported results
 

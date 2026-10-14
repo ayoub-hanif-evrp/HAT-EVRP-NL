@@ -37,15 +37,11 @@ without fabricating reward traces or claiming RL gains without evidence.
 
 ## Figures
 
-- `fig11_training_supervision_flow.png`
-- `fig12_learning_curves_h1h4.png`
-- `fig13_rl_effect_h2_h4.png`
-- `fig14_reward_dynamics_unavailable.png`
-- `fig15_bc_vs_rl_ablation.png`
-- `fig16_hierarchical_policy.png`
-- `fig17_history_deepsets_contribution.png`
+- Main paper learning figure: `results/figures/fig07_learning_and_reward.png`
+- Supplementary historical plots: `results/supplementary/figures/fig11_*` … `fig17_*`
 
 ## Raw sources
 
 - `results/raw/training_logs/training_H*_n10_seed*_c3.csv`
 - `results/raw/training_logs/derived/`
+- `results/raw/reward_learning/`

@@ -26,7 +26,7 @@ from presentation_names import (  # noqa: E402
     stage_label,
     wrap_label,
 )
-from reporting_paths import FIGURES, RAW, RESULTS, TABLES  # noqa: E402
+from reporting_paths import FIGURES, RAW, RESULTS, SUPP_FIGURES, TABLES  # noqa: E402
 
 DPI = 300
 DERIVED = RAW / "training_logs" / "derived"
@@ -76,9 +76,15 @@ def _write_table(name: str, title: str, meta: dict, headers: list[str], rows: li
 
 
 def fig_save(path: Path) -> None:
-    FIGURES.mkdir(parents=True, exist_ok=True)
+    """Learning presentation plots go to supplementary/, not main figures/."""
+    # Force supplementary for any legacy path under results/figures/
+    if path.parent.resolve() == FIGURES.resolve() or (
+        path.parent.name == "figures" and "supplementary" not in path.parts
+    ):
+        path = SUPP_FIGURES / path.name
+    path.parent.mkdir(parents=True, exist_ok=True)
     plt.tight_layout()
-    plt.savefig(path, dpi=DPI, bbox_inches="tight")
+    plt.savefig(path, dpi=DPI, bbox_inches="tight", facecolor="white")
     plt.close()
     print(f"wrote {path}")
 
@@ -249,34 +255,8 @@ def make_fig_rl_effect() -> None:
 
 
 def make_fig_reward_unavailable() -> None:
-    """Skip placeholder when real reward dynamics exist; otherwise archive-only notice."""
-    real = FIGURES / "fig_main07_reward_dynamics.png"
-    reward_csvs = list((RAW / "reward_learning").glob("reward_*_rl_from_bc_rq4.csv")) if (RAW / "reward_learning").exists() else []
-    if real.exists() or reward_csvs:
-        # Real RQ4 reward figure supersedes the historical placeholder.
-        placeholder = FIGURES / "fig14_reward_dynamics_unavailable.png"
-        if placeholder.exists():
-            dest = RESULTS / "archive" / "figures_legacy" / placeholder.name
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            placeholder.replace(dest)
-        return
-    fig, ax = plt.subplots(figsize=(8, 3.5))
-    ax.axis("off")
-    ax.text(
-        0.5,
-        0.55,
-        "Reward dynamics figure unavailable\n\n"
-        "Historical Cycle-3 training CSVs do not record sampled rewards,\n"
-        "baselines, advantages, or infeasible-rollout counts.\n\n"
-        "Run scripts/experiments/run_bc_rl_controlled.py for real reward logs.\n"
-        "Do not reconstruct rewards from validation objectives.",
-        ha="center",
-        va="center",
-        fontsize=11,
-        bbox=dict(boxstyle="round", facecolor="#f5f5f5", edgecolor="#999"),
-    )
-    ax.set_title("FIGURE D — Reward dynamics (data not present in historical logs)")
-    fig_save(FIGURES / "fig14_reward_dynamics_unavailable.png")
+    """Historical placeholder is obsolete; real rewards live in main fig07."""
+    return
 
 
 def make_fig_bc_vs_rl() -> None:
@@ -705,18 +685,14 @@ def write_learning_report() -> None:
             "",
             "## Figures",
             "",
-            "- `fig11_training_supervision_flow.png`",
-            "- `fig12_learning_curves_h1h4.png`",
-            "- `fig13_rl_effect_h2_h4.png`",
-            "- `fig_main07_reward_dynamics.png` (real RQ4 logs; placeholder fig14 archived)",
-            "- `fig15_bc_vs_rl_ablation.png`",
-            "- `fig16_hierarchical_policy.png`",
-            "- `fig17_history_deepsets_contribution.png`",
+            "- Main paper learning figure: `results/figures/fig07_learning_and_reward.png`",
+            "- Supplementary historical plots: `results/supplementary/figures/fig11_*` … `fig17_*`",
             "",
             "## Raw sources",
             "",
             "- `results/raw/training_logs/training_H*_n10_seed*_c3.csv`",
             "- `results/raw/training_logs/derived/`",
+            "- `results/raw/reward_learning/`",
             "",
         ]
     )

@@ -95,24 +95,24 @@ class TableAndFigureTests(unittest.TestCase):
         self.assertIn("History Transformer", text)
 
     def test_learning_figures_png_only(self):
-        figures = ROOT / "results" / "figures"
-        if not figures.exists():
+        main = ROOT / "results" / "figures"
+        supp = ROOT / "results" / "supplementary" / "figures"
+        if not main.exists():
             self.skipTest("figures missing")
-        for path in figures.iterdir():
-            self.assertEqual(path.suffix.lower(), ".png", path.name)
+        for path in main.iterdir():
+            if path.is_file():
+                self.assertEqual(path.suffix.lower(), ".png", path.name)
+        # Main learning figure
+        self.assertTrue((main / "fig07_learning_and_reward.png").exists())
+        # Historical learning plots are supplementary (not in main allowlist)
         for name in (
             "fig11_training_supervision_flow.png",
             "fig12_learning_curves_h1h4.png",
             "fig13_rl_effect_h2_h4.png",
             "fig15_bc_vs_rl_ablation.png",
         ):
-            self.assertTrue((figures / name).exists(), name)
-        # Real reward dynamics supersede the historical placeholder
-        self.assertTrue(
-            (figures / "fig_main07_reward_dynamics.png").exists()
-            or (figures / "fig14_reward_dynamics_unavailable.png").exists(),
-            "expected real reward dynamics or unavailable placeholder",
-        )
+            self.assertTrue((supp / name).exists(), f"expected {name} in supplementary/")
+            self.assertFalse((main / name).exists(), f"{name} must not be in main figures/")
 
     def test_paper_links_resolve(self):
         paper = (ROOT / "paper_draft.md").read_text(encoding="utf-8")
