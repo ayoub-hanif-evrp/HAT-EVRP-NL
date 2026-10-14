@@ -102,8 +102,14 @@ class TableAndFigureTests(unittest.TestCase):
         for path in main.iterdir():
             if path.is_file():
                 self.assertEqual(path.suffix.lower(), ".png", path.name)
-        # Main learning figure
-        self.assertTrue((main / "fig07_learning_and_reward.png").exists())
+        # Main learning figures (expanded set)
+        for name in (
+            "fig18_behavior_cloning_learning_curves.png",
+            "fig19_bc_vs_rl_checkpoint_quality.png",
+            "fig20_reinforce_reward_dynamics.png",
+            "fig21_rl_training_stability.png",
+        ):
+            self.assertTrue((main / name).exists(), name)
         # Historical learning plots are supplementary (not in main allowlist)
         for name in (
             "fig11_training_supervision_flow.png",

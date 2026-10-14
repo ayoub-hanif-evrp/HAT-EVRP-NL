@@ -14,25 +14,38 @@ class PublicationFigureTests(unittest.TestCase):
 
         present = sorted(p.name for p in FIGURES.glob("*.png"))
         self.assertEqual(present, sorted(MAIN_FIGURES))
-        self.assertEqual(len(present), 8)
+        self.assertGreaterEqual(len(present), 16)
+        self.assertEqual(len(present), 21)
 
-    def test_obsolete_names_not_in_main(self):
+    def test_png_only_and_openable(self):
+        from PIL import Image
+
+        from reporting_paths import FIGURES, MAIN_FIGURES
+
+        for name in MAIN_FIGURES:
+            path = FIGURES / name
+            self.assertTrue(path.exists(), name)
+            self.assertEqual(path.suffix.lower(), ".png")
+            with Image.open(path) as im:
+                w, h = im.size
+                self.assertGreater(w, 200, name)
+                self.assertGreater(h, 150, name)
+                self.assertGreaterEqual(im.info.get("dpi", (300, 300))[0], 72)
+
+    def test_obsolete_eight_set_not_in_main(self):
         from reporting_paths import FIGURES
 
         banned = {
+            "fig01_architecture.png",
+            "fig06_architecture_ablation.png",
+            "fig07_learning_and_reward.png",
+            "fig08_quality_compute.png",
             "fig_main03d_schedule_comparison_example.png",
-            "fig_main03_linear_plan_true_feasibility.png",
-            "fig_main03c_e2e_true_feasibility.png",
-            "fig_main07_reward_dynamics.png",
-            "fig06_main_benchmark_n10_fairls.png",
-            "fig17_history_deepsets_contribution.png",
-            "fig08_search_ablation_n40_recovered.png",
-            "fig14_reward_dynamics_unavailable.png",
         }
         present = {p.name for p in FIGURES.glob("*.png")}
         self.assertFalse(present & banned)
 
-    def test_fig03_counts_match_raw(self):
+    def test_fig06_counts_match_raw(self):
         import csv
         from collections import defaultdict
 
@@ -49,12 +62,27 @@ class PublicationFigureTests(unittest.TestCase):
         self.assertEqual(by[(40, "LINEAR-SECANT")]["true"], 11)
         self.assertEqual(by[(40, "LINEAR-EARLY-RATE")]["true"], 11)
 
-    def test_schedule_case_table_exists(self):
-        path = ROOT / "results" / "tables" / "table_fig04_schedule_case.md"
-        self.assertTrue(path.exists(), path)
-        text = path.read_text(encoding="utf-8")
-        self.assertIn("tc0c10s2cf1", text)
-        self.assertIn("Duration violation", text)
+    def test_decomp_identity(self):
+        import csv
+
+        path = ROOT / "results" / "raw" / "regression_recovery" / "RECOVERY_n40_objective_decomposition.csv"
+        rows = list(csv.DictReader(path.open(encoding="utf-8")))
+        for r in rows:
+            if r.get("stage") != "hybrid_insert" or r.get("feasible") != "1":
+                continue
+            tot = float(r["travel_h"]) + float(r["service_h"]) + float(r["charging_h"])
+            self.assertAlmostEqual(tot, float(r["full_h"]), places=5, msg=r["instance"])
+
+    def test_paper_embeds_main_figures(self):
+        import re
+
+        from reporting_paths import MAIN_FIGURES
+
+        paper = (ROOT / "paper_draft.md").read_text(encoding="utf-8")
+        for name in MAIN_FIGURES:
+            self.assertIn(name, paper, f"paper missing embed/reference for {name}")
+        # caption markers
+        self.assertGreaterEqual(len(re.findall(r"\*\*Figure \d+\.", paper)), 16)
 
     def test_regeneration_keeps_allowlist(self):
         import sys

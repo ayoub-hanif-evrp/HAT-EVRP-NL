@@ -97,12 +97,12 @@ Report: [`results/REWARD_AND_LEARNING_STUDY.md`](results/REWARD_AND_LEARNING_STU
 ## Generate all figures and tables
 
 ```bash
-python scripts/reporting/publication_figures.py   # exactly 8 main-paper PNGs
+python scripts/reporting/publication_figures.py   # 21 main-paper PNGs
 python scripts/reporting/build_results.py --all --skip-decomp
 ```
 
-- [`results/figures/`](results/figures/) — **only** the 8 main-paper PNGs (`docs/FIGURE_AUDIT.md`)
-- [`results/supplementary/figures/`](results/supplementary/figures/) — supporting plots
+- [`results/figures/`](results/figures/) — 21 main-paper PNGs ([`docs/FIGURE_CATALOG.md`](docs/FIGURE_CATALOG.md))
+- [`results/supplementary/figures/`](results/supplementary/figures/) — supporting plots + contact sheet
 - [`results/tables/`](results/tables/) — Markdown tables
 - [`paper_draft.md`](paper_draft.md) — manuscript with embedded figures
 
