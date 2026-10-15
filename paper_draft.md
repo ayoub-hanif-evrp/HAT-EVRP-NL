@@ -50,7 +50,7 @@ Service can be subtracted for BKS comparison without changing the ordering of co
 
 ![Figure 1. HAT-EVRP-NL architecture](results/figures/fig01_hat_evrp_nl_architecture.png)
 
-**Figure 1.** Hybrid HAT-EVRP-NL architecture. Blue blocks are learned (node encoder, causal history Transformer, dynamic state fusion, optional DeepSets, hierarchical pointer). Orange blocks are algorithmic and non-differentiable (`frvcpy` FRVCP-NL and Python physical checker). Green blocks denote data/outputs. Training: synthetic experts → BC → optional REINFORCE → validation-selected checkpoint. Gradients never pass through `frvcpy`.
+**Figure 1.** Hybrid HAT-EVRP-NL architecture. Blue blocks are learned (node encoder, causal history Transformer, dynamic state fusion, optional DeepSets, hierarchical pointer). Orange blocks are algorithmic and non-differentiable (`frvcpy` FRVCP-NL and Python physical checker). Green blocks denote data/outputs. Training: synthetic experts → BC → optional REINFORCE → validation-selected checkpoint. Gradients never pass through `frvcpy`. Ablations compare State-only Pointer, History Transformer, DeepSets Fleet Model, and History Transformer + DeepSets. Policy gradients use sampled routing log-probabilities; charging is optimized post-decode.
 
 Ablations (display names): State-only Pointer · History Transformer · DeepSets Fleet Model · History Transformer + DeepSets (HAT-EVRP-NL). Classical: Greedy Construction / Greedy + Local Search. Internal checkpoint keys H0–H4 are retained for reproducibility only (`presentation_names.py`).
 
@@ -96,7 +96,7 @@ Full study: `results/NONLINEAR_CHARGING_STUDY.md`.
 
 ![Figure 7. End-to-end feasibility](results/figures/fig07_end_to_end_charging_feasibility.png)
 
-**Figure 7.** End-to-end neural routing with frozen History Transformer weights. Panels A (n=10/20/40): true-physics feasibility under each planning curve. Panel B: fraction of instances whose customer sequences change vs TRUE-NL. Unlike Figure 6, routing decisions may change. At n=40: TRUE-NL 20/20, SECANT 11/20, EARLY 9/20.
+**Figure 7.** End-to-end neural routing with frozen History Transformer weights (20 official instances per size). Left three panels: true-physics feasibility under each planning curve (TRUE-NL / Secant / Early). Right panel: fraction of instances whose customer sequences change relative to TRUE-NL. Unlike Figure 6, routing decisions may change when the planner uses a misspecified charging law. At n=40: TRUE-NL 20/20, SECANT 11/20, EARLY 9/20.
 
 ![Figure 8. SOC charging schedule](results/figures/fig08_soc_charging_schedule.png)
 
@@ -130,15 +130,15 @@ Full study: `results/NONLINEAR_CHARGING_STUDY.md`.
 
 ![Figure 14. Literature BKS gaps](results/figures/fig14_literature_bks_gap.png)
 
-**Figure 14.** Literature BKS gaps with \(Z_\mathrm{lit}=Z_\mathrm{full}-\text{service}\) (Froger Table 13), **protocol-separated**: (A) n=10 Cycle-3 fair-LS ≈ 4.99% History / 5.44% History+DeepSets; (B) expensive n=10 hybrid insert ≈ **0.027%** (near-BKS; different compute regime); (C) n=40 recovered hybrid ≈ **17.72% / 16.79%**. Panels are not interchangeable rankings. We do **not** claim state-of-the-art performance.
+**Figure 14.** Literature BKS gaps with \(Z_\mathrm{lit}=Z_\mathrm{full}-\text{service}\) (Froger Table 13), **protocol-separated**: (A) n=10 Cycle-3 fair-LS ≈ 4.99% History / 5.44% History+DeepSets; (B) expensive n=10 hybrid insert ≈ **0.027%** (near-BKS; different compute regime—panel B uses a much smaller vertical scale than A/C and is not zero); (C) n=40 recovered hybrid ≈ **17.72% / 16.79%**. Panels are not interchangeable rankings. We do **not** claim state-of-the-art performance.
 
 ![Figure 15. Generalization](results/figures/fig15_generalization_scalability.png)
 
-**Figure 15.** Exploratory size transfer of n10-trained History / History+DeepSets under fair-LS: absolute objective, architecture Δ, and feasibility. Absolute curves largely overlap; **n=80 uses only 3 instances**. Not a strong scalability claim. Recovered hybrid n=40 (different protocol) reaches 56.806 / 56.370 h.
+**Figure 15.** Size transfer of n10-trained History Transformer and History + DeepSets under fair one-shot LS: (A) absolute mean \(Z_\mathrm{full}\), (B) architecture difference Δ = (History+DeepSets) − History, (C) feasibility rate. Absolute curves largely overlap. The n=80 point uses only 3 instances and is exploratory—not a strong large-instance generalization claim. Recovered hybrid n=40 (different protocol) reaches 56.806 / 56.370 h.
 
 ![Figure 16. Search stages](results/figures/fig16_search_improvement_stages.png)
 
-**Figure 16.** Recovered n=40 **categorical** search-mode means for History Transformer / History+DeepSets (20 instances). Independent alternatives from the same starts—not a sequential trajectory. Strong LS need not dominate Basic LS. Hybrid insert has the best mean among reported modes but is not an equal-budget claim.
+**Figure 16.** Recovered n=40 search-mode comparison as a categorical dot plot (History Transformer vs History Transformer + DeepSets; 20 instances; mean \(Z_\mathrm{full}\), lower better). Modes are independent alternatives from the same starts—not a sequential optimization trajectory. Strong LS need not dominate Basic LS. Hybrid insert has the best mean among reported modes; this is not an equal-budget efficiency claim.
 
 ![Figure 17. Quality vs compute](results/figures/fig17_quality_vs_compute.png)
 

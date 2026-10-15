@@ -140,9 +140,9 @@ def fig_save(path: Path, *, tight: bool = True) -> None:
 # ---------------------------------------------------------------------------
 def make_fig01() -> None:
     """Architecture schematic with generous vertical gaps (no arrows through headings)."""
-    fig, ax = plt.subplots(figsize=(8.4, 6.4))
+    fig, ax = plt.subplots(figsize=(8.4, 5.8))
     ax.set_xlim(0, 12.4)
-    ax.set_ylim(0, 12.6)
+    ax.set_ylim(1.9, 12.6)
     ax.axis("off")
 
     def box(x, y, w, h, text, color, fs=7.0):
@@ -214,24 +214,12 @@ def make_fig01() -> None:
     for x1, x2 in [(2.85, 3.2), (5.5, 5.85), (8.35, 8.7)]:
         arrow(x1, 4.55, x2, 4.55)
 
+    # Compact color key only (interpretations belong in the manuscript caption).
     ax.text(
         0.25,
-        3.0,
+        2.6,
         "Blue = learned neural · Orange = algorithmic / non-differentiable · Green = data & outputs",
         fontsize=7.5,
-    )
-    ax.text(
-        0.25,
-        2.3,
-        "Ablations: State-only · History Transformer · DeepSets · History + DeepSets (HAT-EVRP-NL).",
-        fontsize=7.5,
-    )
-    ax.text(
-        0.25,
-        1.6,
-        "Policy gradients use sampled routing log-probabilities; charging is optimized post-decode.",
-        fontsize=7.5,
-        color="#444",
     )
     ax.set_title("HAT-EVRP-NL hybrid architecture", fontsize=11, pad=6)
     fig_save(FIGURES / "fig01_hat_evrp_nl_architecture.png", tight=False)
@@ -442,14 +430,6 @@ def make_fig05() -> None:
     ax.set_title(f"PWL charging slope vs SOC ({inst.name})")
     ax.legend(title="Technology", loc="upper left", frameon=True)
     ax.grid(True, alpha=0.25)
-    fig.text(
-        0.5,
-        -0.02,
-        "Higher SOC ⇒ higher min/kWh on concave Montoya PWL curves (XML segment slopes).",
-        ha="center",
-        fontsize=7.5,
-        color="#444",
-    )
     fig_save(FIGURES / "fig05_charging_time_vs_soc.png")
 
 
@@ -562,11 +542,17 @@ def make_fig06() -> None:
 def make_fig07() -> None:
     cats = _feas_categories(_read(NL_RAW / "end_to_end_charging_sensitivity.csv"), fixed=False)
     changes = _read(NL_RAW / "end_to_end_decision_changes.csv")
-    fig = plt.figure(figsize=(8.8, 3.6))
-    gs = fig.add_gridspec(1, 4, width_ratios=[1, 1, 1, 1.15], wspace=0.22)
-    axes = [fig.add_subplot(gs[0, i]) for i in range(3)]
-    _plot_feas_facets(axes, cats, "A. ")
-    ax = fig.add_subplot(gs[0, 3])
+    fig = plt.figure(figsize=(9.4, 3.5))
+    # Extra gap between feasibility facets and route-change panel.
+    gs = fig.add_gridspec(1, 2, width_ratios=[2.55, 1.0], wspace=0.38)
+    gs_a = gs[0].subgridspec(1, 3, wspace=0.18)
+    axes = [fig.add_subplot(gs_a[0, i]) for i in range(3)]
+    _plot_feas_facets(axes, cats, "")
+    for i, s in enumerate((10, 20, 40)):
+        axes[i].set_title(f"n={s}", fontsize=9)
+    axes[0].set_ylabel("Instances (of 20)")
+
+    ax = fig.add_subplot(gs[1])
     sizes = [10, 20, 40]
     x = np.arange(len(sizes))
     w = 0.35
@@ -578,24 +564,28 @@ def make_fig07() -> None:
         ax.bar(x + (i - 0.5) * w, rates, w, color=col, label=model.replace("LINEAR-", ""))
     ax.set_xticks(x)
     ax.set_xticklabels([f"n={s}" for s in sizes])
-    ax.set_ylabel("% changed routes")
+    # Put ylabel on the right to avoid colliding with the n=40 panel.
+    ax.yaxis.set_label_position("right")
+    ax.yaxis.tick_right()
+    ax.set_ylabel("% instances with changed routes")
     ax.set_ylim(0, 105)
-    ax.set_title("B. Routes vs TRUE-NL", fontsize=9)
+    ax.set_title("Route sequences vs TRUE-NL", fontsize=9)
     ax.legend(loc="upper right", frameon=True, fontsize=6.5)
     ax.grid(True, axis="y", alpha=0.25)
+
     legend_elems = [
         Patch(fc=C["true_feas"], label="True-physics feasible"),
         Patch(fc=C["false_feas"], label="Planner-OK, true-physics fail"),
         Patch(fc=C["plan_fail"], label="Planner rejected / no stops"),
     ]
-    fig.legend(handles=legend_elems, loc="upper center", ncol=3, frameon=False, bbox_to_anchor=(0.38, 1.08))
+    fig.legend(handles=legend_elems, loc="upper center", ncol=3, frameon=False, bbox_to_anchor=(0.42, 1.06))
     fig.suptitle(
-        f"End-to-end routing: charging-law misspecification "
+        f"End-to-end charging-law misspecification "
         f"(frozen {method_label('H2', short=True)} weights)",
         fontsize=10,
-        y=1.14,
+        y=1.12,
     )
-    fig.subplots_adjust(top=0.78, bottom=0.14)
+    fig.subplots_adjust(top=0.78, bottom=0.14, left=0.07, right=0.92)
     fig_save(FIGURES / "fig07_end_to_end_charging_feasibility.png", tight=False)
 
 
@@ -729,13 +719,6 @@ def make_fig09() -> None:
         "Charging-time estimation error (plans with recorded nominal & true charge hours)",
         fontsize=10,
     )
-    fig.text(
-        0.5,
-        -0.04,
-        "Negative = linear planner underestimates true nonlinear charging time. Sample sizes = paired recorded hours (not all 20).",
-        ha="center",
-        fontsize=7.5,
-    )
     fig_save(FIGURES / "fig09_linear_charging_estimation_error.png")
 
 
@@ -795,14 +778,6 @@ def make_fig10() -> None:
     ax.grid(True, axis="y", alpha=0.25)
 
     fig.suptitle("n=40 recovered hybrid_insert: frvcpy charging choices (TRUE-NL)", fontsize=10, y=1.02)
-    fig.text(
-        0.5,
-        -0.02,
-        "Same frvcpy optimizer for both architectures; panels report what the charging plan chooses.",
-        ha="center",
-        fontsize=7.5,
-        color="#444",
-    )
     fig_save(FIGURES / "fig10_station_usage_and_energy.png")
 
 
@@ -843,14 +818,6 @@ def make_fig11() -> None:
     ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.02), ncol=3, frameon=False, borderaxespad=0.0)
     ax.set_title("Objective decomposition under true nonlinear charging", fontsize=10, pad=22)
     ax.grid(True, axis="x", alpha=0.25)
-    fig.text(
-        0.5,
-        -0.02,
-        "History + DeepSets mean edge is mainly lower travel, not lower charging (identical frvcpy).",
-        ha="center",
-        fontsize=7.5,
-        color="#444",
-    )
     fig.subplots_adjust(top=0.82)
     fig_save(FIGURES / "fig11_objective_decomposition.png")
 
@@ -908,25 +875,20 @@ def make_fig12() -> None:
     ax.bar(x + w / 2, d42, w, color=MC["H4"], label="Hist.+DeepSets − History")
     ax.axhline(0, color="k", lw=1.0)
     for xi, a, b in zip(x, d21, d42):
-        ax.text(xi - w / 2, a + (0.02 if a >= 0 else -0.06), f"{a:+.2f}", ha="center", fontsize=6.5)
-        ax.text(xi + w / 2, b + (0.02 if b >= 0 else -0.06), f"{b:+.2f}", ha="center", fontsize=6.5)
+        ax.text(xi - w / 2, a + (0.025 if a >= 0 else -0.04), f"{a:+.2f}", ha="center", va="bottom" if a >= 0 else "top", fontsize=6.5)
+        ax.text(xi + w / 2, b + (0.025 if b >= 0 else -0.04), f"{b:+.2f}", ha="center", va="bottom" if b >= 0 else "top", fontsize=6.5)
     ax.set_xticks(x)
     ax.set_xticklabels([f"Seed {s}" for s in seed_list])
     ax.set_ylabel("Δ mean Z_full (h); negative = better")
     ax.set_title("B. Per-seed paired means", fontsize=9)
+    finite = [v for v in d21 + d42 if v is not None and math.isfinite(v)]
+    if finite:
+        pad = 0.12
+        ax.set_ylim(min(finite) - pad, max(finite) + pad)
     ax.legend(loc="upper right", fontsize=6.5, frameon=True)
     ax.grid(True, axis="y", alpha=0.25)
 
     fig.suptitle("Matched n=10 Cycle-3 fair one-shot local search (20 instances / seed)", fontsize=10, y=1.02)
-    fig.text(
-        0.5,
-        -0.04,
-        "Average History vs State-only gain is seed-sensitive (≈ −0.58 / +0.04 / ≈0 on seeds 42–44). "
-        "DeepSets does not consistently improve on History alone.",
-        ha="center",
-        fontsize=7,
-        color="#444",
-    )
     fig_save(FIGURES / "fig12_neural_architecture_ablation.png")
 
 
@@ -980,14 +942,6 @@ def make_fig13() -> None:
     ax.set_ylabel("Layout-mean Δ Z_full (h)\nnegative = second method better ←")
     ax.set_title("Paired architecture effects (n=10 Cycle-3 fair-LS)")
     ax.grid(True, axis="y", alpha=0.25)
-    fig.text(
-        0.5,
-        -0.05,
-        "Each point = one customer layout (seed-averaged). Diamonds: mean ± 1.96·SE over n=20 layouts "
-        "(descriptive; layouts—not 60 instance×seed rows—are the paired units).",
-        ha="center",
-        fontsize=7,
-    )
     fig_save(FIGURES / "fig13_history_deepsets_paired_effect.png")
 
 
@@ -1068,16 +1022,6 @@ def make_fig14() -> None:
     # Keep a readable non-zero scale without exaggerating significance.
     ax.set_ylim(0, max(0.12, hybrid_mean * 4))
     ax.axhline(0, color="k", lw=0.6)
-    ax.text(
-        0.5,
-        0.92,
-        "≈ 0% (not zero;\nscale ≠ panel A)",
-        transform=ax.transAxes,
-        ha="center",
-        va="top",
-        fontsize=6.5,
-        color="#666",
-    )
     ax.grid(True, axis="y", alpha=0.25)
 
     ax = axes[2]
@@ -1098,16 +1042,6 @@ def make_fig14() -> None:
         fontsize=10,
         y=1.02,
     )
-    fig.text(
-        0.5,
-        -0.07,
-        "Do not rank across panels — budgets differ. A ≈ cheap fair-LS (~5%); "
-        "B ≈ expensive hybrid insert (~0.03%); C ≈ n=40 recovered hybrid (~17%). "
-        "Near-zero in B is real but uses a different compute regime than A.",
-        ha="center",
-        fontsize=7,
-        color="#444",
-    )
     fig_save(FIGURES / "fig14_literature_bks_gap.png")
 
 
@@ -1121,7 +1055,7 @@ def make_fig15() -> None:
         40: _read(CYCLE3 / "FINAL_n40_fairls.csv"),
         80: _read(CYCLE3 / "FINAL_n80_fairls.csv"),
     }
-    fig, axes = plt.subplots(1, 3, figsize=(9.2, 3.6))
+    fig, axes = plt.subplots(1, 3, figsize=(9.4, 3.5))
 
     ax = axes[0]
     for m in ("H2", "H4"):
@@ -1138,14 +1072,7 @@ def make_fig15() -> None:
     ax.set_title("A. Absolute objective", fontsize=9)
     ax.legend(loc="upper left", frameon=True, fontsize=6.5)
     ax.grid(True, alpha=0.25)
-    ax.annotate(
-        "n=80: 3 inst.\n(exploratory)",
-        xy=(80, ys[-1] if ys else 90),
-        xytext=(55, (ys[-1] if ys else 90) - 12),
-        fontsize=6.5,
-        color="#D55E00",
-        arrowprops=dict(arrowstyle="->", color="#D55E00", lw=0.8),
-    )
+    ax.set_xticks([10, 20, 40, 80])
 
     ax = axes[1]
     xs, dys = [], []
@@ -1159,17 +1086,23 @@ def make_fig15() -> None:
     ax.axhline(0, color="k", lw=0.9)
     ax.plot(xs, dys, "D-", color="#333", lw=1.5, ms=6)
     if dys:
-        pad = max(0.08, 0.15 * (max(dys) - min(dys) + 1e-9))
-        ax.set_ylim(min(dys) - pad - 0.05, max(dys) + pad + 0.08)
+        y_lo = min(dys) - 0.18
+        y_hi = max(dys) + 0.22
+        ax.set_ylim(y_lo, y_hi)
+        ax.set_xlim(min(xs) - 6, max(xs) + 6)
     for x, d in zip(xs, dys):
-        # Place labels inside axes with offset that stays clear of markers.
-        offset = pad * 0.35 if d >= 0 else -pad * 0.45
-        ax.text(x, d + offset, f"{d:+.2f}", ha="center", va="bottom" if d >= 0 else "top", fontsize=6.5, clip_on=True)
+        # Label non-zero deltas only; near-zero points sit on the baseline (value clear from marker).
+        if abs(d) < 5e-3:
+            continue
+        if d >= 0:
+            ax.text(x, d + 0.04, f"{d:+.2f}", ha="center", va="bottom", fontsize=6.5, clip_on=True)
+        else:
+            ax.text(x, d - 0.04, f"{d:+.2f}", ha="center", va="top", fontsize=6.5, clip_on=True)
     ax.set_xlabel("Test size n")
     ax.set_ylabel("Δ Z_full (h)\nHist.+DeepSets − History")
     ax.set_title("B. Architecture difference", fontsize=9)
+    ax.set_xticks([10, 20, 40, 80])
     ax.grid(True, alpha=0.25)
-    ax.text(0.98, 0.02, "n=80 thin", transform=ax.transAxes, ha="right", fontsize=6, color="#D55E00")
 
     ax = axes[2]
     for m in ("H2", "H4"):
@@ -1201,45 +1134,34 @@ def make_fig15() -> None:
     ax.set_xlabel("Test size n")
     ax.set_ylabel("Feasibility (%)")
     ax.set_ylim(0, 108)
+    ax.set_xticks([10, 20, 40, 80])
     ax.set_title("C. Feasibility rate", fontsize=9)
     ax.legend(loc="lower right", frameon=True, fontsize=6.5)
     ax.grid(True, alpha=0.25)
 
-    fig.suptitle(
-        "Exploratory size transfer (fair-LS; n10-trained weights) — not a strong scalability claim",
-        fontsize=9.5,
-    )
-    fig.text(
-        0.5,
-        -0.06,
-        "Architecture differences are small relative to size effects. n=80 uses only 3 instances — "
-        "do not interpret as statistically established scalability.",
-        ha="center",
-        fontsize=7,
-        color="#444",
-    )
+    fig.suptitle("Size transfer under fair one-shot LS (n10-trained checkpoints)", fontsize=10)
     fig_save(FIGURES / "fig15_generalization_scalability.png")
 
 
 # ---------------------------------------------------------------------------
-# FIG 16 — Search stages
+# FIG 16 — Search stages (categorical dot plot; full axis from 0)
 # ---------------------------------------------------------------------------
 def make_fig16() -> None:
     rows = _read(AUTH_N40_RECOVERY_PIPE)
     stages = ["construct", "basic_ls", "strong_ls", "classical_ruin", "neural_insert", "hybrid_insert"]
     short_stage = {
-        "construct": "Construct",
-        "basic_ls": "Basic LS",
-        "strong_ls": "Strong LS",
-        "classical_ruin": "Classical\nruin–repair",
-        "neural_insert": "Neural\ninsert",
-        "hybrid_insert": "Hybrid\ninsert",
+        "construct": "Neural construction",
+        "basic_ls": "Basic local search",
+        "strong_ls": "Strong local search",
+        "classical_ruin": "Classical ruin–repair",
+        "neural_insert": "Neural insert repair",
+        "hybrid_insert": "Hybrid insert repair",
     }
-    fig, ax = plt.subplots(figsize=(7.8, 4.0))
-    x = np.arange(len(stages))
-    w = 0.35
-    handles = []
-    for i, m in enumerate(("H2", "H4")):
+    fig, ax = plt.subplots(figsize=(7.6, 4.2))
+    y = np.arange(len(stages))
+    offsets = {"H2": 0.12, "H4": -0.12}
+    markers = {"H2": "o", "H4": "s"}
+    for m in ("H2", "H4"):
         means = []
         for st in stages:
             xs = [
@@ -1248,37 +1170,45 @@ def make_fig16() -> None:
                 if r["method"] == m and r["stage"] == st and r["feasible"] == "1"
             ]
             means.append(_mean(xs) if xs else float("nan"))
-        xpos = x + (i - 0.5) * w
-        bars = ax.bar(xpos, means, w, color=MC[m], label=method_label(m, short=True), zorder=2)
-        handles.append(bars)
-        for xi, v in zip(xpos, means):
+        ypos = y + offsets[m]
+        ax.scatter(
+            means,
+            ypos,
+            s=70,
+            marker=markers[m],
+            color=MC[m],
+            zorder=3,
+            label=method_label(m, short=True),
+            edgecolors="white",
+            linewidths=0.6,
+        )
+        for yi, v in zip(ypos, means):
             if math.isfinite(v):
-                ax.text(xi, v + 0.12, f"{v:.2f}", ha="center", va="bottom", fontsize=6, color="#333")
-    ax.set_xticks(x)
-    ax.set_xticklabels([short_stage[s] for s in stages], fontsize=7)
-    ax.set_ylabel("Mean Z_full (h); lower is better")
-    ax.set_title("n=40 search modes as alternatives (20 instances; not a sequential trajectory)")
-    ax.set_ylim(54.5, 61.8)
-    ax.grid(True, axis="y", alpha=0.25)
-    # Legend completely above the axes — never inside the data region.
-    fig.legend(
-        handles=handles,
-        labels=[method_label(m, short=True) for m in ("H2", "H4")],
-        loc="upper center",
+                # Place value labels clearly right of markers (full objective, not truncated).
+                ax.text(v + 1.2, yi, f"{v:.2f}", va="center", fontsize=7, color=MC[m])
+    ax.set_yticks(y)
+    ax.set_yticklabels([short_stage[s] for s in stages], fontsize=8)
+    ax.set_xlabel("Mean Z_full (h); lower is better")
+    ax.set_title("n=40 search modes (20 instances; categorical alternatives)", pad=18)
+    # Full axis from 0 avoids exaggerated truncated-scale differences.
+    finite = [
+        float(r["objective_h"])
+        for r in rows
+        if r["stage"] in stages and r["feasible"] == "1"
+    ]
+    xmax = max(finite) + 12 if finite else 70
+    ax.set_xlim(0, xmax)
+    ax.grid(True, axis="x", alpha=0.25)
+    # Legend outside the data region (above axes).
+    ax.legend(
+        loc="lower left",
+        bbox_to_anchor=(0.0, 1.01),
         ncol=2,
         frameon=False,
-        bbox_to_anchor=(0.5, 1.02),
-        fontsize=8,
+        fontsize=7.5,
     )
-    fig.text(
-        0.5,
-        -0.06,
-        "Categorical comparison of independent search procedures from the same neural starts. "
-        "Strong LS need not dominate Basic LS under unequal move budgets.",
-        ha="center",
-        fontsize=7,
-    )
-    fig.subplots_adjust(top=0.86, bottom=0.18)
+    ax.invert_yaxis()
+    fig.subplots_adjust(top=0.82, left=0.28, right=0.98, bottom=0.12)
     fig_save(FIGURES / "fig16_search_improvement_stages.png", tight=False)
 
 
@@ -1340,21 +1270,12 @@ def make_fig17() -> None:
     ax.set_xlabel("Mean stage-level frvcpy oracle executions")
     ax.set_ylabel("Mean Z_full (h); inverted axis (lower = better)")
     ax.set_title(
-        f"Exploratory: quality vs compute "
-        f"({method_label('H2', short=True)}, n=40, seed 42; unequal budgets)",
+        f"Quality vs compute ({method_label('H2', short=True)}, n=40, seed 42)",
         fontsize=9,
     )
     ax.invert_yaxis()
     ax.legend(loc="center left", bbox_to_anchor=(1.02, 0.5), frameon=True, fontsize=6.5)
     ax.grid(True, alpha=0.25)
-    fig.text(
-        0.5,
-        -0.03,
-        "Not an equal-budget efficiency claim. Points show realized oracle count and runtime per search mode.",
-        ha="center",
-        fontsize=7.5,
-        color="#444",
-    )
     fig_save(FIGURES / "fig17_quality_vs_compute.png")
 
 
@@ -1382,14 +1303,6 @@ def make_fig18() -> None:
     axes[0, 0].set_ylabel("Synthetic-val Z_full (h)")
     axes[1, 0].set_ylabel("Synthetic-val Z_full (h)")
     fig.suptitle("Behavior-cloning validation curves (Cycle-3; markers = logged eval points)", fontsize=10)
-    fig.text(
-        0.5,
-        -0.02,
-        "One panel per architecture. Bold ≈ seed 42; faint = seeds 43/44. ★ = best logged point "
-        "(sparse evaluations). Checkpoints selected by validation, not final step.",
-        ha="center",
-        fontsize=7,
-    )
     fig_save(FIGURES / "fig18_behavior_cloning_learning_curves.png")
 
 
@@ -1427,14 +1340,6 @@ def make_fig19() -> None:
     ax.legend(loc="lower right", frameon=True)
     ax.grid(True, axis="x", alpha=0.25)
     ax.invert_yaxis()
-    fig.text(
-        0.5,
-        -0.04,
-        f"History Trans.: RL better {n_better['H2']}/3 seeds · Hist.+DeepSets: RL better {n_better['H4']}/3. "
-        "Protocol-dependent; distinct from Cycle-3 synth-val RL instability. Not hybrid-search RL.",
-        ha="center",
-        fontsize=7,
-    )
     fig_save(FIGURES / "fig19_bc_vs_rl_checkpoint_quality.png")
 
 
@@ -1481,15 +1386,6 @@ def make_fig20() -> None:
         ax.legend(loc="lower right", fontsize=7, frameon=True)
     axes[0].set_ylabel("R (−Z_full or −100)")
     fig.suptitle("REINFORCE reward dynamics (official RQ4; faint = per-seed raw)", fontsize=10)
-    fig.text(
-        0.5,
-        -0.06,
-        "R = −Z_full if feasible; R = −100 if infeasible. Noisy rewards alone do not prove successful RL — "
-        "see construction checkpoints (Fig. 19) and validation-based selection.",
-        ha="center",
-        fontsize=7,
-        color="#444",
-    )
     fig_save(FIGURES / "fig20_reinforce_reward_dynamics.png")
 
 
@@ -1529,14 +1425,6 @@ def make_fig21() -> None:
     axes[1, 0].set_xlabel("RL step")
     axes[1, 1].set_xlabel("RL step")
     fig.suptitle("Supplementary: RL training diagnostics (mean; band = min–max seeds)", fontsize=10)
-    fig.text(
-        0.5,
-        -0.02,
-        "Diagnostic only — large grads co-occurring with unstable rewards is correlational, not causal.",
-        ha="center",
-        fontsize=7.5,
-        color="#444",
-    )
     fig_save(SUPP_FIGURES / "fig21_rl_training_stability.png")
 
 
