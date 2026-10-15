@@ -112,8 +112,10 @@ R=-Z_\mathrm{full}\ \text{if feasible},\quad R=-100\ \text{otherwise}.
 
 ## Priority order for new science (after Phase 1)
 
-1. Prefix-only history ablation (RQ1) — clarifies whether history is causal.  
-2. Recompute e2e route-change rates with invariant fingerprints (RQ3).  
-3. DeepSets pooling / open-only matched ablations (RQ2) — expect possible negative result.  
-4. Reward scaling audit + controlled RL with frozen search (RQ4).  
+1. Prefix-only history ablation (RQ1) — clarifies whether history is causal. **NOT YET TRAINED** (manifest).  
+2. Recompute e2e route-change rates with invariant fingerprints (RQ3). **DONE** (versioned reanalysis).  
+3. DeepSets pooling / open-only matched ablations (RQ2) — expect possible negative result. Lightweight P0 shows H2=H4; H4_open unmatched. **Matched multi-seed NOT YET RUN.**  
+4. Reward scaling audit + controlled RL with frozen search (RQ4). Construction-only exists; **hybrid RL NOT YET RUN.**  
 5. Only then: multi-seed confirmatory n20/n40 sweeps.
+
+Strict wall-clock LS deadlines are implemented (`local_search(deadline=...)`). Full P3 tables remain to be generated under authorization.

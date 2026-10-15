@@ -1993,40 +1993,56 @@ def train_model(args: argparse.Namespace) -> None:
     model.load_state_dict(best_state)
     final_diag = diagnose_deepsets(model, validation[0][0])
     print({"final_diagnostics": final_diag})
+    from artifact_io import environment_metadata, safe_save_checkpoint, safe_write_csv
+
     args.checkpoints.mkdir(parents=True, exist_ok=True)
-    checkpoint = (
+    checkpoint_target = (
         args.checkpoints / f"{args.model}_n{args.size}_seed{args.seed}_{version}.pt"
     )
-    torch.save(
-        {
-            "state_dict": model.state_dict(),
-            "config": asdict(VARIANTS[args.model]),
-            "model": args.model,
-            "size": args.size,
-            "seed": args.seed,
-            "version": version,
-            "teacher": teacher,
-            "generator": generator_version,
-            "multi_target": multi_target,
-            "fleet_counterfactual": fleet_counterfactual,
-            "init_checkpoint": str(init_ckpt) if init_ckpt else None,
-            "repair_rl_steps": repair_rl_steps,
-            "diagnostics": final_diag,
-        },
-        checkpoint,
+    payload = {
+        "state_dict": model.state_dict(),
+        "config": asdict(VARIANTS[args.model]),
+        "model": args.model,
+        "size": args.size,
+        "seed": args.seed,
+        "version": version,
+        "teacher": teacher,
+        "generator": generator_version,
+        "multi_target": multi_target,
+        "fleet_counterfactual": fleet_counterfactual,
+        "init_checkpoint": str(init_ckpt) if init_ckpt else None,
+        "repair_rl_steps": repair_rl_steps,
+        "diagnostics": final_diag,
+        "provenance": environment_metadata(),
+    }
+    overwrite = bool(getattr(args, "overwrite_artifacts", False))
+
+    def _save_ckpt(path: Path) -> None:
+        torch.save(payload, path)
+
+    checkpoint = safe_save_checkpoint(
+        checkpoint_target, _save_ckpt, overwrite=overwrite
     )
     args.results.mkdir(parents=True, exist_ok=True)
-    log_path = (
+    log_target = (
         args.results
         / f"training_{args.model}_n{args.size}_seed{args.seed}_{version}.csv"
     )
-    write_training_csv(log_path, rows)
+    log_path = safe_write_csv(
+        log_target,
+        lambda p: write_training_csv(p, rows),
+        overwrite=overwrite,
+    )
     if reward_rows:
-        reward_path = (
+        reward_target = (
             args.results
             / f"reward_{args.model}_n{args.size}_seed{args.seed}_{version}.csv"
         )
-        write_training_csv(reward_path, reward_rows)
+        reward_path = safe_write_csv(
+            reward_target,
+            lambda p: write_training_csv(p, reward_rows),
+            overwrite=overwrite,
+        )
         print(f"saved reward log {reward_path}")
     print(
         f"saved {checkpoint} and {log_path}; total {time.perf_counter() - start:.2f}s"
@@ -2109,6 +2125,12 @@ def main() -> None:
     )
     parser.add_argument("--results", type=Path, default=Path("results"))
     parser.add_argument("--checkpoints", type=Path, default=Path("checkpoints"))
+    parser.add_argument(
+        "--overwrite-artifacts",
+        action="store_true",
+        help="Allow overwriting existing training CSVs/checkpoints (protected "
+        "historical checkpoints still require HAT_EVRP_ALLOW_CHECKPOINT_OVERWRITE=1)",
+    )
     args = parser.parse_args()
     if args.model == "CHARGE":
         train_direct(args)

@@ -395,8 +395,9 @@ def check_route(
     if stops[0][0] != instance.depot or stops[-1][0] != instance.depot:
         return fail("route does not start and end at depot")
 
+    n_nodes = len(instance.nodes)
     for index, (node, amount) in enumerate(stops):
-        if node < 0 or node >= len(instance.nodes):
+        if node < 0 or node >= n_nodes:
             return fail(f"unknown node {node}")
         kind = instance.nodes[node].kind
         # Depot may only appear at the endpoints (start/end).
@@ -428,6 +429,8 @@ def check_route(
 
         if index + 1 < len(stops):
             next_node = stops[index + 1][0]
+            if next_node < 0 or next_node >= n_nodes:
+                return fail(f"unknown successor node {next_node}")
             required = instance.energy_wh[node][next_node]
             if required > soc + tolerance:
                 return fail(f"negative SOC on arc {node}->{next_node}")

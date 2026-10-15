@@ -1,6 +1,14 @@
 # Scientific Results Audit
 
-Independently recomputed from authoritative per-instance CSVs (commit baseline `2789a3e`; this document regenerates from raw evidence).
+Independently recomputed from authoritative per-instance CSVs (commit baseline `2789a3e`; finalization updates through `966010a`+).
+
+See also: `docs/FINALIZATION_REPORT.md` for Stage-A fixes and lightweight experiment evidence.
+
+### Finalization addenda (executed)
+
+- **Paired fair-LS (instance×seed, seeds 42–44):** H2−H1 mean Δ ≈ −0.180 h (bootstrap CI excludes 0); H4−H2 mean Δ ≈ +0.074 h (CI includes 0).
+- **P0 construction n=10 seed 42:** H2 = H4 = 21.844 h mean; H1 22.499; H3 22.668. H4_open 21.800 is a **different** training tag (not matched Cycle-3).
+- **Invariant route-change rates** (recomputed): n40 SECANT 30%, EARLY 25% (unchanged vs order-sensitive prior at this size).
 
 ## Objective conventions
 

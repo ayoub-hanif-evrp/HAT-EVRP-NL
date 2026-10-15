@@ -163,6 +163,7 @@ Cycle-3 uses **400 BC + 40 standard REINFORCE** on synthetic n=10. Historical sy
 | [`docs/METHODOLOGY_AUDIT.md`](docs/METHODOLOGY_AUDIT.md) | RQ1–RQ4 strengths, confounders, required ablations |
 | [`docs/EXPERIMENT_PROTOCOL.md`](docs/EXPERIMENT_PROTOCOL.md) | Reproducible commands and compute policy |
 | [`docs/PHASE1_CHANGE_REPORT.md`](docs/PHASE1_CHANGE_REPORT.md) | Correctness fixes change log |
+| [`docs/FINALIZATION_REPORT.md`](docs/FINALIZATION_REPORT.md) | Finalization evidence + readiness checklist |
 | [`results/SCIENTIFIC_RESULTS_AUDIT.md`](results/SCIENTIFIC_RESULTS_AUDIT.md) | Independent numerical audit |
 | [`results/NONLINEAR_CHARGING_STUDY.md`](results/NONLINEAR_CHARGING_STUDY.md) | Linear vs nonlinear under true physics |
 | [`results/REWARD_AND_LEARNING_STUDY.md`](results/REWARD_AND_LEARNING_STUDY.md) | BC/RL + reward logs |

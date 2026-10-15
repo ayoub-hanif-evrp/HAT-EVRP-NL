@@ -28,6 +28,9 @@ class SearchDiagnostics:
     operators: dict[str, OperatorStats] = field(default_factory=dict)
     budget: int = 0
     schedule: str = "sequential"
+    deadline_hit: bool = False
+    overtime_s: float = 0.0
+    stopped_reason: str = ""
 
     def ensure(self, name: str) -> OperatorStats:
         if name not in self.operators:
@@ -42,6 +45,9 @@ class SearchDiagnostics:
             "improvements": self.improvements,
             "budget": self.budget,
             "schedule": self.schedule,
+            "deadline_hit": self.deadline_hit,
+            "overtime_s": self.overtime_s,
+            "stopped_reason": self.stopped_reason,
             "operators": {
                 name: {
                     "attempted": stats.attempted,
@@ -63,6 +69,8 @@ def local_search(
     max_passes: int,
     evaluation_budget: int,
     operators: str = "basic",
+    deadline: float | None = None,
+    clock=None,
 ) -> tuple[list[tuple[int, ...]], list[RoutePlan], int, SearchDiagnostics]:
     """Best-improvement neighborhoods with exact FRVCP evaluations.
 
@@ -70,22 +78,44 @@ def local_search(
       - basic: 2-opt + relocate (Cycle-3)
       - strong: sequential 2-opt → relocate → swap → 2-opt* → eliminate
       - strong_balanced: round-robin operator schedule under the same budget
+
+    If ``deadline`` is set (same clock units as ``clock()``), no *new* oracle
+    evaluation is started after the deadline. An in-flight oracle call that
+    finishes after the deadline is counted and recorded as overtime.
+    ``clock`` defaults to ``time.perf_counter`` and is injectable for tests.
     """
+    import time as _time
+
     tolerance = 1e-10
     schedule = "balanced" if operators == "strong_balanced" else "sequential"
     use_strong = operators in {"strong", "strong_balanced"}
     diag = SearchDiagnostics(budget=evaluation_budget, schedule=schedule)
+    now = clock or _time.perf_counter
 
     def remaining() -> int:
         return evaluation_budget - diag.evaluations
 
+    def past_deadline() -> bool:
+        return deadline is not None and now() >= deadline
+
     def solve(name: str, customer_route: tuple[int, ...]) -> RoutePlan | None:
         if remaining() <= 0:
+            diag.stopped_reason = diag.stopped_reason or "evaluation_budget"
+            return None
+        if past_deadline():
+            diag.deadline_hit = True
+            diag.stopped_reason = "deadline"
             return None
         stats = diag.ensure(name)
+        t0 = now()
         plan = oracle.solve(customer_route)
+        t1 = now()
         diag.evaluations += 1
         stats.oracle_evals += 1
+        if deadline is not None and t1 > deadline:
+            diag.deadline_hit = True
+            diag.overtime_s += t1 - deadline
+            diag.stopped_reason = "deadline_overtime"
         return plan
 
     # Operator that last produced the current pass incumbent (for attribution).

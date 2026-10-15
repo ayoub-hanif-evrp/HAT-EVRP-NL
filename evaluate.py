@@ -414,25 +414,24 @@ def _classical_until_time(
         return _failed(last_fail or "no feasible classical construction", time.perf_counter() - start)
 
     improvements = 0
+    construct_seconds = time.perf_counter() - start
+    overtime_s = 0.0
+    deadline_hit = False
     if local_passes > 0 and time.perf_counter() < deadline:
-        remaining_s = deadline - time.perf_counter()
-        # Soft wall-clock guard: shrink evaluation budget if almost no time left.
-        # (LS itself is evaluation-budgeted; we never claim equal wall-clock from
-        # equal evaluation counts alone.)
-        ls_budget = local_budget
-        if remaining_s < 0.05 * max(time_budget_s, 1e-9):
-            ls_budget = max(1, local_budget // 10)
         oracle = FixedRouteOracle(instance)
         ls_start = time.perf_counter()
-        best_routes, best_plans, improvements, _diag = local_search(
+        best_routes, best_plans, improvements, ls_diag = local_search(
             best_routes,
             best_plans,
             oracle,
             max_passes=local_passes,
-            evaluation_budget=ls_budget,
+            evaluation_budget=local_budget,
+            deadline=deadline,
         )
         local_search_seconds = time.perf_counter() - ls_start
         oracle_executions += oracle.calls
+        deadline_hit = bool(ls_diag.deadline_hit)
+        overtime_s = float(ls_diag.overtime_s)
 
     elapsed = time.perf_counter() - start
     valid, reason = check_solution(instance, best_plans)
@@ -446,6 +445,9 @@ def _classical_until_time(
         charging_stops += check.charging_stops
         charging_hours += check.charging_hours
     objective = sum(plan.duration_hours for plan in best_plans)
+    note = ""
+    if deadline_hit:
+        note = f"deadline_hit; overtime_s={overtime_s:.6f}; construct_s={construct_seconds:.6f}"
     return (
         BaselineResult(
             True,
@@ -459,7 +461,7 @@ def _classical_until_time(
             elapsed,
             local_search_seconds,
             improvements,
-            "",
+            note,
             len(unique_constructions),
         ),
         restarts,
