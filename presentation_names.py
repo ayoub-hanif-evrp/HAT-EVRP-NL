@@ -1,41 +1,66 @@
 """Central presentation labels for methods and search stages.
 
 Internal CSV keys / checkpoint IDs stay unchanged (H2, hybrid_insert, …).
+Reader-facing figures and tables MUST use these display names — never bare H1–H4.
 """
 
 from __future__ import annotations
 
+# Canonical long names (tables, captions, manuscript prose).
 METHOD_DISPLAY: dict[str, str] = {
-    "H0": "Randomized Greedy Routing",
-    "H0_strong": "Randomized Greedy + Local Search",
-    "H1": "State-Only Hierarchical Pointer",
-    "H2": "History Transformer Routing",
-    "H3": "DeepSets Fleet Routing",
-    "H4": "History Transformer + DeepSets (HAT-EVRP-NL)",
+    "H0": "Greedy Construction",
+    "H0_strong": "Greedy + Local Search",
+    "H1": "State-only Pointer",
+    "H2": "History Transformer",
+    "H3": "DeepSets Fleet Model",
+    "H4": "History Transformer + DeepSets",
+    "H4_open": "History Transformer + Open-route DeepSets",
     "hybrid_H4": "History Transformer + DeepSets + frvcpy",
     "direct_CHARGE": "Learned Direct CHARGE Controller",
     "direct_plus_repair": "Direct CHARGE + frvcpy Repair",
 }
 
-# Compact axis/legend labels (avoid overlap in publication PNGs).
+# Alias requested by publication style guide.
+METHOD_DISPLAY_NAMES = METHOD_DISPLAY
+
+# Compact chart labels (axes/legends). No internal codes.
 METHOD_SHORT: dict[str, str] = {
-    "H0": "Greedy (H0)",
-    "H0_strong": "Greedy+LS (H0_strong)",
-    "H1": "State-only (H1)",
-    "H2": "History (H2)",
-    "H3": "DeepSets (H3)",
-    "H4": "HAT-EVRP-NL (H4)",
+    "H0": "Greedy",
+    "H0_strong": "Greedy + LS",
+    "H1": "State-only",
+    "H2": "History Trans.",
+    "H3": "DeepSets",
+    "H4": "History + DeepSets",
+    "H4_open": "Hist. + Open DeepSets",
+}
+
+# Multi-line axis labels when space is tight.
+METHOD_WRAP: dict[str, str] = {
+    "H0": "Greedy\nConstruction",
+    "H0_strong": "Greedy +\nLocal Search",
+    "H1": "State-only\nPointer",
+    "H2": "History\nTransformer",
+    "H3": "DeepSets\nFleet Model",
+    "H4": "History Trans.\n+ DeepSets",
+    "H4_open": "History +\nOpen DeepSets",
+}
+
+PAIR_DISPLAY: dict[str, str] = {
+    "H2-H1": "History Trans.\n− State-only",
+    "H3-H1": "DeepSets\n− State-only",
+    "H4-H2": "History + DeepSets\n− History Trans.",
+    "H4-H1": "History + DeepSets\n− State-only",
 }
 
 SEARCH_DISPLAY: dict[str, str] = {
-    "construct": "Neural Construction Only",
-    "basic_ls": "Basic Local Search",
-    "strong_ls": "Strong Local Search",
-    "classical_ruin": "Classical Ruin-and-Repair",
-    "neural_append": "Neural Append-Only Repair",
-    "neural_insert": "Neural Position-Aware Repair",
-    "hybrid_insert": "Classical + Neural Insertion Repair",
-    "ls": "Local Search",
+    "construct": "Neural construction",
+    "basic_ls": "Basic local search",
+    "strong_ls": "Strong local search",
+    "classical_ruin": "Classical ruin–repair",
+    "neural_append": "Neural append repair",
+    "neural_insert": "Neural insert repair",
+    "hybrid_insert": "Hybrid insert repair",
+    "ls": "Local search",
 }
 
 STAGE_DISPLAY: dict[str, str] = {
@@ -45,26 +70,42 @@ STAGE_DISPLAY: dict[str, str] = {
     "rl_repair": "Repair REINFORCE",
 }
 
+# Stable colorblind-friendly method colors (shared across figures).
+METHOD_COLORS: dict[str, str] = {
+    "H0": "#999999",
+    "H0_strong": "#666666",
+    "H1": "#56B4E9",
+    "H2": "#0072B2",
+    "H3": "#E69F00",
+    "H4": "#009E73",
+    "H4_open": "#CC79A7",
+}
 
-def method_label(key: str, *, short: bool = False) -> str:
-    """Full display name, or compact axis/legend label when short=True."""
+
+def method_label(key: str, *, short: bool = False, wrap: bool = False) -> str:
+    """Reader-facing method name (no internal H-codes)."""
+    if wrap:
+        return METHOD_WRAP.get(key, METHOD_SHORT.get(key, key))
     if short:
-        return METHOD_SHORT.get(key, key)
-    name = METHOD_DISPLAY.get(key, key)
-    if key not in METHOD_DISPLAY:
-        return name
-    return f"{name} ({key})"
+        return METHOD_SHORT.get(key, METHOD_DISPLAY.get(key, key))
+    return METHOD_DISPLAY.get(key, key)
+
+
+def pair_label(key: str) -> str:
+    return PAIR_DISPLAY.get(key, key)
 
 
 def search_label(key: str, *, short: bool = False) -> str:
     name = SEARCH_DISPLAY.get(key, key)
-    if short or key not in SEARCH_DISPLAY:
-        return name if key not in SEARCH_DISPLAY else f"{name} ({key})"
-    return f"{name} ({key})"
+    return name
 
 
 def stage_label(key: str) -> str:
     return STAGE_DISPLAY.get(key, key)
+
+
+def method_color(key: str) -> str:
+    return METHOD_COLORS.get(key, "#333333")
 
 
 def wrap_label(text: str, width: int = 22) -> str:
@@ -89,3 +130,14 @@ def wrap_label(text: str, width: int = 22) -> str:
     if cur:
         lines.append(cur)
     return "\n".join(lines)
+
+
+def methodology_name_note() -> str:
+    """One-time reproducibility mapping for the manuscript."""
+    return (
+        "Internal ablation keys (H0–H4) map to display names: "
+        "H0 Greedy Construction; H0_strong Greedy + Local Search; "
+        "H1 State-only Pointer; H2 History Transformer; "
+        "H3 DeepSets Fleet Model; H4 History Transformer + DeepSets "
+        "(HAT-EVRP-NL). Reader-facing figures and tables use display names only."
+    )

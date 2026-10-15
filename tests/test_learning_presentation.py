@@ -13,14 +13,40 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class MethodNameTests(unittest.TestCase):
     def test_display_names_cover_core_keys(self):
-        from presentation_names import METHOD_DISPLAY, SEARCH_DISPLAY, method_label
+        from presentation_names import (
+            METHOD_DISPLAY,
+            METHOD_DISPLAY_NAMES,
+            SEARCH_DISPLAY,
+            method_label,
+            pair_label,
+        )
 
+        self.assertIs(METHOD_DISPLAY_NAMES, METHOD_DISPLAY)
         for key in ("H0", "H0_strong", "H1", "H2", "H3", "H4"):
             self.assertIn(key, METHOD_DISPLAY)
             self.assertNotEqual(method_label(key), key)
-            self.assertIn(key, method_label(key, short=True))
+            # Short labels must be descriptive — never bare internal codes.
+            short = method_label(key, short=True)
+            self.assertNotEqual(short, key)
+            self.assertNotRegex(short, r"^H\d")
+            self.assertFalse(re.search(r"\(H\d", short))
+            self.assertFalse(re.search(r"\bH\d\b", method_label(key)))
         for key in ("classical_ruin", "neural_insert", "hybrid_insert", "neural_append"):
             self.assertIn(key, SEARCH_DISPLAY)
+        for pair in ("H2-H1", "H4-H2"):
+            self.assertFalse(re.search(r"\bH\d\b", pair_label(pair)))
+
+    def test_main_tables_avoid_h_codes_in_method_cells(self):
+        tables = ROOT / "results" / "tables"
+        for name in (
+            "table03_main_models.md",
+            "table08_bks_comparison.md",
+            "benchmark_protocol_comparison.md",
+        ):
+            text = (tables / name).read_text(encoding="utf-8")
+            # Data rows should not use bare (H2) style display labels.
+            self.assertNotRegex(text, r"\(H[0-4]\)")
+            self.assertNotRegex(text, r"\| H[0-4] \|")
 
 
 class RewardFormulaTests(unittest.TestCase):

@@ -1,15 +1,15 @@
-# H2 vs H4 under recovered hybrid_insert (n=40)
+# History Transformer vs History + DeepSets (n=40 hybrid insert)
 
 - Objective convention: Full duration
 - Units: hours
 - Benchmark size: 40
 - Instance count: 20
-- Methods / checkpoints: H2 vs H4 Cycle-3, identical protocol
+- Methods / checkpoints: History Transformer vs History Transformer + DeepSets, identical protocol
 - Search protocol: ordinary λ=0 + strong LS + hybrid_insert
 - Seeds: 42 (single seed)
 - Source raw: `results/raw/regression_recovery/RECOVERY_n40_recovered_pipeline.csv`
 
-| Instance | History Transformer (H2) h | HAT-EVRP-NL (H4) h | H4−H2 |
+| Instance | History Transformer h | History + DeepSets h | Δ (Hist+DeepSets − History) |
 |---|---|---|---|
 | tc0c40s5cf0 | 57.3243 | 57.9150 | +0.5907 |
 | tc0c40s5cf4 | 57.0618 | 53.6167 | -3.4451 |
@@ -34,4 +34,4 @@
 
 ## Interpretation
 
-Wins(H4 better)/ties/losses = 7/4/9. Mean H4−H2 = -0.4355 h. Single-seed recovered hybrid; not a general DeepSets claim.
+Wins(Hist+DeepSets better)/ties/losses = 7/4/9. Mean Δ = -0.4355 h. Single-seed recovered hybrid; not a general DeepSets claim.

@@ -27,7 +27,15 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from presentation_names import METHOD_DISPLAY, SEARCH_DISPLAY, method_label  # noqa: E402
+from presentation_names import (  # noqa: E402
+    METHOD_DISPLAY,
+    METHOD_DISPLAY_NAMES,
+    SEARCH_DISPLAY,
+    method_color,
+    method_label,
+    pair_label,
+    search_label,
+)
 from reporting_paths import (  # noqa: E402
     ARCHIVE_FIGURES,
     AUTH_BKS_GAPS,
@@ -77,7 +85,7 @@ C = {
     "normal": "#E69F00",
     "slow": "#0072B2",
 }
-MC = {"H0_strong": C["h0"], "H1": C["h1"], "H2": C["h2"], "H3": C["h3"], "H4": C["h4"]}
+MC = {k: method_color(k) for k in ("H0", "H0_strong", "H1", "H2", "H3", "H4", "H4_open")}
 
 
 def apply_style() -> None:
@@ -131,59 +139,94 @@ def fig_save(path: Path, *, tight: bool = True) -> None:
 # FIG 01 — Architecture
 # ---------------------------------------------------------------------------
 def make_fig01() -> None:
-    fig, ax = plt.subplots(figsize=(7.6, 5.2))
-    ax.set_xlim(0, 12)
-    ax.set_ylim(0, 11)
+    fig, ax = plt.subplots(figsize=(8.0, 5.6))
+    ax.set_xlim(0, 12.2)
+    ax.set_ylim(0, 11.2)
     ax.axis("off")
 
-    def box(x, y, w, h, text, color, fs=7.2):
+    def box(x, y, w, h, text, color, fs=7.0):
         ax.add_patch(
             FancyBboxPatch(
-                (x, y), w, h, boxstyle="round,pad=0.02,rounding_size=0.06",
-                lw=1.0, ec="#333", fc=color,
+                (x, y),
+                w,
+                h,
+                boxstyle="round,pad=0.02,rounding_size=0.05",
+                lw=1.0,
+                ec="#333",
+                fc=color,
             )
         )
-        ax.text(x + w / 2, y + h / 2, text, ha="center", va="center", fontsize=fs)
+        ax.text(x + w / 2, y + h / 2, text, ha="center", va="center", fontsize=fs, wrap=True)
 
     def arrow(x1, y1, x2, y2):
         ax.add_patch(
-            FancyArrowPatch((x1, y1), (x2, y2), arrowstyle="-|>", mutation_scale=9, lw=1.05, color="#444")
+            FancyArrowPatch(
+                (x1, y1),
+                (x2, y2),
+                arrowstyle="-|>",
+                mutation_scale=10,
+                lw=1.1,
+                color="#444",
+                connectionstyle="arc3,rad=0",
+            )
         )
 
-    ax.text(0.2, 10.5, "A. Inference path", fontsize=9, fontweight="bold")
-    box(0.2, 9.0, 2.0, 1.1, "Montoya XML\nfeatures", "#F0F0F0")
-    box(2.5, 9.0, 1.9, 1.1, "Static node\nencoder", "#CFE2F3")
-    box(4.7, 9.0, 2.1, 1.1, "Causal history\nTransformer", "#CFE2F3")
-    box(7.1, 9.0, 2.0, 1.1, "Dynamic EV\nstate fusion", "#CFE2F3")
-    box(9.4, 9.0, 2.3, 1.1, "DeepSets fleet\n(optional)", "#CFE2F3")
-    for a, b in [(2.2, 2.5), (4.4, 4.7), (6.8, 7.1), (9.1, 9.4)]:
-        arrow(a, 9.55, b, 9.55)
+    # Section A — neural inference (row y≈9.1)
+    ax.text(0.25, 10.65, "A. Learned neural inference", fontsize=9, fontweight="bold")
+    box(0.25, 9.05, 1.85, 1.15, "Montoya\nnode features", "#F0F0F0")
+    box(2.35, 9.05, 1.85, 1.15, "Static node\nencoder", "#CFE2F3")
+    box(4.45, 9.05, 1.95, 1.15, "Causal route\nhistory Trans.", "#CFE2F3")
+    box(6.65, 9.05, 1.85, 1.15, "Dynamic EV\nstate fusion", "#CFE2F3")
+    box(8.75, 9.05, 1.95, 1.15, "DeepSets fleet\n(optional)", "#CFE2F3")
+    box(10.9, 9.05, 1.1, 1.15, "Hier.\npointer", "#CFE2F3", fs=6.5)
+    for x1, x2 in [(2.1, 2.35), (4.2, 4.45), (6.4, 6.65), (8.5, 8.75), (10.7, 10.9)]:
+        arrow(x1, 9.62, x2, 9.62)
 
-    box(3.5, 7.1, 2.6, 1.1, "Hierarchical\nroute/customer pointer", "#CFE2F3")
-    box(6.5, 7.1, 2.4, 1.1, "Customer sequences\n(learned)", "#FFF2CC")
-    arrow(8.1, 9.0, 4.8, 8.2)
-    arrow(10.5, 9.0, 7.8, 8.2)
-    arrow(6.1, 7.65, 6.5, 7.65)
+    # Sequences sit left of center so the drop into frvcpy never crosses the B heading.
+    box(0.25, 7.45, 2.6, 1.0, "Customer sequences\n(learned routing)", "#FFF2CC")
+    # Vertical drop from hierarchical pointer, then left to sequences (stays in band A).
+    arrow(11.45, 9.05, 11.45, 7.95)
+    arrow(11.45, 7.95, 2.85, 7.95)
 
-    ax.text(0.2, 6.4, "B. Exact charging + validation (not learned)", fontsize=9, fontweight="bold")
-    box(0.2, 4.9, 3.2, 1.2, "frvcpy FixedRouteOracle\nnonlinear charging (exact FRVCP)", "#FCE5CD")
-    box(3.8, 4.9, 3.0, 1.2, "Python physical checker\nSOC / duration / coverage", "#FCE5CD")
-    box(7.2, 4.9, 4.5, 1.2, "Validated solution\nroutes + charge schedule + Z_full", "#E8F5E9")
-    arrow(5.5, 7.1, 1.8, 6.1)
-    arrow(3.4, 5.5, 3.8, 5.5)
-    arrow(6.8, 5.5, 7.2, 5.5)
+    # Section B — algorithmic (title clear of all arrows)
+    ax.text(0.25, 6.85, "B. Algorithmic charging & validation (non-differentiable)", fontsize=9, fontweight="bold")
+    box(0.25, 5.25, 3.5, 1.15, "frvcpy fixed-route\nnonlinear charging (FRVCP-NL)", "#FCE5CD")
+    box(4.15, 5.25, 3.4, 1.15, "Independent Python checker\nSOC · duration · coverage", "#FCE5CD")
+    box(7.95, 5.25, 3.85, 1.15, "Validated solution\nroutes + charge plan + Z_full", "#E8F5E9")
+    # Short vertical arrow from sequences into frvcpy (below B title).
+    arrow(1.55, 7.45, 1.55, 6.4)
+    arrow(3.75, 5.82, 4.15, 5.82)
+    arrow(7.55, 5.82, 7.95, 5.82)
 
-    ax.text(0.2, 4.2, "C. Training path", fontsize=9, fontweight="bold")
-    box(0.2, 2.7, 2.5, 1.1, "Synthetic experts\n(greedy/LS + frvcpy)", "#E8F5E9")
-    box(3.1, 2.7, 2.2, 1.1, "Behavior\ncloning", "#E8F5E9")
-    box(5.7, 2.7, 2.4, 1.1, "Optional\nREINFORCE", "#E8F5E9")
-    box(8.5, 2.7, 3.2, 1.1, "Validation-selected\ncheckpoint (.pt)", "#E8F5E9")
-    for a, b in [(2.7, 3.1), (5.3, 5.7), (8.1, 8.5)]:
-        arrow(a, 3.25, b, 3.25)
+    # Section C — training
+    ax.text(0.25, 4.45, "C. Training (weights only; never through frvcpy)", fontsize=9, fontweight="bold")
+    box(0.25, 2.95, 2.6, 1.1, "Synthetic experts\n(greedy/LS + frvcpy)", "#E8F5E9")
+    box(3.2, 2.95, 2.3, 1.1, "Behavior\ncloning", "#E8F5E9")
+    box(5.85, 2.95, 2.5, 1.1, "Optional\nREINFORCE", "#E8F5E9")
+    box(8.7, 2.95, 3.1, 1.1, "Validation-selected\ncheckpoint", "#E8F5E9")
+    for x1, x2 in [(2.85, 3.2), (5.5, 5.85), (8.35, 8.7)]:
+        arrow(x1, 3.5, x2, 3.5)
 
-    ax.text(0.2, 1.6, "Blue = learned neural  ·  Orange = algorithmic / non-differentiable  ·  Green = data & outputs", fontsize=7.5)
-    ax.text(0.2, 0.85, "H1–H4 ablate history Transformer and DeepSets. Charging gradients never flow through frvcpy.", fontsize=7.5)
-    ax.set_title("HAT-EVRP-NL hybrid architecture", fontsize=11, pad=8)
+    ax.text(
+        0.25,
+        1.85,
+        "Blue = learned neural · Orange = algorithmic / non-differentiable · Green = data & outputs",
+        fontsize=7.5,
+    )
+    ax.text(
+        0.25,
+        1.15,
+        "Ablations: State-only · History Transformer · DeepSets · History + DeepSets (HAT-EVRP-NL).",
+        fontsize=7.5,
+    )
+    ax.text(
+        0.25,
+        0.55,
+        "Policy gradients use sampled routing log-probabilities; charging is optimized post-decode.",
+        fontsize=7.5,
+        color="#444",
+    )
+    ax.set_title("HAT-EVRP-NL hybrid architecture", fontsize=11, pad=6)
     fig_save(FIGURES / "fig01_hat_evrp_nl_architecture.png", tight=False)
 
 
@@ -302,7 +345,10 @@ def make_fig03() -> None:
     ax.set_aspect("equal")
     ax.set_xlabel("x")
     ax.set_ylabel("y")
-    ax.set_title(f"Validated hybrid solution: {sol['instance']} (H2, {sol['full_h']:.2f} h)")
+    ax.set_title(
+        f"Validated hybrid solution: {sol['instance']} "
+        f"({method_label('H2', short=True)}, {sol['full_h']:.2f} h)"
+    )
     ax.grid(True, alpha=0.2)
     fig_save(FIGURES / "fig03_feasible_ev_routes.png")
 
@@ -424,25 +470,31 @@ def _feas_categories(rows: list[dict], *, fixed: bool) -> dict:
 def _plot_feas_panel(ax, cats, title: str) -> None:
     sizes = [10, 20, 40]
     models = ["TRUE-NL", "LINEAR-SECANT", "LINEAR-EARLY-RATE"]
-    x = np.arange(len(sizes))
-    width = 0.26
-    for i, model in enumerate(models):
-        tf = [cats[(s, model)]["true_feas"] for s in sizes]
-        ff = [cats[(s, model)]["false_feas"] for s in sizes]
-        pf = [cats[(s, model)]["plan_fail"] for s in sizes]
-        xpos = x + (i - 1) * width
-        ax.bar(xpos, tf, width, color=C["true_feas"])
-        ax.bar(xpos, ff, width, bottom=tf, color=C["false_feas"])
-        ax.bar(xpos, pf, width, bottom=[a + b for a, b in zip(tf, ff)], color=C["plan_fail"])
-        for xi, v in zip(xpos, tf):
-            ax.text(xi, 20.3, str(v), ha="center", va="bottom", fontsize=6.5, fontweight="bold")
-    ax.set_xticks(x)
-    ax.set_xticklabels([f"n={s}" for s in sizes])
+    model_short = {"TRUE-NL": "TRUE-NL", "LINEAR-SECANT": "Secant", "LINEAR-EARLY-RATE": "Early-rate"}
+    # One tick per (size, model) so names sit under bars.
+    xpos_all = []
+    labels = []
+    width = 0.75
+    idx = 0
+    for s in sizes:
+        for model in models:
+            tf = cats[(s, model)]["true_feas"]
+            ff = cats[(s, model)]["false_feas"]
+            pf = cats[(s, model)]["plan_fail"]
+            ax.bar(idx, tf, width, color=C["true_feas"], edgecolor="white", lw=0.4)
+            ax.bar(idx, ff, width, bottom=tf, color=C["false_feas"], edgecolor="white", lw=0.4)
+            ax.bar(idx, pf, width, bottom=tf + ff, color=C["plan_fail"], edgecolor="white", lw=0.4)
+            ax.text(idx, 20.35, str(tf), ha="center", va="bottom", fontsize=6.5, fontweight="bold")
+            xpos_all.append(idx)
+            labels.append(f"n={s}\n{model_short[model]}")
+            idx += 1
+        idx += 0.6  # gap between size groups
+    ax.set_xticks(xpos_all)
+    ax.set_xticklabels(labels, fontsize=6.5)
     ax.set_ylim(0, 22.8)
     ax.axhline(20, color="#CCC", ls=":", lw=0.8)
     ax.set_ylabel("Instances (of 20)")
     ax.set_title(title, fontsize=9)
-    ax.text(0.5, -0.18, "Bars L→R: TRUE-NL · SECANT · EARLY", transform=ax.transAxes, ha="center", fontsize=7)
 
 
 def make_fig06() -> None:
@@ -488,7 +540,12 @@ def make_fig07() -> None:
         Patch(fc=C["plan_fail"], label="Planner rejected / no stops"),
     ]
     fig.legend(handles=legend_elems, loc="upper left", ncol=3, frameon=False, bbox_to_anchor=(0.05, 1.08))
-    fig.suptitle("End-to-end routing: charging-law misspecification (frozen H2 weights)", fontsize=10, y=1.14)
+    fig.suptitle(
+        f"End-to-end routing: charging-law misspecification "
+        f"(frozen {method_label('H2', short=True)} weights)",
+        fontsize=10,
+        y=1.14,
+    )
     fig_save(FIGURES / "fig07_end_to_end_charging_feasibility.png")
 
 
@@ -691,7 +748,7 @@ def make_fig10() -> None:
     fig.text(
         0.5,
         -0.02,
-        "Same frvcpy optimizer for H2 and H4; panels report what the charging plan chooses.",
+        "Same frvcpy optimizer for both architectures; panels report what the charging plan chooses.",
         ha="center",
         fontsize=7.5,
         color="#444",
@@ -730,8 +787,8 @@ def make_fig11() -> None:
         ax.text(tr + sv / 2, yi, f"{sv:.1f}", va="center", ha="center", fontsize=6.5, color="white")
         ax.text(tr + sv + ch / 2, yi, f"{ch:.2f}", va="center", ha="center", fontsize=6.5, color="white")
     ax.set_yticks(y)
-    ax.set_yticklabels([method_label(m, short=True) for m in order])
-    ax.set_xlabel("Mean hours (20 official n=40; recovered hybrid_insert; Z_full)")
+    ax.set_yticklabels([method_label(m, wrap=True) for m in order])
+    ax.set_xlabel("Mean hours (20 official n=40; recovered hybrid insert; Z_full)")
     ax.set_xlim(0, max(totals) + 8)
     ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.02), ncol=3, frameon=False, borderaxespad=0.0)
     ax.set_title("Objective decomposition under true nonlinear charging", fontsize=10, pad=22)
@@ -739,7 +796,7 @@ def make_fig11() -> None:
     fig.text(
         0.5,
         -0.02,
-        "H4 mean improvement is mainly lower travel time, not lower charging (identical frvcpy).",
+        "History + DeepSets mean edge is mainly lower travel, not lower charging (identical frvcpy).",
         ha="center",
         fontsize=7.5,
         color="#444",
@@ -749,12 +806,15 @@ def make_fig11() -> None:
 
 
 # ---------------------------------------------------------------------------
-# FIG 12 — Architecture ablation
+# FIG 12 — Architecture ablation + per-seed variability
 # ---------------------------------------------------------------------------
 def make_fig12() -> None:
     methods = ["H0_strong", "H1", "H2", "H3", "H4"]
     seed_means = {m: [] for m in methods}
-    for seed in (42, 43, 44):
+    seed_list = (42, 43, 44)
+    # Per-seed paired deltas for History − State-only and Hist+DeepSets − History
+    seed_pair = {s: {"H2-H1": None, "H4-H2": None} for s in seed_list}
+    for seed in seed_list:
         rows = _read(CYCLE3 / f"compare_size10_fairls_final_seed{seed}_c3.csv")
         by = defaultdict(list)
         for r in rows:
@@ -763,31 +823,58 @@ def make_fig12() -> None:
         for m in methods:
             if by[m]:
                 seed_means[m].append(_mean(by[m]))
+        if by["H1"] and by["H2"]:
+            seed_pair[seed]["H2-H1"] = _mean(by["H2"]) - _mean(by["H1"])
+        if by["H2"] and by["H4"]:
+            seed_pair[seed]["H4-H2"] = _mean(by["H4"]) - _mean(by["H2"])
+
     means = [_mean(seed_means[m]) for m in methods]
     errs = [_stdev(seed_means[m]) for m in methods]
-    fig, ax = plt.subplots(figsize=(7.0, 3.8))
+
+    fig, axes = plt.subplots(1, 2, figsize=(9.0, 3.8), gridspec_kw={"width_ratios": [1.35, 1.0]})
+
+    ax = axes[0]
     y = np.arange(len(methods))
     for yi, m, mean, err in zip(y, methods, means, errs):
         ax.errorbar(mean, yi, xerr=err, fmt="o", color=MC[m], ecolor="#666", elinewidth=1.1, capsize=3, ms=8)
         for sm in seed_means[m]:
-            ax.plot(sm, yi, "|", color=MC[m], ms=9, alpha=0.5)
-        # labels to the right of the error bar tip, clear of markers
-        ax.text(mean + err + 0.04, yi, f"{mean:.3f}±{err:.3f}", va="center", fontsize=7, color="#333")
+            ax.plot(sm, yi, "|", color=MC[m], ms=9, alpha=0.55)
+        ax.text(mean + err + 0.04, yi, f"{mean:.3f}", va="center", fontsize=7, color="#333")
     ax.set_yticks(y)
-    ax.set_yticklabels([METHOD_DISPLAY[m] for m in methods])
-    ax.set_xlabel("Mean full duration (h); seed means ± std (3 seeds × 20 instances)")
-    lo = min(m - e for m, e in zip(means, errs)) - 0.15
-    hi = max(m + e for m, e in zip(means, errs)) + 0.55
+    ax.set_yticklabels([method_label(m) for m in methods], fontsize=7.5)
+    ax.set_xlabel("Mean Z_full (h); ticks = seed means; bars = ± std across 3 seeds")
+    lo = min(m - e for m, e in zip(means, errs)) - 0.12
+    hi = max(m + e for m, e in zip(means, errs)) + 0.45
     ax.set_xlim(lo, hi)
-    ax.axvline(means[methods.index("H2")], color=C["h2"], ls=":", lw=0.9, alpha=0.5)
     ax.grid(True, axis="x", alpha=0.25)
-    ax.set_title("Matched n=10 Cycle-3 fair one-shot LS")
+    ax.set_title("A. Aggregate fair-LS (n=10)", fontsize=9)
+
+    ax = axes[1]
+    x = np.arange(len(seed_list))
+    w = 0.35
+    d21 = [seed_pair[s]["H2-H1"] for s in seed_list]
+    d42 = [seed_pair[s]["H4-H2"] for s in seed_list]
+    ax.bar(x - w / 2, d21, w, color=MC["H2"], label="History − State-only")
+    ax.bar(x + w / 2, d42, w, color=MC["H4"], label="Hist.+DeepSets − History")
+    ax.axhline(0, color="k", lw=1.0)
+    for xi, a, b in zip(x, d21, d42):
+        ax.text(xi - w / 2, a + (0.02 if a >= 0 else -0.06), f"{a:+.2f}", ha="center", fontsize=6.5)
+        ax.text(xi + w / 2, b + (0.02 if b >= 0 else -0.06), f"{b:+.2f}", ha="center", fontsize=6.5)
+    ax.set_xticks(x)
+    ax.set_xticklabels([f"Seed {s}" for s in seed_list])
+    ax.set_ylabel("Δ mean Z_full (h); negative = better")
+    ax.set_title("B. Per-seed paired means", fontsize=9)
+    ax.legend(loc="upper right", fontsize=6.5, frameon=True)
+    ax.grid(True, axis="y", alpha=0.25)
+
+    fig.suptitle("Matched n=10 Cycle-3 fair one-shot local search (20 instances / seed)", fontsize=10, y=1.02)
     fig.text(
         0.5,
-        -0.02,
-        "History helps vs state-only; DeepSets does not consistently beat history alone.",
+        -0.04,
+        "Average History vs State-only gain is seed-sensitive (≈ −0.58 / +0.04 / ≈0 on seeds 42–44). "
+        "DeepSets does not consistently improve on History alone.",
         ha="center",
-        fontsize=7.5,
+        fontsize=7,
         color="#444",
     )
     fig_save(FIGURES / "fig12_neural_architecture_ablation.png")
@@ -798,12 +885,8 @@ def make_fig12() -> None:
 # ---------------------------------------------------------------------------
 def make_fig13() -> None:
     """Layout-aware paired effects: average seed deltas per instance, then SE over 20 layouts."""
-    # Collect per (pair, instance) list of seed-level deltas, then mean over seeds.
-    layout_deltas = {
-        "H2−H1\n(history)": defaultdict(list),
-        "H3−H1\n(DeepSets)": defaultdict(list),
-        "H4−H2\n(+DeepSets)": defaultdict(list),
-    }
+    pair_keys = ["H2-H1", "H3-H1", "H4-H2"]
+    layout_deltas = {k: defaultdict(list) for k in pair_keys}
     for seed in (42, 43, 44):
         rows = _read(CYCLE3 / f"compare_size10_fairls_final_seed{seed}_c3.csv")
         by = defaultdict(dict)
@@ -812,46 +895,46 @@ def make_fig13() -> None:
                 by[r["instance"]][r["method"]] = float(r["objective_h"])
         for inst, d in by.items():
             if "H1" in d and "H2" in d:
-                layout_deltas["H2−H1\n(history)"][inst].append(d["H2"] - d["H1"])
+                layout_deltas["H2-H1"][inst].append(d["H2"] - d["H1"])
             if "H1" in d and "H3" in d:
-                layout_deltas["H3−H1\n(DeepSets)"][inst].append(d["H3"] - d["H1"])
+                layout_deltas["H3-H1"][inst].append(d["H3"] - d["H1"])
             if "H2" in d and "H4" in d:
-                layout_deltas["H4−H2\n(+DeepSets)"][inst].append(d["H4"] - d["H2"])
+                layout_deltas["H4-H2"][inst].append(d["H4"] - d["H2"])
 
-    keys = list(layout_deltas)
     layout_means = []
-    for k in keys:
+    tick_labels = []
+    for k in pair_keys:
         vals = [_mean(xs) for xs in layout_deltas[k].values() if xs]
         layout_means.append(vals)
+        tick_labels.append(f"{pair_label(k)}\nn={len(vals)} layouts")
 
-    fig, ax = plt.subplots(figsize=(6.8, 3.8))
+    fig, ax = plt.subplots(figsize=(7.0, 3.9))
     bp = ax.boxplot(
         layout_means,
-        tick_labels=[f"{k.split(chr(10))[0]}\nn={len(v)} layouts" for k, v in zip(keys, layout_means)],
+        tick_labels=tick_labels,
         showmeans=False,
         patch_artist=True,
         widths=0.55,
     )
-    for patch, col in zip(bp["boxes"], [C["h2"], C["h3"], C["h4"]]):
+    for patch, col in zip(bp["boxes"], [MC["H2"], MC["H3"], MC["H4"]]):
         patch.set_facecolor(col)
         patch.set_alpha(0.35)
     ax.axhline(0, color="k", lw=1.0)
     for i, vals in enumerate(layout_means):
-        # jittered layout means
         jitter = (np.random.default_rng(0).random(len(vals)) - 0.5) * 0.12
         ax.scatter(np.full(len(vals), i + 1) + jitter, vals, s=18, color="#333", alpha=0.45, zorder=3)
         m = _mean(vals)
         se = _stdev(vals) / math.sqrt(len(vals)) if len(vals) > 1 else 0.0
         ax.errorbar(i + 1, m, yerr=1.96 * se, fmt="D", color="#111", ms=6, capsize=4, zorder=5)
         ax.text(i + 1.28, m, f"{m:+.3f}", va="center", fontsize=7, color="#222")
-    ax.set_ylabel("Layout-mean Δ Z_full (h); negative = improvement")
+    ax.set_ylabel("Layout-mean Δ Z_full (h)\nnegative = second method better ←")
     ax.set_title("Paired architecture effects (n=10 Cycle-3 fair-LS)")
     ax.grid(True, axis="y", alpha=0.25)
     fig.text(
         0.5,
-        -0.04,
+        -0.05,
         "Each point = one customer layout (seed-averaged). Diamonds: mean ± 1.96·SE over n=20 layouts "
-        "(descriptive; not a claim of independent instance×seed samples).",
+        "(descriptive; layouts—not 60 instance×seed rows—are the paired units).",
         ha="center",
         fontsize=7,
     )
@@ -889,7 +972,7 @@ def make_fig14() -> None:
     methods_n10 = ["H0_strong", "H1", "H2", "H3", "H4"]
     fair = gaps_from_fairls(methods_n10)
 
-    # Strongest labeled n10 hybrid protocol (H2_c3 hybrid_insert)
+    # Strongest labeled n10 hybrid protocol (History Trans. + hybrid insert)
     ins = _read(RAW / "insertion_repair" / "INSERTION_official_n10.csv")
     hybrid_gaps = []
     for r in ins:
@@ -908,7 +991,8 @@ def make_fig14() -> None:
             continue
         n40[r["method"]].append(_lit_gap(float(r["objective_h"]), bks[inst], 40))
 
-    fig, axes = plt.subplots(1, 3, figsize=(9.2, 3.6), gridspec_kw={"width_ratios": [1.35, 0.85, 0.95]})
+    # Three panels with independent y-scales; panel B uses inset annotation for near-zero gap.
+    fig, axes = plt.subplots(1, 3, figsize=(9.4, 3.7), gridspec_kw={"width_ratios": [1.4, 0.9, 1.0]})
 
     ax = axes[0]
     y = np.arange(len(methods_n10))
@@ -918,38 +1002,58 @@ def make_fig14() -> None:
         ax.text(g + 0.12, yi, f"{g:.2f}%", va="center", fontsize=7.5)
     ax.set_yticks(y)
     ax.set_yticklabels([method_label(m, short=True) for m in methods_n10])
-    ax.set_xlabel("Mean lit. gap %")
-    ax.set_title("A. n=10 Cycle-3 fair-LS\n(3 seeds × 20 inst.)")
+    ax.set_xlabel("Mean lit. gap (%)")
+    ax.set_title("A. Fair one-shot LS\nn=10 · 3 seeds × 20")
     ax.set_xlim(0, max(vals) + 1.8)
     ax.grid(True, axis="x", alpha=0.25)
 
     ax = axes[1]
-    ax.bar([0], [hybrid_mean], color=C["h2"], width=0.55)
-    ax.text(0, hybrid_mean + 0.02, f"{hybrid_mean:.3f}%", ha="center", fontsize=8)
+    # Log-scale style alternative: annotate near-zero with reference to panel A scale.
+    ax.bar([0], [hybrid_mean], color=MC["H2"], width=0.5)
+    ax.text(0, hybrid_mean + max(0.008, hybrid_mean * 0.15), f"{hybrid_mean:.3f}%", ha="center", fontsize=8)
     ax.set_xticks([0])
-    ax.set_xticklabels(["H2_c3\nhybrid_insert"])
-    ax.set_ylabel("Mean lit. gap %")
-    ax.set_title("B. Strongest n=10\nhybrid protocol")
-    ax.set_ylim(0, max(0.15, hybrid_mean * 3))
+    ax.set_xticklabels([f"{method_label('H2', short=True)}\n+ hybrid insert"])
+    ax.set_ylabel("Mean lit. gap (%)")
+    ax.set_title("B. Expensive hybrid\nn=10 · near-BKS")
+    # Keep a readable non-zero scale without exaggerating significance.
+    ax.set_ylim(0, max(0.12, hybrid_mean * 4))
+    ax.axhline(0, color="k", lw=0.6)
+    ax.text(
+        0.5,
+        0.92,
+        "≈ 0% (not zero;\nscale ≠ panel A)",
+        transform=ax.transAxes,
+        ha="center",
+        va="top",
+        fontsize=6.5,
+        color="#666",
+    )
     ax.grid(True, axis="y", alpha=0.25)
 
     ax = axes[2]
-    labs = ["History (H2)", "HAT-EVRP-NL (H4)"]
+    labs = [method_label("H2", wrap=True), method_label("H4", wrap=True)]
     vals40 = [_mean(n40["H2"]), _mean(n40["H4"])]
-    ax.bar(labs, vals40, color=[C["h2"], C["h4"]], width=0.55)
-    for lab, g in zip(labs, vals40):
-        ax.text(lab, g + 0.25, f"{g:.2f}%", ha="center", fontsize=8)
-    ax.set_ylabel("Mean lit. gap %")
-    ax.set_title("C. n=40 recovered\nhybrid_insert (20 inst.)")
-    ax.set_ylim(0, max(vals40) + 3)
+    ax.bar([0, 1], vals40, color=[MC["H2"], MC["H4"]], width=0.55)
+    for xi, g in zip([0, 1], vals40):
+        ax.text(xi, g + 0.35, f"{g:.2f}%", ha="center", fontsize=8)
+    ax.set_xticks([0, 1])
+    ax.set_xticklabels(labs, fontsize=7)
+    ax.set_ylabel("Mean lit. gap (%)")
+    ax.set_title("C. Larger instances\nn=40 recovered hybrid")
+    ax.set_ylim(0, max(vals40) + 3.5)
     ax.grid(True, axis="y", alpha=0.25)
 
-    fig.suptitle("Literature BKS gaps (Z_lit = Z_full − fixed service; Froger Table 13)", fontsize=10, y=1.02)
+    fig.suptitle(
+        "Literature BKS gaps by protocol (Z_lit = Z_full − fixed service; Froger Table 13)",
+        fontsize=10,
+        y=1.02,
+    )
     fig.text(
         0.5,
-        -0.06,
-        "Protocols are NOT interchangeable: A ≈ cheap fair-LS (~5% H2); B ≈ expensive hybrid insert (~0.03% H2); "
-        "C ≈ n40 recovered hybrid (~17%). Do not rank across panels.",
+        -0.07,
+        "Do not rank across panels — budgets differ. A ≈ cheap fair-LS (~5%); "
+        "B ≈ expensive hybrid insert (~0.03%); C ≈ n=40 recovered hybrid (~17%). "
+        "Near-zero in B is real but uses a different compute regime than A.",
         ha="center",
         fontsize=7,
         color="#444",
@@ -958,19 +1062,20 @@ def make_fig14() -> None:
 
 
 # ---------------------------------------------------------------------------
-# FIG 15 — Generalization
+# FIG 15 — Generalization (exploratory)
 # ---------------------------------------------------------------------------
 def make_fig15() -> None:
-    # From FINAL tables / fairls aggregates
     final = {
         10: _read(CYCLE3 / "FINAL_n10_fairls.csv"),
         20: _read(CYCLE3 / "FINAL_n20_fairls.csv"),
         40: _read(CYCLE3 / "FINAL_n40_fairls.csv"),
         80: _read(CYCLE3 / "FINAL_n80_fairls.csv"),
     }
-    fig, axes = plt.subplots(1, 2, figsize=(7.8, 3.5))
+    # Relative Δ (Hist+DeepSets − History) and feasibility where columns exist.
+    fig, axes = plt.subplots(1, 3, figsize=(9.0, 3.4))
+
     ax = axes[0]
-    for m, col in (("H2", C["h2"]), ("H4", C["h4"])):
+    for m in ("H2", "H4"):
         xs, ys = [], []
         for n in (10, 20, 40, 80):
             row = next((r for r in final[n] if r.get("method") == m), None)
@@ -978,32 +1083,79 @@ def make_fig15() -> None:
                 continue
             xs.append(n)
             ys.append(float(row["mean_h"]))
-        ax.plot(xs, ys, "o-", color=col, lw=1.6, label=method_label(m, short=True))
-    ax.set_xlabel("Test size n (models trained on synthetic n=10)")
-    ax.set_ylabel("Mean full duration (h)")
-    ax.set_title("A. Fair-LS duration vs size")
-    ax.legend(frameon=True, fontsize=7)
+        ax.plot(xs, ys, "o-", color=MC[m], lw=1.6, label=method_label(m, short=True))
+    ax.set_xlabel("Test size n (trained on synth. n=10)")
+    ax.set_ylabel("Mean Z_full (h)")
+    ax.set_title("A. Absolute objective", fontsize=9)
+    ax.legend(frameon=True, fontsize=6.5)
     ax.grid(True, alpha=0.25)
-    ax.text(0.98, 0.02, "n=80: 3 instances only", transform=ax.transAxes, ha="right", fontsize=7, color="#D55E00")
+    ax.text(0.98, 0.02, "n=80: 3 inst.", transform=ax.transAxes, ha="right", fontsize=6.5, color="#D55E00")
 
     ax = axes[1]
-    # runtime / oracle if present
-    for m, col in (("H2", C["h2"]), ("H4", C["h4"])):
+    xs, dys = [], []
+    for n in (10, 20, 40, 80):
+        r2 = next((r for r in final[n] if r.get("method") == "H2"), None)
+        r4 = next((r for r in final[n] if r.get("method") == "H4"), None)
+        if not r2 or not r4:
+            continue
+        xs.append(n)
+        dys.append(float(r4["mean_h"]) - float(r2["mean_h"]))
+    ax.axhline(0, color="k", lw=0.9)
+    ax.plot(xs, dys, "D-", color="#333", lw=1.5, ms=6)
+    for x, d in zip(xs, dys):
+        ax.text(x, d + (0.05 if d >= 0 else -0.12), f"{d:+.2f}", ha="center", fontsize=6.5)
+    ax.set_xlabel("Test size n")
+    ax.set_ylabel("Δ Z_full (h)\nHist.+DeepSets − History")
+    ax.set_title("B. Architecture difference", fontsize=9)
+    ax.grid(True, alpha=0.25)
+
+    ax = axes[2]
+    for m in ("H2", "H4"):
         xs, ys = [], []
         for n in (10, 20, 40, 80):
             row = next((r for r in final[n] if r.get("method") == m), None)
-            if not row or row.get("mean_runtime_s") in ("", None):
+            if not row:
+                continue
+            feas = row.get("feasible") or row.get("feas_rate") or ""
+            pct = None
+            if isinstance(feas, str) and "/" in feas:
+                a, b = feas.split("/", 1)
+                try:
+                    pct = 100.0 * float(a) / float(b) if float(b) else None
+                except ValueError:
+                    pct = None
+            elif feas not in ("", None):
+                try:
+                    v = float(feas)
+                    pct = 100.0 * v if v <= 1.0 else v
+                except ValueError:
+                    pct = None
+            if pct is None:
                 continue
             xs.append(n)
-            ys.append(float(row["mean_runtime_s"]))
+            ys.append(pct)
         if xs:
-            ax.plot(xs, ys, "s-", color=col, lw=1.6, label=method_label(m, short=True))
+            ax.plot(xs, ys, "s-", color=MC[m], lw=1.6, label=method_label(m, short=True))
     ax.set_xlabel("Test size n")
-    ax.set_ylabel("Mean runtime (s)")
-    ax.set_title("B. Fair-LS runtime vs size")
-    ax.legend(frameon=True, fontsize=7)
+    ax.set_ylabel("Feasibility (%)")
+    ax.set_ylim(0, 105)
+    ax.set_title("C. Feasibility rate", fontsize=9)
+    ax.legend(frameon=True, fontsize=6.5)
     ax.grid(True, alpha=0.25)
-    fig.suptitle("Generalization of n10-trained checkpoints (fair-LS transfer)", fontsize=10)
+
+    fig.suptitle(
+        "Exploratory size transfer (fair-LS; n10-trained weights) — not a strong scalability claim",
+        fontsize=9.5,
+    )
+    fig.text(
+        0.5,
+        -0.05,
+        "Absolute duration and runtime grow with n as expected. Overlapping History vs History+DeepSets "
+        "curves mean architecture differences are small relative to size effects; n=80 has only 3 instances.",
+        ha="center",
+        fontsize=7,
+        color="#444",
+    )
     fig_save(FIGURES / "fig15_generalization_scalability.png")
 
 
@@ -1013,32 +1165,43 @@ def make_fig15() -> None:
 def make_fig16() -> None:
     rows = _read(AUTH_N40_RECOVERY_PIPE)
     stages = ["construct", "basic_ls", "strong_ls", "classical_ruin", "neural_insert", "hybrid_insert"]
-    # Categorical dots — NO connecting lines (branches are independent alternatives).
-    fig, ax = plt.subplots(figsize=(7.4, 4.0))
+    short_stage = {
+        "construct": "Construct",
+        "basic_ls": "Basic LS",
+        "strong_ls": "Strong LS",
+        "classical_ruin": "Classical\nruin–repair",
+        "neural_insert": "Neural\ninsert",
+        "hybrid_insert": "Hybrid\ninsert",
+    }
+    fig, ax = plt.subplots(figsize=(7.6, 3.9))
     x = np.arange(len(stages))
-    offsets = {"H2": -0.12, "H4": 0.12}
-    for m, marker in (("H2", "o"), ("H4", "s")):
+    w = 0.35
+    for i, m in enumerate(("H2", "H4")):
         means = []
         for st in stages:
-            xs = [float(r["objective_h"]) for r in rows if r["method"] == m and r["stage"] == st and r["feasible"] == "1"]
+            xs = [
+                float(r["objective_h"])
+                for r in rows
+                if r["method"] == m and r["stage"] == st and r["feasible"] == "1"
+            ]
             means.append(_mean(xs) if xs else float("nan"))
-        xpos = x + offsets[m]
-        ax.scatter(xpos, means, s=70, marker=marker, color=MC[m], zorder=3, label=method_label(m, short=True))
+        xpos = x + (i - 0.5) * w
+        ax.bar(xpos, means, w, color=MC[m], label=method_label(m, short=True), zorder=2)
         for xi, v in zip(xpos, means):
             if math.isfinite(v):
-                ax.text(xi, v - 0.18, f"{v:.2f}", ha="center", va="top", fontsize=6.5, color=MC[m])
+                ax.text(xi, v + 0.12, f"{v:.2f}", ha="center", va="bottom", fontsize=6, color="#333")
     ax.set_xticks(x)
-    ax.set_xticklabels([SEARCH_DISPLAY.get(s, s) for s in stages], rotation=22, ha="right", fontsize=7)
-    ax.set_ylabel("Mean full duration (h); lower is better")
-    ax.set_title("n=40 recovered search modes (20 instances; categorical comparison)")
-    ax.legend(loc="upper right", frameon=True)
+    ax.set_xticklabels([short_stage[s] for s in stages], fontsize=7)
+    ax.set_ylabel("Mean Z_full (h); lower is better")
+    ax.set_title("n=40 search modes as alternatives (20 instances; not a sequential trajectory)")
+    ax.legend(loc="lower left", frameon=True, fontsize=7)
+    ax.set_ylim(54.5, 61.5)
     ax.grid(True, axis="y", alpha=0.25)
-    ax.invert_yaxis()
     fig.text(
         0.5,
-        -0.08,
-        "No trajectory lines: modes are alternative post-construction searches from the same starts, "
-        "not a sequential optimization path. Strong LS need not dominate basic LS.",
+        -0.06,
+        "Categorical comparison of independent search procedures from the same neural starts. "
+        "Strong LS need not dominate Basic LS under unequal move budgets.",
         ha="center",
         fontsize=7,
     )
@@ -1046,7 +1209,7 @@ def make_fig16() -> None:
 
 
 # ---------------------------------------------------------------------------
-# FIG 17 — Quality vs compute
+# FIG 17 — Quality vs compute (exploratory; unequal budgets)
 # ---------------------------------------------------------------------------
 def make_fig17() -> None:
     fair = _read(AUTH_N40_RECOVERY_FAIR)
@@ -1061,7 +1224,6 @@ def make_fig17() -> None:
         "hybrid_insert": "#009E73",
     }
     points = []
-    # basic_ls incremental from pipeline
     by_inst = defaultdict(dict)
     for r in pipe:
         if r["method"] == "H2" and r["feasible"] == "1":
@@ -1070,7 +1232,10 @@ def make_fig17() -> None:
     for d in by_inst.values():
         if "basic_ls" in d and "construct" in d:
             objs.append(float(d["basic_ls"]["objective_h"]))
-            orcs.append(float(d["basic_ls"]["oracle_solver_executions"]) - float(d["construct"]["oracle_solver_executions"]))
+            orcs.append(
+                float(d["basic_ls"]["oracle_solver_executions"])
+                - float(d["construct"]["oracle_solver_executions"])
+            )
             rts.append(float(d["basic_ls"]["runtime_s"]) - float(d["construct"]["runtime_s"]))
     if objs:
         points.append(("basic_ls", _mean(objs), _mean(orcs), _mean(rts)))
@@ -1085,18 +1250,37 @@ def make_fig17() -> None:
         rts = [float(r["runtime_search_s"]) for r in xs if float(r.get("runtime_search_s") or 0) > 0]
         points.append((stage, mean_h, mean_orc, _mean(rts) if rts else float("nan")))
 
-    fig, ax = plt.subplots(figsize=(6.8, 4.0))
+    fig, ax = plt.subplots(figsize=(7.0, 4.0))
     for stage, mean_h, mean_orc, mean_rt in points:
-        rt_lab = f"{mean_rt:.2f}s" if math.isfinite(mean_rt) else "rt n/a"
-        ax.scatter(mean_orc, mean_h, s=100, marker=markers[stage], color=colors[stage], zorder=3, label=f"{SEARCH_DISPLAY[stage]} ({rt_lab})")
+        rt_lab = f"{mean_rt:.1f}s" if math.isfinite(mean_rt) else "rt n/a"
+        ax.scatter(
+            mean_orc,
+            mean_h,
+            s=110,
+            marker=markers[stage],
+            color=colors[stage],
+            zorder=3,
+            label=f"{search_label(stage)} · {rt_lab}",
+        )
         ax.annotate(f"{mean_h:.2f}", (mean_orc, mean_h), textcoords="offset points", xytext=(7, 5), fontsize=7)
     ax.set_xlabel("Mean stage-level frvcpy oracle executions")
-    ax.set_ylabel("Mean full duration (h)")
-    ax.set_title("n=40 H2: quality vs stage-level compute (20 inst., seed 42)")
+    ax.set_ylabel("Mean Z_full (h); inverted axis (lower = better)")
+    ax.set_title(
+        f"Exploratory: quality vs compute "
+        f"({method_label('H2', short=True)}, n=40, seed 42; unequal budgets)",
+        fontsize=9,
+    )
     ax.invert_yaxis()
-    ax.legend(loc="center left", bbox_to_anchor=(1.02, 0.5), frameon=True, fontsize=7)
+    ax.legend(loc="center left", bbox_to_anchor=(1.02, 0.5), frameon=True, fontsize=6.5)
     ax.grid(True, alpha=0.25)
-    fig.text(0.5, -0.02, "Unequal realized budgets — not an equal-budget experiment.", ha="center", fontsize=7.5, color="#444")
+    fig.text(
+        0.5,
+        -0.03,
+        "Not an equal-budget efficiency claim. Points show realized oracle count and runtime per search mode.",
+        ha="center",
+        fontsize=7.5,
+        color="#444",
+    )
     fig_save(FIGURES / "fig17_quality_vs_compute.png")
 
 
@@ -1117,7 +1301,7 @@ def make_fig18() -> None:
             ax.plot(steps, vals, "o-", color=color, alpha=0.35 if seed != 42 else 0.95, lw=1.3, ms=3.5)
             bi = int(np.argmin(vals))
             ax.scatter([steps[bi]], [vals[bi]], marker="*", s=70, color=color if seed == 42 else "#888", zorder=4)
-        ax.set_title(method_label(model, short=True), fontsize=9)
+        ax.set_title(method_label(model), fontsize=8.5)
         ax.grid(True, alpha=0.25)
     axes[1, 0].set_xlabel("BC evaluation step")
     axes[1, 1].set_xlabel("BC evaluation step")
@@ -1127,8 +1311,8 @@ def make_fig18() -> None:
     fig.text(
         0.5,
         -0.02,
-        "One panel per architecture. Bold ≈ seed 42; faint = seeds 43/44. ★ = best logged point on that seed "
-        "(sparse evaluations — not a continuous trajectory).",
+        "One panel per architecture. Bold ≈ seed 42; faint = seeds 43/44. ★ = best logged point "
+        "(sparse evaluations). Checkpoints selected by validation, not final step.",
         ha="center",
         fontsize=7,
     )
@@ -1140,27 +1324,30 @@ def make_fig18() -> None:
 # ---------------------------------------------------------------------------
 def make_fig19() -> None:
     summary = _read(RL_RAW / "bc_vs_rl_official_n10_summary.csv")
-    fig, ax = plt.subplots(figsize=(6.6, 3.8))
+    fig, ax = plt.subplots(figsize=(6.8, 3.9))
     y = 0
     yticks = []
     ylabels = []
+    n_better = {"H2": 0, "H4": 0}
     for model in ("H2", "H4"):
         for seed in ("42", "43", "44"):
             bc = next(r for r in summary if r["model"] == model and r["seed"] == seed and r["tag"] == "bc_only_rq4")
             rl = next(r for r in summary if r["model"] == model and r["seed"] == seed and r["tag"] == "rl_from_bc_rq4")
             b, r = float(bc["mean_full_h"]), float(rl["mean_full_h"])
             col = "#009E73" if r < b else "#D55E00"
+            if r < b:
+                n_better[model] += 1
             ax.plot([b, r], [y, y], "-", color=col, lw=2.0)
             ax.plot(b, y, "o", color=C["bc"], ms=8)
             ax.plot(r, y, "s", color=C["rl"], ms=7)
             ax.text(max(b, r) + 0.15, y, f"Δ={r - b:+.2f}", va="center", fontsize=7, color=col)
             yticks.append(y)
-            ylabels.append(f"{model} s{seed}")
+            ylabels.append(f"{method_label(model, short=True)}\nseed {seed}")
             y += 1
     ax.set_yticks(yticks)
-    ax.set_yticklabels(ylabels)
-    ax.set_xlabel("Mean full duration (h); official n=10 construction-only, 20/20 feasible")
-    ax.set_title("Controlled RQ4: BC-only → RL-from-BC (paired slopes)")
+    ax.set_yticklabels(ylabels, fontsize=7)
+    ax.set_xlabel("Mean Z_full (h); official n=10 construction-only, 20/20 feasible")
+    ax.set_title("Controlled RQ4: BC-only → RL-from-BC (construction-only)")
     ax.plot([], [], "o", color=C["bc"], label="BC-only")
     ax.plot([], [], "s", color=C["rl"], label="RL-from-BC")
     ax.legend(loc="lower right", frameon=True)
@@ -1168,10 +1355,11 @@ def make_fig19() -> None:
     ax.invert_yaxis()
     fig.text(
         0.5,
-        -0.03,
-        "H2: RL better 1/3 seeds · H4: RL better 3/3 · Distinct from Cycle-3 synth-val RL instability.",
+        -0.04,
+        f"History Trans.: RL better {n_better['H2']}/3 seeds · Hist.+DeepSets: RL better {n_better['H4']}/3. "
+        "Protocol-dependent; distinct from Cycle-3 synth-val RL instability. Not hybrid-search RL.",
         ha="center",
-        fontsize=7.5,
+        fontsize=7,
     )
     fig_save(FIGURES / "fig19_bc_vs_rl_checkpoint_quality.png")
 
@@ -1213,7 +1401,7 @@ def make_fig20() -> None:
                 ls="--",
                 label="Greedy baseline",
             )
-        ax.set_title(method_label(model, short=True))
+        ax.set_title(method_label(model))
         ax.set_xlabel("RL step")
         ax.grid(True, alpha=0.25)
         ax.legend(loc="lower right", fontsize=7, frameon=True)
@@ -1222,9 +1410,8 @@ def make_fig20() -> None:
     fig.text(
         0.5,
         -0.06,
-        "R = −Z_full if feasible; R = −100 if infeasible. Noisy reward traces do NOT demonstrate consistent RL "
-        "learning by themselves — interpret together with official n10 construction checkpoints (Fig. 19) "
-        "and validation-based checkpoint selection.",
+        "R = −Z_full if feasible; R = −100 if infeasible. Noisy rewards alone do not prove successful RL — "
+        "see construction checkpoints (Fig. 19) and validation-based selection.",
         ha="center",
         fontsize=7,
         color="#444",
@@ -1260,7 +1447,7 @@ def make_fig21() -> None:
         for ax, key, title in panels:
             arr = np.array(mats[key])
             mean = arr.mean(axis=0)
-            ax.plot(steps_ref, mean, color=color, lw=1.8, label=model)
+            ax.plot(steps_ref, mean, color=color, lw=1.8, label=method_label(model, short=True))
             ax.fill_between(steps_ref, arr.min(axis=0), arr.max(axis=0), color=color, alpha=0.12)
             ax.set_title(title, fontsize=9)
             ax.grid(True, alpha=0.25)

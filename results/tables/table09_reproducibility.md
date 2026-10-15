@@ -4,14 +4,14 @@
 - Units: hours
 - Benchmark size: 40
 - Instance count: 20
-- Methods / checkpoints: H4_c3 hybrid_insert (best mean)
+- Methods / checkpoints: History Transformer + DeepSets + hybrid insert (best mean)
 - Search protocol: ordinary λ=0, 3 samples, strong LS, classical ruin 6/600 + neural insert 6
 - Seeds: 42
 - Source raw: `scripts/experiments/run_regression_recovery.py`
 
 | Item | Value |
 |---|---|
-| Checkpoint | checkpoints/H4_n10_seed42_c3.pt |
+| Checkpoint | checkpoints/H4_n10_seed42_c3.pt (internal key H4) |
 | Construction | decode sample=(i>0), cost_lambda=0, no force_first |
 | Samples | 3 |
 | LS | strong, passes=3, budget=4000 |
@@ -22,4 +22,4 @@
 
 ## Interpretation
 
-Preserve best incumbent; never accept a worse repair. Single seed — exploratory.
+Preserve best incumbent; never accept a worse repair. Single seed — exploratory. Checkpoint filenames retain internal H4 key for reproducibility.

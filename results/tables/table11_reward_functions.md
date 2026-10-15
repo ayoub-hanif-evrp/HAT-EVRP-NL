@@ -9,7 +9,7 @@
 - Seeds: n/a
 - Source raw: `train.py (reinforce / pomo_reinforce_step / repair_reinforce_step)`
 
-| Stage | Feasible reward | Infeasible penalty | Baseline | Loss | Used for Cycle-3 H2/H4? |
+| Stage | Feasible reward | Infeasible penalty | Baseline | Loss | Used for Cycle-3 History / Hist.+DeepSets? |
 |---|---|---|---|---|---|
 | Behavior cloning | N/A (cross-entropy on teacher actions) | N/A | N/A | masked hierarchical CE | Yes (400 steps) |
 | Standard REINFORCE | R = −Z_full | R = −100 | greedy rollout reward | L = −(R−b)·Σ log π | Yes (40 steps) |

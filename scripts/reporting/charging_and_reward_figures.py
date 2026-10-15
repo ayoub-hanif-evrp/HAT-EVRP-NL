@@ -430,7 +430,7 @@ def write_bc_rl_table():
         for r in summary:
             rows.append(
                 [
-                    method_label(r["model"], short=True),
+                    method_label(r["model"]),
                     r["seed"],
                     r["tag"],
                     f"{r['n_feasible']}/{r['n']}",
@@ -442,7 +442,7 @@ def write_bc_rl_table():
         for r in hist:
             rows.append(
                 [
-                    method_label(r["model"], short=True),
+                    method_label(r["model"]),
                     "42-44",
                     "c3_log_bc_best",
                     "synth val",
@@ -452,7 +452,7 @@ def write_bc_rl_table():
             )
             rows.append(
                 [
-                    method_label(r["model"], short=True),
+                    method_label(r["model"]),
                     "42-44",
                     "c3_log_rl_end",
                     "synth val",
@@ -468,9 +468,9 @@ def write_bc_rl_table():
             "Source": "results/raw/reward_learning + training_logs/derived",
             "Note": "Controlled RQ4 checkpoints are separate from Cycle-3 *_c3.pt",
         },
-        ["Model", "Seed", "Stage/tag", "Feasibility", "Mean h", "Protocol"],
+        ["Method", "Seed", "Stage/tag", "Feasibility", "Mean h", "Protocol"],
         rows if rows else [["unavailable", "", "", "", "", "run run_bc_rl_controlled.py"]],
-        "Do not claim RL improves H4 unless controlled official/synth comparisons show it. "
+        "Do not claim RL improves History+DeepSets unless controlled official/synth comparisons show it. "
         "Historical logs alone are not equivalent to saved BC-only vs RL checkpoints.",
     )
 

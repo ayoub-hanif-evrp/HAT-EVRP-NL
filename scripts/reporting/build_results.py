@@ -387,7 +387,7 @@ def make_search_and_h2h4() -> None:
             color="#e15759",
             capsize=4,
             ms=8,
-            label="mean H4−H2 ± SE",
+            label="mean Δ ± SE",
         )
         ax.scatter(deltas, np.linspace(-0.3, 0.3, len(deltas)), alpha=0.55, s=28, color="#59a14f")
         ax.axvline(0, color="black", lw=1)
@@ -396,7 +396,7 @@ def make_search_and_h2h4() -> None:
         ties = len(deltas) - wins - losses
         ax.set_yticks([])
         ax.set_xlabel(
-            "Full duration difference (h): History+DeepSets (H4) − History (H2)"
+            "Full duration difference (h): History + DeepSets − History Transformer"
         )
         ax.set_title(
             f"n=40 Classical+Neural Insertion — paired (W/T/L={wins}/{ties}/{losses}); "
@@ -853,8 +853,7 @@ def build_tables(decomp_rows: list[dict]) -> None:
                 feas = match[0].get("feasible", "60/60")
                 table_rows.append(
                     [
-                        method_label(m, short=True),
-                        m,
+                        method_label(m),
                         f"{_row_objective(match[0]):.4f}",
                         feas,
                         "Cycle-3 fair-LS",
@@ -868,16 +867,16 @@ def build_tables(decomp_rows: list[dict]) -> None:
                 "units": "hours",
                 "size": 10,
                 "n_instances": "20 instances × up to 3 seeds (see feasible column)",
-                "methods": "H0–H4 Cycle-3 n10 checkpoints",
+                "methods": "Greedy / State-only / History / DeepSets / History+DeepSets (Cycle-3 n10)",
                 "protocol": "best-of-10 constructions + one-shot basic LS",
                 "seeds": "42–44 aggregated where present",
                 "source": str(n10.relative_to(ROOT)).replace("\\", "/"),
             },
-            ["Display name", "Key", "Mean full h", "Feasible", "Protocol"],
+            ["Method", "Mean full h", "Feasible", "Protocol"],
             table_rows,
-            "History Transformer Routing (H2) is the strongest efficient neural ablation under "
-            "matched fair-LS; HAT-EVRP-NL (H4) is the full architecture without a consistent "
-            "multi-seed DeepSets win. Do not mix with hybrid-search rows.",
+            "History Transformer is the strongest efficient neural ablation under matched fair-LS; "
+            "History Transformer + DeepSets (HAT-EVRP-NL) does not show a consistent multi-seed "
+            "DeepSets win. Do not mix with hybrid-search rows. Internal keys H0–H4 retained in raw CSVs.",
         )
 
     pipe = _find("RECOVERY_n40_recovered_pipeline.csv")
@@ -894,10 +893,8 @@ def build_tables(decomp_rows: list[dict]) -> None:
                 if objs:
                     table_rows.append(
                         [
-                            method_label(method, short=True),
-                            method,
-                            search_label(stage, short=True),
-                            stage,
+                            method_label(method),
+                            search_label(stage),
                             f"{_mean(objs):.4f}",
                             len(objs),
                         ]
@@ -910,14 +907,14 @@ def build_tables(decomp_rows: list[dict]) -> None:
                 "units": "hours",
                 "size": 40,
                 "n_instances": 20,
-                "methods": "History Transformer (H2) / HAT-EVRP-NL (H4) Cycle-3",
+                "methods": "History Transformer / History Transformer + DeepSets (Cycle-3)",
                 "protocol": "ordinary λ=0 starts; matched starts; unequal realized search compute",
                 "seeds": "42",
                 "source": str(pipe.relative_to(ROOT)).replace("\\", "/"),
             },
-            ["Model", "Key", "Search stage", "Stage key", "Mean full h", "N"],
+            ["Method", "Search mode", "Mean full h", "N"],
             table_rows,
-            "Classical + Neural Insertion Repair beats historical fair-LS. "
+            "Hybrid insert repair has the best mean among reported modes. "
             "Not an equal-oracle-budget experiment.",
         )
 
@@ -935,26 +932,26 @@ def build_tables(decomp_rows: list[dict]) -> None:
         ties = len(paired) - wins - losses
         write_table(
             "table06_h2_vs_h4.md",
-            "H2 vs H4 under recovered hybrid_insert (n=40)",
+            "History Transformer vs History + DeepSets (n=40 hybrid insert)",
             {
                 "objective": "Full duration",
                 "units": "hours",
                 "size": 40,
                 "n_instances": len(paired),
-                "methods": "H2 vs H4 Cycle-3, identical protocol",
+                "methods": "History Transformer vs History Transformer + DeepSets, identical protocol",
                 "protocol": "ordinary λ=0 + strong LS + hybrid_insert",
                 "seeds": "42 (single seed)",
                 "source": str(pipe.relative_to(ROOT)).replace("\\", "/"),
             },
             [
                 "Instance",
-                "History Transformer (H2) h",
-                "HAT-EVRP-NL (H4) h",
-                "H4−H2",
+                "History Transformer h",
+                "History + DeepSets h",
+                "Δ (Hist+DeepSets − History)",
             ],
             [[a, f"{b:.4f}", f"{c:.4f}", f"{d:+.4f}"] for a, b, c, d in paired],
-            f"Wins(H4 better)/ties/losses = {wins}/{ties}/{losses}. "
-            f"Mean H4−H2 = {_mean([d for *_, d in paired]):+.4f} h. "
+            f"Wins(Hist+DeepSets better)/ties/losses = {wins}/{ties}/{losses}. "
+            f"Mean Δ = {_mean([d for *_, d in paired]):+.4f} h. "
             "Single-seed recovered hybrid; not a general DeepSets claim.",
         )
 
@@ -971,8 +968,7 @@ def build_tables(decomp_rows: list[dict]) -> None:
         for m, group in sorted(by.items()):
             rows_out.append(
                 [
-                    method_label(m, short=True),
-                    m,
+                    method_label(m),
                     f"{_mean([float(r['travel_h']) for r in group]):.4f}",
                     f"{_mean([float(r['service_h']) for r in group]):.4f}",
                     f"{_mean([float(r['charging_h']) for r in group]):.4f}",
@@ -990,14 +986,13 @@ def build_tables(decomp_rows: list[dict]) -> None:
                 "units": "hours",
                 "size": 40,
                 "n_instances": 20,
-                "methods": "H2/H4 Cycle-3 recovered hybrid",
+                "methods": "History Transformer / History + DeepSets (Cycle-3 recovered hybrid)",
                 "protocol": "ordinary λ=0 + strong LS + hybrid_insert",
                 "seeds": "42",
                 "source": "results/raw/regression_recovery/RECOVERY_n40_objective_decomposition.csv",
             },
             [
-                "Model",
-                "Key",
+                "Method",
                 "Travel h",
                 "Service h",
                 "Nonlinear charge h",
@@ -1009,7 +1004,8 @@ def build_tables(decomp_rows: list[dict]) -> None:
             rows_out,
             "Charging hours come from exact F_s(q_out)-F_s(q_in) on validated RoutePlan.stops. "
             "frvcpy optimizes the fixed-route charging subproblem only. "
-            "H4’s better full duration is driven mainly by lower travel despite slightly higher mean charging.",
+            "History + DeepSets’ better full duration is driven mainly by lower travel despite "
+            "slightly higher mean charging.",
         )
         write_table(
             "table07_charging_analysis.md",
@@ -1019,7 +1015,7 @@ def build_tables(decomp_rows: list[dict]) -> None:
                 "units": "hours / kWh",
                 "size": 40,
                 "n_instances": 20,
-                "methods": "H2/H4",
+                "methods": "History Transformer / History + DeepSets",
                 "protocol": "same as table02",
                 "seeds": "42",
                 "source": "RECOVERY_n40_objective_decomposition.csv",
@@ -1027,7 +1023,7 @@ def build_tables(decomp_rows: list[dict]) -> None:
             ["Method", "Mean charge h", "Mean energy kWh", "Mean visits", "Identity OK rate"],
             [
                 [
-                    m,
+                    method_label(m),
                     f"{_mean([float(r['charging_h']) for r in g]):.4f}",
                     f"{_mean([float(r['energy_charged_kwh']) for r in g if r['energy_charged_kwh'] != '']):.3f}",
                     f"{_mean([float(r['n_charges']) for r in g]):.2f}",
@@ -1083,8 +1079,7 @@ def build_tables(decomp_rows: list[dict]) -> None:
             key = r.get("method", "")
             pretty.append(
                 [
-                    method_label(key, short=True),
-                    key,
+                    method_label(key),
                     f"{float(r['mean_gap_lit_pct']):.2f}",
                     f"{float(r['median_gap_lit_pct']):.2f}",
                     f"{float(r['mean_gap_full_pct']):.2f}",
@@ -1101,14 +1096,13 @@ def build_tables(decomp_rows: list[dict]) -> None:
                 "size": "n=10",
                 "n_instances": f"{n_inst} official instances per method "
                 f"({len(rows)} method-summary rows — not {len(rows)} instances)",
-                "methods": ", ".join(r["method"] for r in rows),
+                "methods": "Greedy+LS through History+DeepSets (Cycle-3 fair-LS)",
                 "protocol": "fair-LS Cycle-3; service-time correction applied",
                 "seeds": "see IMPROVEMENT report / FINAL fair-LS aggregates",
                 "source": str(corr.relative_to(ROOT)).replace("\\", "/"),
             },
             [
-                "Display name",
-                "Key",
+                "Method",
                 "Mean lit gap %",
                 "Median lit gap %",
                 "Mean naive gap % (full vs BKS)",
@@ -1137,7 +1131,7 @@ def build_tables(decomp_rows: list[dict]) -> None:
                 rows_out.append(
                     [
                         size,
-                        method,
+                        method_label(method),
                         f"{_row_objective(match[0]):.4f}",
                         match[0].get("feasible", ""),
                         "fair-LS from10",
@@ -1152,7 +1146,9 @@ def build_tables(decomp_rows: list[dict]) -> None:
                 if r["method"] == method and r["stage"] == "hybrid_insert" and r["feasible"] == "1"
             ]
             if objs:
-                rows_out.append([40, method, f"{_mean(objs):.4f}", f"{len(objs)}/20", "recovered hybrid"])
+                rows_out.append(
+                    [40, method_label(method), f"{_mean(objs):.4f}", f"{len(objs)}/20", "recovered hybrid"]
+                )
     write_table(
         "table05_scalability.md",
         "Scalability across problem sizes",
@@ -1161,14 +1157,15 @@ def build_tables(decomp_rows: list[dict]) -> None:
             "units": "hours",
             "size": "10/20/40/80",
             "n_instances": 20,
-            "methods": "H2/H4",
+            "methods": "History Transformer / History + DeepSets",
             "protocol": "protocol labeled per row — do not pool blindly",
             "seeds": "42 (+ multi-seed n10 where noted)",
             "source": "FINAL_n*_fairls + RECOVERY pipeline",
         },
         ["n", "Method", "Mean full h", "Feasible", "Protocol"],
         rows_out,
-        "Training size is n=10 for all rows. Test size varies. Recovered hybrid is a different search protocol than fair-LS.",
+        "Training size is n=10 for all rows. Test size varies. Recovered hybrid is a different search protocol than fair-LS. "
+        "n=80 currently uses only 3 instances — exploratory.",
     )
 
     write_table(
@@ -1179,14 +1176,14 @@ def build_tables(decomp_rows: list[dict]) -> None:
             "units": "hours",
             "size": 40,
             "n_instances": 20,
-            "methods": "H4_c3 hybrid_insert (best mean)",
+            "methods": "History Transformer + DeepSets + hybrid insert (best mean)",
             "protocol": "ordinary λ=0, 3 samples, strong LS, classical ruin 6/600 + neural insert 6",
             "seeds": "42",
             "source": "scripts/experiments/run_regression_recovery.py",
         },
         ["Item", "Value"],
         [
-            ["Checkpoint", "checkpoints/H4_n10_seed42_c3.pt"],
+            ["Checkpoint", "checkpoints/H4_n10_seed42_c3.pt (internal key H4)"],
             ["Construction", "decode sample=(i>0), cost_lambda=0, no force_first"],
             ["Samples", "3"],
             ["LS", "strong, passes=3, budget=4000"],
@@ -1195,7 +1192,8 @@ def build_tables(decomp_rows: list[dict]) -> None:
             ["Mean objective", "56.3700 h (see RECOVERY pipeline)"],
             ["Reporting", "python scripts/reporting/build_results.py --all"],
         ],
-        "Preserve best incumbent; never accept a worse repair. Single seed — exploratory.",
+        "Preserve best incumbent; never accept a worse repair. Single seed — exploratory. "
+        "Checkpoint filenames retain internal H4 key for reproducibility.",
     )
 
 
@@ -1209,9 +1207,9 @@ def write_index() -> None:
         "",
         "| Setting | Configuration | Mean full h | Notes |",
         "|---|---|---:|---|",
-        "| n=40 | H4 Cycle-3 + ordinary λ=0 + hybrid_insert | **56.370** | Beats hist fair-LS 57.506; single seed |",
-        "| n=40 | H2 Cycle-3 + ordinary λ=0 + hybrid_insert | **56.806** | Beats hist fair-LS 57.173 |",
-        "| n=10 | H2 Cycle-3 fair-LS | **19.813** | Multi-seed Cycle-3 baseline |",
+        "| n=40 | History + DeepSets + hybrid_insert | **56.370** | Beats hist fair-LS 57.506; single seed |",
+        "| n=40 | History Transformer + hybrid_insert | **56.806** | Beats hist fair-LS 57.173 |",
+        "| n=10 | History Transformer fair-LS | **19.813** | Multi-seed Cycle-3 baseline |",
         "",
         "## Do not cite as current best",
         "",
@@ -1220,14 +1218,14 @@ def write_index() -> None:
         "",
         "## Important limitations",
         "",
-        "- H4’s better n40 mean in the recovered single-seed experiment does **not** establish a reliable general DeepSets advantage.",
+        "- History + DeepSets’ better n40 mean in the recovered single-seed experiment does **not** establish a reliable general DeepSets advantage.",
         "- Equal wall-clock neural-search superiority has **not** been established.",
         "- Official benchmark evaluation was revisited repeatedly; treat recent search results as exploratory.",
         "- `frvcpy` is exact for the **fixed-route** charging subproblem, not a proof of global VRP optimality.",
         "",
-        "## Main-paper figures (exactly 8 PNGs)",
+        "## Main-paper figures",
         "",
-        "See [`../docs/FIGURE_AUDIT.md`](../docs/FIGURE_AUDIT.md).",
+        "See [`../docs/FIGURE_CATALOG.md`](../docs/FIGURE_CATALOG.md).",
         "",
     ]
     for p in sorted(FIGURES.glob("*.png")):

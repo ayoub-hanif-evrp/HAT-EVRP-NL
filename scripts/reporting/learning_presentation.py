@@ -245,7 +245,7 @@ def make_fig_rl_effect() -> None:
     ax.grid(True, axis="y", alpha=0.3)
     # Annotate H4 instability
     ax.annotate(
-        "H4 RL endpoint unstable\n(checkpoint keeps best BC)",
+        "Hist.+DeepSets RL endpoint unstable\n(checkpoint keeps best BC)",
         xy=(3 + width / 2, rl_means[3]),
         xytext=(2.2, max(rl_means) * 0.85),
         fontsize=8,
@@ -344,8 +344,7 @@ def write_learning_tables() -> None:
         cfg = VARIANTS[key]
         rows.append(
             [
-                method_label(key, short=True),
-                key,
+                method_label(key),
                 "yes" if cfg.history else "no",
                 "yes" if cfg.deepsets else "no",
                 cfg.d_model,
@@ -363,20 +362,19 @@ def write_learning_tables() -> None:
         )
     _write_table(
         "table10_training_configuration.md",
-        "Training configuration for Cycle-3 H1–H4 checkpoints",
+        "Training configuration for Cycle-3 neural ablations",
         {
             "objective": "Synthetic validation full duration for checkpoint selection",
             "units": "hours / steps",
             "size": "n=10 synthetic train/val",
             "n_instances": "120 train / 12 val per seed",
-            "methods": "H1–H4 Cycle-3",
+            "methods": "State-only / History / DeepSets / History+DeepSets (Cycle-3)",
             "protocol": "BC then standard REINFORCE (pomo_k=0); generator v2 defaults",
             "seeds": "42–44",
             "source": "results/archive/reports/notes.md + train.py defaults + training_*_c3.csv",
         },
         [
-            "Display name",
-            "Key",
+            "Method",
             "History",
             "DeepSets",
             "Hidden",
@@ -393,7 +391,8 @@ def write_learning_tables() -> None:
         ],
         rows,
         "Insertion/POMO/repair flags were **not** used for Cycle-3 primary checkpoints. "
-        "Post-Cycle-3 `perf_*` runs are separate warm-start experiments.",
+        "Post-Cycle-3 `perf_*` runs are separate warm-start experiments. "
+        "Internal checkpoint keys H1–H4 remain in filenames for reproducibility.",
     )
 
     _write_table(
@@ -415,7 +414,7 @@ def write_learning_tables() -> None:
             "Infeasible penalty",
             "Baseline",
             "Loss",
-            "Used for Cycle-3 H2/H4?",
+            "Used for Cycle-3 History / Hist.+DeepSets?",
         ],
         [
             [
@@ -481,7 +480,7 @@ def write_learning_tables() -> None:
             "units": "hours",
             "size": "n=10 synthetic",
             "n_instances": "12 validation instances × 3 seeds",
-            "methods": "H1–H4",
+            "methods": "State-only / History / DeepSets / History+DeepSets",
             "protocol": "Log-based: best BC step vs RL endpoint; checkpoint keeps best overall",
             "seeds": "42–44",
             "source": "results/raw/training_logs/derived/bc_vs_rl_aggregate_c3.csv",
@@ -497,12 +496,10 @@ def write_learning_tables() -> None:
         ],
         table_rows,
         "Across three Cycle-3 seeds, RL **endpoint** validation beats best-BC on only "
-        "**1/3 seeds for H2** and **0/3 for H4** (and H1/H3). Mean RL endpoints are worse "
-        "because several seeds collapse. Checkpoint selection still retains BC weights when "
-        "RL worsens validation — so deployed H4 (and often H1/H3) are BC-selected. "
-        "Do **not** claim RL improves HAT-EVRP-NL. Separate BC-only `.pt` files were not "
-        "saved; official Montoya BC-only vs RL weight evaluation remains unavailable "
-        "without a controlled retrain.",
+        "**1/3 History Transformer seeds** and **0/3 History+DeepSets seeds** (and State-only/DeepSets). "
+        "Mean RL endpoints are worse because several seeds collapse. Checkpoint selection retains "
+        "BC weights when RL worsens validation — deployed History+DeepSets (and often State-only/DeepSets) "
+        "are BC-selected. Do **not** claim RL improves HAT-EVRP-NL from Cycle-3 alone.",
     )
 
     diag_rows = []
@@ -524,13 +521,13 @@ def write_learning_tables() -> None:
         )
     _write_table(
         "table13_training_diagnostics.md",
-        "Training diagnostics (Cycle-3 H2/H4 per seed)",
+        "Training diagnostics (Cycle-3 History / History+DeepSets per seed)",
         {
             "objective": "Synthetic validation + logged losses/entropy",
             "units": "hours / nats",
             "size": "n=10 synthetic",
             "n_instances": "12 val instances",
-            "methods": "H2, H4",
+            "methods": "History Transformer / History Transformer + DeepSets",
             "protocol": "Cycle-3 logs; RL only logged at endpoint (eval_every=40, rl_steps=40)",
             "seeds": "42–44",
             "source": "results/raw/training_logs/derived/bc_vs_rl_per_seed_c3.csv",
@@ -548,7 +545,7 @@ def write_learning_tables() -> None:
         ],
         diag_rows,
         "Entropy and RL loss are diagnostics only. Sampled reward variance was not logged "
-        "historically. H4 seed-42 RL endpoint 31.02 h vs BC-best ~15.71 h is a clear instability.",
+        "historically. History+DeepSets seed-42 RL endpoint 31.02 h vs BC-best ~15.71 h is a clear instability.",
     )
 
 
@@ -567,8 +564,7 @@ def write_neural_contribution_table() -> None:
             e = eq_by[m]
             rows_out.append(
                 [
-                    method_label(m, short=True),
-                    m,
+                    method_label(m),
                     f"{float(e['mean_h']):.4f}",
                     f"{float(f['mean_h']):.4f}",
                     f"{float(f['mean_h']) - float(e['mean_h']):+.4f}",
@@ -593,8 +589,7 @@ def write_neural_contribution_table() -> None:
             if cons and hyb:
                 rows_out.append(
                     [
-                        method_label(method, short=True),
-                        method,
+                        method_label(method),
                         f"{_mean(cons):.4f}",
                         f"{_mean(hyb):.4f}",
                         f"{_mean(hyb) - _mean(cons):+.4f}",
@@ -611,14 +606,13 @@ def write_neural_contribution_table() -> None:
             "units": "hours",
             "size": "n=10 fair/equal; n=40 recovered",
             "n_instances": "20 (protocols labeled per row)",
-            "methods": "H0_strong–H4 / H2–H4",
+            "methods": "Greedy+LS through History+DeepSets; History vs History+DeepSets on n40",
             "protocol": "Do not pool rows across protocols",
             "seeds": "Cycle-3 multi-seed n10; n40 seed 42",
             "source": "FINAL_n10_equal_construction + FINAL_n10_fairls + RECOVERY pipeline",
         },
         [
-            "Model",
-            "Key",
+            "Method",
             "Construction-oriented mean h",
             "After search mean h",
             "Δ (search − construction)",
@@ -660,9 +654,11 @@ def write_learning_report() -> None:
         "| Model | Mean BC-best h | Mean RL-end h | Mean Δ | Seeds RL helped | Deployed from BC |",
         "|---|---:|---:|---:|---:|---:|",
     ]
+    from presentation_names import method_label as _ml
+
     for r in agg:
         lines.append(
-            f"| {r['model']} | {float(r['mean_bc_best_val_h']):.4f} | "
+            f"| {_ml(r['model'])} | {float(r['mean_bc_best_val_h']):.4f} | "
             f"{float(r['mean_rl_end_val_h']):.4f} | "
             f"{float(r['mean_rl_minus_bc_best_h']):+.4f} | "
             f"{r['seeds_rl_improved']}/{r['n_seeds']} | "
@@ -673,24 +669,25 @@ def write_learning_report() -> None:
             "",
             "### Key conclusions",
             "",
-            "1. Across seeds 42–44, RL **endpoint** beats best-BC validation on **1/3 H2 seeds** "
-            "and **0/3 H4 seeds**. Mean RL endpoints are pulled up by collapses.",
-            "2. **H4 seed 42** is a clear instability (BC-best ≈15.71 h → RL-end ≈31.02 h). "
-            "Checkpoint selection retains BC weights — published H4 is **not** an RL-improved model.",
-            "3. **Do not claim that RL improves HAT-EVRP-NL** from Cycle-3 alone. Even H2’s "
+            "1. Across seeds 42–44, RL **endpoint** beats best-BC validation on **1/3 History Transformer seeds** "
+            "and **0/3 History+DeepSets seeds**. Mean RL endpoints are pulled up by collapses.",
+            "2. **History+DeepSets seed 42** is a clear instability (BC-best ≈15.71 h → RL-end ≈31.02 h). "
+            "Checkpoint selection retains BC weights — published History+DeepSets is **not** an RL-improved model.",
+            "3. **Do not claim that RL improves HAT-EVRP-NL** from Cycle-3 alone. Even History Transformer’s "
             "single-seed RL gain is not a robust multi-seed result.",
             "4. Separate BC-only `.pt` files were not saved; official Montoya BC-only vs RL "
             "weight ablation remains **unavailable** without a controlled retrain.",
-            "5. Sampled reward traces are **unavailable** in historical logs (fig14).",
+            "5. Sampled reward traces for historical Cycle-3 RL were **unavailable** in older logs; "
+            "official RQ4 reward CSVs support Figures 19–20.",
             "",
             "## Figures",
             "",
-            "- Main paper learning figure: `results/figures/fig07_learning_and_reward.png`",
-            "- Supplementary historical plots: `results/supplementary/figures/fig11_*` … `fig17_*`",
+            "- Main paper: `fig18` BC curves, `fig19` BC vs RL, `fig20` reward dynamics.",
+            "- Supplementary: `fig21` RL stability diagnostics.",
             "",
             "## Raw sources",
             "",
-            "- `results/raw/training_logs/training_H*_n10_seed*_c3.csv`",
+            "- `results/raw/training_logs/training_H*_n10_seed*_c3.csv` (internal keys in filenames)",
             "- `results/raw/training_logs/derived/`",
             "- `results/raw/reward_learning/`",
             "",

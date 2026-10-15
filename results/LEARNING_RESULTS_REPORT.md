@@ -22,26 +22,26 @@ without fabricating reward traces or claiming RL gains without evidence.
 
 | Model | Mean BC-best h | Mean RL-end h | Mean Δ | Seeds RL helped | Deployed from BC |
 |---|---:|---:|---:|---:|---:|
-| H1 | 15.5464 | 17.8534 | +2.3070 | 0/3 | 3/3 |
-| H2 | 15.4235 | 22.0845 | +6.6610 | 1/3 | 2/3 |
-| H3 | 15.6168 | 22.0632 | +6.4463 | 0/3 | 3/3 |
-| H4 | 15.4325 | 26.4013 | +10.9688 | 0/3 | 3/3 |
+| State-only Pointer | 15.5464 | 17.8534 | +2.3070 | 0/3 | 3/3 |
+| History Transformer | 15.4235 | 22.0845 | +6.6610 | 1/3 | 2/3 |
+| DeepSets Fleet Model | 15.6168 | 22.0632 | +6.4463 | 0/3 | 3/3 |
+| History Transformer + DeepSets | 15.4325 | 26.4013 | +10.9688 | 0/3 | 3/3 |
 
 ### Key conclusions
 
-1. Across seeds 42–44, RL **endpoint** beats best-BC validation on **1/3 H2 seeds** and **0/3 H4 seeds**. Mean RL endpoints are pulled up by collapses.
-2. **H4 seed 42** is a clear instability (BC-best ≈15.71 h → RL-end ≈31.02 h). Checkpoint selection retains BC weights — published H4 is **not** an RL-improved model.
-3. **Do not claim that RL improves HAT-EVRP-NL** from Cycle-3 alone. Even H2’s single-seed RL gain is not a robust multi-seed result.
+1. Across seeds 42–44, RL **endpoint** beats best-BC validation on **1/3 History Transformer seeds** and **0/3 History+DeepSets seeds**. Mean RL endpoints are pulled up by collapses.
+2. **History+DeepSets seed 42** is a clear instability (BC-best ≈15.71 h → RL-end ≈31.02 h). Checkpoint selection retains BC weights — published History+DeepSets is **not** an RL-improved model.
+3. **Do not claim that RL improves HAT-EVRP-NL** from Cycle-3 alone. Even History Transformer’s single-seed RL gain is not a robust multi-seed result.
 4. Separate BC-only `.pt` files were not saved; official Montoya BC-only vs RL weight ablation remains **unavailable** without a controlled retrain.
-5. Sampled reward traces are **unavailable** in historical logs (fig14).
+5. Sampled reward traces for historical Cycle-3 RL were **unavailable** in older logs; official RQ4 reward CSVs support Figures 19–20.
 
 ## Figures
 
-- Main paper learning figure: `results/figures/fig07_learning_and_reward.png`
-- Supplementary historical plots: `results/supplementary/figures/fig11_*` … `fig17_*`
+- Main paper: `fig18` BC curves, `fig19` BC vs RL, `fig20` reward dynamics.
+- Supplementary: `fig21` RL stability diagnostics.
 
 ## Raw sources
 
-- `results/raw/training_logs/training_H*_n10_seed*_c3.csv`
+- `results/raw/training_logs/training_H*_n10_seed*_c3.csv` (internal keys in filenames)
 - `results/raw/training_logs/derived/`
 - `results/raw/reward_learning/`

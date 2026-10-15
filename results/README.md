@@ -6,9 +6,9 @@ This directory separates **presentation** (`figures/`, `tables/`) from **evidenc
 
 | Setting | Configuration | Mean full h | Notes |
 |---|---|---:|---|
-| n=40 | H4 Cycle-3 + ordinary λ=0 + hybrid_insert | **56.370** | Beats hist fair-LS 57.506; single seed |
-| n=40 | H2 Cycle-3 + ordinary λ=0 + hybrid_insert | **56.806** | Beats hist fair-LS 57.173 |
-| n=10 | H2 Cycle-3 fair-LS | **19.813** | Multi-seed Cycle-3 baseline |
+| n=40 | History + DeepSets + hybrid_insert | **56.370** | Beats hist fair-LS 57.506; single seed |
+| n=40 | History Transformer + hybrid_insert | **56.806** | Beats hist fair-LS 57.173 |
+| n=10 | History Transformer fair-LS | **19.813** | Multi-seed Cycle-3 baseline |
 
 ## Do not cite as current best
 
@@ -17,27 +17,44 @@ This directory separates **presentation** (`figures/`, `tables/`) from **evidenc
 
 ## Important limitations
 
-- H4’s better n40 mean in the recovered single-seed experiment does **not** establish a reliable general DeepSets advantage.
+- History + DeepSets’ better n40 mean in the recovered single-seed experiment does **not** establish a reliable general DeepSets advantage.
 - Equal wall-clock neural-search superiority has **not** been established.
 - Official benchmark evaluation was revisited repeatedly; treat recent search results as exploratory.
 - `frvcpy` is exact for the **fixed-route** charging subproblem, not a proof of global VRP optimality.
 
-## Main-paper figures (20 PNGs)
+## Main-paper figures
 
-Allowlist: `MAIN_FIGURES` in `reporting_paths.py`.  
-Catalog: [`../docs/FIGURE_CATALOG.md`](../docs/FIGURE_CATALOG.md) · Quality: [`../docs/FIGURE_QUALITY_REVIEW.md`](../docs/FIGURE_QUALITY_REVIEW.md) · Audit: [`SCIENTIFIC_RESULTS_AUDIT.md`](SCIENTIFIC_RESULTS_AUDIT.md).
+See [`../docs/FIGURE_CATALOG.md`](../docs/FIGURE_CATALOG.md).
 
-`fig01`–`fig20` live in [`figures/`](figures/).  
-`fig21` RL diagnostics is **supplementary** only.
+- [`figures/fig01_hat_evrp_nl_architecture.png`](figures/fig01_hat_evrp_nl_architecture.png)
+- [`figures/fig02_montoya_instance_layouts.png`](figures/fig02_montoya_instance_layouts.png)
+- [`figures/fig03_feasible_ev_routes.png`](figures/fig03_feasible_ev_routes.png)
+- [`figures/fig04_nonlinear_charging_curves.png`](figures/fig04_nonlinear_charging_curves.png)
+- [`figures/fig05_charging_time_vs_soc.png`](figures/fig05_charging_time_vs_soc.png)
+- [`figures/fig06_fixed_route_charging_feasibility.png`](figures/fig06_fixed_route_charging_feasibility.png)
+- [`figures/fig07_end_to_end_charging_feasibility.png`](figures/fig07_end_to_end_charging_feasibility.png)
+- [`figures/fig08_soc_charging_schedule.png`](figures/fig08_soc_charging_schedule.png)
+- [`figures/fig09_linear_charging_estimation_error.png`](figures/fig09_linear_charging_estimation_error.png)
+- [`figures/fig10_station_usage_and_energy.png`](figures/fig10_station_usage_and_energy.png)
+- [`figures/fig11_objective_decomposition.png`](figures/fig11_objective_decomposition.png)
+- [`figures/fig12_neural_architecture_ablation.png`](figures/fig12_neural_architecture_ablation.png)
+- [`figures/fig13_history_deepsets_paired_effect.png`](figures/fig13_history_deepsets_paired_effect.png)
+- [`figures/fig14_literature_bks_gap.png`](figures/fig14_literature_bks_gap.png)
+- [`figures/fig15_generalization_scalability.png`](figures/fig15_generalization_scalability.png)
+- [`figures/fig16_search_improvement_stages.png`](figures/fig16_search_improvement_stages.png)
+- [`figures/fig17_quality_vs_compute.png`](figures/fig17_quality_vs_compute.png)
+- [`figures/fig18_behavior_cloning_learning_curves.png`](figures/fig18_behavior_cloning_learning_curves.png)
+- [`figures/fig19_bc_vs_rl_checkpoint_quality.png`](figures/fig19_bc_vs_rl_checkpoint_quality.png)
+- [`figures/fig20_reinforce_reward_dynamics.png`](figures/fig20_reinforce_reward_dynamics.png)
 
 ## Supplementary figures
 
-Supporting plots live in [`supplementary/figures/`](supplementary/figures/) (includes `fig21_rl_training_stability.png`).
+Supporting plots live in [`supplementary/figures/`](supplementary/figures/).
 Superseded plots live in [`archive/figures_legacy/`](archive/figures_legacy/).
 
 ## Tables (Markdown)
 
-- [`tables/benchmark_protocol_comparison.md`](tables/benchmark_protocol_comparison.md) — protocol-separated main comparison
+- [`tables/benchmark_protocol_comparison.md`](tables/benchmark_protocol_comparison.md)
 - [`tables/table01_benchmark_overview.md`](tables/table01_benchmark_overview.md)
 - [`tables/table02_objective_and_charging.md`](tables/table02_objective_and_charging.md)
 - [`tables/table03_main_models.md`](tables/table03_main_models.md)
