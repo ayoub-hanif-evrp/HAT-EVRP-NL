@@ -31,14 +31,27 @@ def literature_compatible_objective_hours(
     return float(full_duration_hours) - total_customer_service_hours(instance)
 
 
+def route_sequence_fingerprint(
+    sequences: list[tuple[int, ...]] | tuple[tuple[int, ...], ...]
+) -> str:
+    """Canonical fingerprint of customer sequences.
+
+    Vehicle-route order is ignored (sorted), but customer order within each
+    route is preserved. Empty solutions fingerprint as \"\".
+    """
+    parts = ["-".join(str(c) for c in seq) for seq in sequences if seq]
+    parts.sort()
+    return "|".join(parts)
+
+
 def decompose_route(
     instance: Instance, stops: ConcreteRoute, tolerance: float = 1e-7
 ) -> dict:
     """Break one concrete route into travel / service / nonlinear charging hours.
 
-    Charging hours use exact piecewise-linear F_s(q_out)-F_s(q_in) via
-    ``charging_time``. Does not invent values: infeasible routes return
-    ``feasible=False``.
+    Travel, service, and charging are computed independently from the stop list.
+    ``identity_ok`` is True iff travel + service + charging matches the
+    independently simulated full duration within ``tolerance``.
     """
     check = check_route(instance, stops)
     if not check.feasible or stops is None:
@@ -52,35 +65,39 @@ def decompose_route(
             "n_charges": 0,
             "station_types": (),
             "reason": check.reason,
+            "identity_ok": False,
         }
     service_h = 0.0
-    charging_h = 0.0
     travel_h = 0.0
-    energy_wh = 0.0
-    station_types: list[str] = []
-    for index, (node, amount) in enumerate(stops):
+    for index, (node, _amount) in enumerate(stops):
         kind = instance.nodes[node].kind
         if kind == 1:
             service_h += instance.service_times[node]
-        if amount is not None and amount > tolerance:
-            curve = instance.curves[instance.nodes[node].station_type]
-            # Reconstruct SOC-in from check by re-simulating locally for energy.
-            # Prefer amount as energy charged; charging time from F_s.
-            # We re-walk SOC for exact F_s(q_out)-F_s(q_in).
-            pass
         if index + 1 < len(stops):
             nxt = stops[index + 1][0]
             travel_h += instance.travel_hours[node][nxt]
 
-    # Accurate charging hours and energy from a single forward pass.
     soc = instance.battery_wh
     charging_h = 0.0
     energy_wh = 0.0
-    station_types = []
+    station_types: list[str] = []
     n_charges = 0
     for index, (node, amount) in enumerate(stops):
         kind = instance.nodes[node].kind
         if amount is not None:
+            if not math.isfinite(float(amount)):
+                return {
+                    "feasible": False,
+                    "travel_h": float("nan"),
+                    "service_h": float("nan"),
+                    "charging_h": float("nan"),
+                    "full_h": float("nan"),
+                    "energy_charged_wh": float("nan"),
+                    "n_charges": 0,
+                    "station_types": (),
+                    "reason": f"nonfinite charging quantity at node {node}",
+                    "identity_ok": False,
+                }
             added = max(float(amount), 0.0)
             if added > tolerance and kind == 2:
                 curve = instance.curves[instance.nodes[node].station_type]
@@ -95,8 +112,7 @@ def decompose_route(
             soc = max(0.0, soc - instance.energy_wh[node][nxt])
 
     full_h = float(check.duration_hours)
-    # Travel inferred so travel+service+charge == full (identity check).
-    travel_h = full_h - service_h - charging_h
+    identity_ok = abs((travel_h + service_h + charging_h) - full_h) <= tolerance
     return {
         "feasible": True,
         "travel_h": travel_h,
@@ -106,7 +122,8 @@ def decompose_route(
         "energy_charged_wh": energy_wh,
         "n_charges": n_charges,
         "station_types": tuple(station_types),
-        "reason": "",
+        "reason": "" if identity_ok else "travel+service+charging != simulated full",
+        "identity_ok": identity_ok,
     }
 
 
@@ -132,8 +149,11 @@ def decompose_solution(instance: Instance, plans: list[RoutePlan]) -> dict:
     travel = service = charging = energy = 0.0
     n_charges = 0
     types: list[str] = []
+    route_identity = True
     for plan in plans:
         part = decompose_route(instance, plan.stops)
+        if not part.get("identity_ok", False):
+            route_identity = False
         travel += part["travel_h"]
         service += part["service_h"]
         charging += part["charging_h"]
@@ -143,9 +163,11 @@ def decompose_solution(instance: Instance, plans: list[RoutePlan]) -> dict:
     full = travel + service + charging
     expected_full = sum(p.duration_hours for p in plans)
     lit = literature_compatible_objective_hours(instance, expected_full)
-    identity_ok = abs(full - expected_full) <= 1e-6 and abs(
-        lit - (expected_full - total_customer_service_hours(instance))
-    ) <= 1e-6
+    identity_ok = (
+        route_identity
+        and abs(full - expected_full) <= 1e-6
+        and abs(lit - (expected_full - total_customer_service_hours(instance))) <= 1e-6
+    )
     return {
         "feasible": True,
         "travel_h": travel,
@@ -158,7 +180,7 @@ def decompose_solution(instance: Instance, plans: list[RoutePlan]) -> dict:
         "n_charges": n_charges,
         "charging_share": charging / expected_full if expected_full > 0 else 0.0,
         "station_types": tuple(types),
-        "reason": "",
+        "reason": "" if identity_ok else "decomposition identity failed",
         "identity_ok": identity_ok,
     }
 
@@ -385,6 +407,8 @@ def check_route(
             duration += instance.service_times[node]
 
         if amount is not None:
+            if not math.isfinite(float(amount)):
+                return fail(f"nonfinite charging quantity at station {node}")
             if kind != 2:
                 return fail(f"charging specified at non-station {node}")
             if amount < -tolerance:
@@ -394,6 +418,8 @@ def check_route(
                 return fail(f"battery exceeds capacity at station {node}")
             curve = instance.curves[instance.nodes[node].station_type]
             added_time = charging_time(curve, soc, min(q_out, instance.battery_wh))
+            if not math.isfinite(added_time):
+                return fail(f"nonfinite charging time at station {node}")
             duration += added_time
             charge_duration += added_time
             soc = min(q_out, instance.battery_wh)
@@ -406,8 +432,13 @@ def check_route(
             if required > soc + tolerance:
                 return fail(f"negative SOC on arc {node}->{next_node}")
             soc = max(0.0, soc - required)
-            duration += instance.travel_hours[node][next_node]
+            hop = instance.travel_hours[node][next_node]
+            if not math.isfinite(hop):
+                return fail(f"nonfinite travel time on arc {node}->{next_node}")
+            duration += hop
 
+    if not math.isfinite(duration):
+        return fail("nonfinite route duration")
     expected = tuple(expected_customers) if expected_customers is not None else None
     if expected is not None and tuple(seen) != expected:
         return fail(f"customer order {tuple(seen)} != expected {expected}")
@@ -425,14 +456,27 @@ def check_route(
     )
 
 
-def check_solution(instance: Instance, plans: list[RoutePlan]) -> tuple[bool, str]:
+def check_solution(
+    instance: Instance,
+    plans: list[RoutePlan],
+    tolerance: float = 1e-7,
+) -> tuple[bool, str]:
+    """Validate multi-route coverage and stored-duration consistency."""
     all_customers: list[int] = []
     for route_number, plan in enumerate(plans):
         if not plan.feasible or plan.stops is None:
             return False, f"route {route_number} has no feasible plan"
+        if not math.isfinite(plan.duration_hours):
+            return False, f"route {route_number}: nonfinite stored duration"
         check = check_route(instance, plan.stops)
         if not check.feasible:
             return False, f"route {route_number}: {check.reason}"
+        if abs(check.duration_hours - float(plan.duration_hours)) > tolerance:
+            return (
+                False,
+                f"route {route_number}: stored duration "
+                f"{plan.duration_hours:.9f} != simulated {check.duration_hours:.9f}",
+            )
         all_customers.extend(check.customers)
     if len(all_customers) != len(set(all_customers)):
         return False, "a customer appears on multiple routes"

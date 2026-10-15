@@ -40,6 +40,32 @@ VARIANTS = {
 }
 
 
+def write_training_csv(path: Path, rows: list[dict]) -> None:
+    """Write heterogeneous BC/RL training rows with a union field schema.
+
+    Combined BC+RL logs append different keys over time. Using only the first
+    row's keys raises ``ValueError`` when a later stage introduces new fields.
+    Missing values are written as empty strings.
+    """
+    if not rows:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("", encoding="utf-8")
+        return
+    fieldnames: list[str] = []
+    seen: set[str] = set()
+    for row in rows:
+        for key in row:
+            if key not in seen:
+                seen.add(key)
+                fieldnames.append(key)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames, extrasaction="ignore")
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({key: row.get(key, "") for key in fieldnames})
+
+
 def _direct_features(
     instance: Instance,
     current: int,
@@ -1994,19 +2020,13 @@ def train_model(args: argparse.Namespace) -> None:
         args.results
         / f"training_{args.model}_n{args.size}_seed{args.seed}_{version}.csv"
     )
-    with log_path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
-        writer.writeheader()
-        writer.writerows(rows)
+    write_training_csv(log_path, rows)
     if reward_rows:
         reward_path = (
             args.results
             / f"reward_{args.model}_n{args.size}_seed{args.seed}_{version}.csv"
         )
-        with reward_path.open("w", newline="", encoding="utf-8") as handle:
-            writer = csv.DictWriter(handle, fieldnames=list(reward_rows[0].keys()))
-            writer.writeheader()
-            writer.writerows(reward_rows)
+        write_training_csv(reward_path, reward_rows)
         print(f"saved reward log {reward_path}")
     print(
         f"saved {checkpoint} and {log_path}; total {time.perf_counter() - start:.2f}s"

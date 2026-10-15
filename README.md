@@ -97,11 +97,11 @@ Report: [`results/REWARD_AND_LEARNING_STUDY.md`](results/REWARD_AND_LEARNING_STU
 ## Generate all figures and tables
 
 ```bash
-python scripts/reporting/publication_figures.py   # 21 main-paper PNGs
+python scripts/reporting/publication_figures.py   # 20 main-paper PNGs
 python scripts/reporting/build_results.py --all --skip-decomp
 ```
 
-- [`results/figures/`](results/figures/) — 21 main-paper PNGs ([`docs/FIGURE_CATALOG.md`](docs/FIGURE_CATALOG.md))
+- [`results/figures/`](results/figures/) — 20 main-paper PNGs ([`docs/FIGURE_CATALOG.md`](docs/FIGURE_CATALOG.md))
 - [`results/supplementary/figures/`](results/supplementary/figures/) — supporting plots + contact sheet
 - [`results/tables/`](results/tables/) — Markdown tables
 - [`paper_draft.md`](paper_draft.md) — manuscript with embedded figures
@@ -160,6 +160,10 @@ Cycle-3 uses **400 BC + 40 standard REINFORCE** on synthetic n=10. Historical sy
 | Document | Role |
 |---|---|
 | [`paper_draft.md`](paper_draft.md) | Manuscript (RQ1–RQ4) |
+| [`docs/METHODOLOGY_AUDIT.md`](docs/METHODOLOGY_AUDIT.md) | RQ1–RQ4 strengths, confounders, required ablations |
+| [`docs/EXPERIMENT_PROTOCOL.md`](docs/EXPERIMENT_PROTOCOL.md) | Reproducible commands and compute policy |
+| [`docs/PHASE1_CHANGE_REPORT.md`](docs/PHASE1_CHANGE_REPORT.md) | Correctness fixes change log |
+| [`results/SCIENTIFIC_RESULTS_AUDIT.md`](results/SCIENTIFIC_RESULTS_AUDIT.md) | Independent numerical audit |
 | [`results/NONLINEAR_CHARGING_STUDY.md`](results/NONLINEAR_CHARGING_STUDY.md) | Linear vs nonlinear under true physics |
 | [`results/REWARD_AND_LEARNING_STUDY.md`](results/REWARD_AND_LEARNING_STUDY.md) | BC/RL + reward logs |
 | [`results/README.md`](results/README.md) | Results index |

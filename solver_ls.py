@@ -88,6 +88,9 @@ def local_search(
         stats.oracle_evals += 1
         return plan
 
+    # Operator that last produced the current pass incumbent (for attribution).
+    best_operator: list[str | None] = [None]
+
     def consider(
         name: str,
         candidate_routes: list[tuple[int, ...]],
@@ -106,6 +109,7 @@ def local_search(
             stats.provisional_updates += 1
             diag.provisional_updates += 1
             stats.improvement_h += current_objective - objective
+            best_operator[0] = name
             return objective, candidate_routes, candidate_plans
         return best_objective, best_routes, best_plans
 
@@ -326,6 +330,7 @@ def local_search(
         best_objective = current_objective
         best_routes: list[tuple[int, ...]] | None = None
         best_plans: list[RoutePlan] | None = None
+        best_operator[0] = None
 
         if schedule == "sequential":
             names = ["two_opt", "relocate"]
@@ -420,11 +425,11 @@ def local_search(
         routes, plans = best_routes, best_plans
         improvements += 1
         diag.improvements += 1
-        # Credit the operator that produced the applied incumbent if unique.
-        for stats in diag.operators.values():
-            if stats.provisional_updates > stats.accepted:
-                stats.accepted += 1
-                break
+        # Credit the operator that produced the applied incumbent.
+        credited = best_operator[0]
+        if credited is not None:
+            diag.ensure(credited).accepted += 1
+        best_operator[0] = None
         # Best-improvement: restart pass after one accepted move.
     return routes, plans, improvements, diag
 

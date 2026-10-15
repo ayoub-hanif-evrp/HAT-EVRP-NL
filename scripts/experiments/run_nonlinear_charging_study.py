@@ -25,6 +25,7 @@ from charging import (  # noqa: E402
     check_route,
     check_solution,
     decompose_solution,
+    route_sequence_fingerprint,
 )
 from charging_surrogates import (  # noqa: E402
     document_surrogate,
@@ -422,11 +423,9 @@ def stage_end_to_end(sizes=(10, 20, 40), limit: int | None = None):
                             "duration_violation": "",
                             "soc_fail": "",
                         }
-                    # Route fingerprint for decision change analysis
+                    # Route fingerprint: vehicle-order invariant, customer order preserved.
                     fingerprint = (
-                        "|".join("-".join(str(c) for c in seq) for seq in sequences)
-                        if sequences
-                        else ""
+                        route_sequence_fingerprint(sequences) if sequences else ""
                     )
                     rows.append(
                         {

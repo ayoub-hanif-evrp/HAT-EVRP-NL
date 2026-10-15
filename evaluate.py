@@ -338,29 +338,35 @@ def _classical_until_time(
     Generates genuinely seeded randomized constructions (only the first trial
     may be deterministic). Tracks unique customer-route constructions so that
     duplicated identical trials are not silently treated as independent search.
-    """
-    import time
-    from dataclasses import replace
 
-    from charging import FixedRouteOracle, check_solution
-    from solver import local_search
+    Runtime includes construction and any local search actually performed.
+    ``oracle_calls`` counts actual ``frvcpy`` solver executions (cache misses),
+    not logical requests. Local search is truncated when the wall-clock budget
+    is exhausted; equal evaluation-count budgets alone are not claimed as
+    equal wall-clock effort.
+    """
+    import math
+    import time
+
+    from charging import FixedRouteOracle, check_route, check_solution
+    from solver import BaselineResult, local_search
 
     start = time.perf_counter()
+    deadline = start + max(0.0, float(time_budget_s))
     best_routes = None
     best_plans = None
     best_obj = float("inf")
     restarts = 0
-    oracle_calls = 0
+    oracle_executions = 0
+    local_search_seconds = 0.0
     last_fail = ""
     unique_constructions: set[tuple[tuple[int, ...], ...]] = set()
 
-    # Reserve a fraction of the measured neural budget for one final LS.
+    # Reserve a fraction of the measured budget for one final LS when requested.
     construct_deadline = (
-        start + time_budget_s * 0.8 if local_passes > 0 else start + time_budget_s
+        start + time_budget_s * 0.8 if local_passes > 0 else deadline
     )
     while time.perf_counter() < construct_deadline and restarts < 5000:
-        # Trial 0: one optional deterministic greedy. Later trials: RCL sampling
-        # with independent seeds so seed changes actually change actions.
         result = randomized_greedy(
             instance,
             restarts=1,
@@ -370,7 +376,7 @@ def _classical_until_time(
             deterministic_first=(restarts == 0),
         )
         restarts += 1
-        oracle_calls += result.oracle_calls
+        oracle_executions += result.oracle_calls
         if result.feasible:
             unique_constructions.add(result.customer_routes)
             if result.objective_hours < best_obj:
@@ -382,96 +388,79 @@ def _classical_until_time(
         if restarts == 1 and time.perf_counter() >= construct_deadline:
             break
 
-    if best_routes is None:
-        elapsed = time.perf_counter() - start
-        failed = randomized_greedy(
-            instance,
-            restarts=1,
-            seed=seed,
-            local_search_passes=0,
-            local_search_budget=0,
-            deterministic_first=True,
-        )
+    def _failed(reason: str, elapsed: float) -> tuple:
         return (
-            replace(
-                failed,
-                feasible=False,
-                reason=last_fail or failed.reason,
-                runtime_seconds=elapsed,
-                oracle_calls=oracle_calls,
-                unique_constructions=len(unique_constructions),
+            BaselineResult(
+                False,
+                math.inf,
+                (),
+                (),
+                0,
+                0,
+                0.0,
+                oracle_executions,
+                elapsed,
+                local_search_seconds,
+                0,
+                reason,
+                len(unique_constructions),
             ),
             restarts,
             elapsed,
             len(unique_constructions),
         )
 
+    if best_routes is None:
+        return _failed(last_fail or "no feasible classical construction", time.perf_counter() - start)
+
     improvements = 0
-    if local_passes > 0:
+    if local_passes > 0 and time.perf_counter() < deadline:
+        remaining_s = deadline - time.perf_counter()
+        # Soft wall-clock guard: shrink evaluation budget if almost no time left.
+        # (LS itself is evaluation-budgeted; we never claim equal wall-clock from
+        # equal evaluation counts alone.)
+        ls_budget = local_budget
+        if remaining_s < 0.05 * max(time_budget_s, 1e-9):
+            ls_budget = max(1, local_budget // 10)
         oracle = FixedRouteOracle(instance)
+        ls_start = time.perf_counter()
         best_routes, best_plans, improvements, _diag = local_search(
             best_routes,
             best_plans,
             oracle,
             max_passes=local_passes,
-            evaluation_budget=local_budget,
+            evaluation_budget=ls_budget,
         )
-        oracle_calls += oracle.calls
+        local_search_seconds = time.perf_counter() - ls_start
+        oracle_executions += oracle.calls
 
     elapsed = time.perf_counter() - start
     valid, reason = check_solution(instance, best_plans)
     if not valid:
-        failed = randomized_greedy(
-            instance,
-            restarts=1,
-            seed=seed,
-            local_search_passes=0,
-            local_search_budget=0,
-            deterministic_first=True,
-        )
-        return (
-            replace(
-                failed,
-                feasible=False,
-                reason=reason,
-                runtime_seconds=elapsed,
-                oracle_calls=oracle_calls,
-                unique_constructions=len(unique_constructions),
-            ),
-            restarts,
-            elapsed,
-            len(unique_constructions),
-        )
-    charging_stops = charging_hours = 0
+        return _failed(reason, elapsed)
+
+    charging_stops = 0
+    charging_hours = 0.0
     for plan in best_plans:
         check = check_route(instance, plan.stops)
         charging_stops += check.charging_stops
         charging_hours += check.charging_hours
     objective = sum(plan.duration_hours for plan in best_plans)
-    template = randomized_greedy(
-        instance,
-        restarts=1,
-        seed=seed,
-        local_search_passes=0,
-        local_search_budget=0,
-        deterministic_first=True,
-    )
     return (
-        replace(
-            template,
-            feasible=True,
-            objective_hours=objective,
-            customer_routes=tuple(best_routes),
-            plans=tuple(best_plans),
-            routes=len(best_routes),
-            charging_stops=charging_stops,
-            charging_hours=charging_hours,
-            oracle_calls=oracle_calls,
-            runtime_seconds=elapsed,
-            local_search_seconds=0.0,
-            local_improvements=improvements,
-            reason="",
-            unique_constructions=len(unique_constructions),
+        BaselineResult(
+            True,
+            objective,
+            tuple(best_routes),
+            tuple(best_plans),
+            len(best_routes),
+            charging_stops,
+            charging_hours,
+            oracle_executions,
+            elapsed,
+            local_search_seconds,
+            improvements,
+            "",
+            len(unique_constructions),
         ),
         restarts,
         elapsed,
