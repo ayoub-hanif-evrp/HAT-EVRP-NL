@@ -1,0 +1,11 @@
+{
+  "timestamp_utc": "2026-10-15T15:34:14.637864+00:00",
+  "commit": "5680dfbacd2d6e1960120eda263fb0c699f61e94",
+  "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "executable": "C:\\Users\\AYOUB\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+  "torch": "2.14.0+cpu",
+  "cuda_available": false,
+  "frvcpy": "unknown",
+  "study": "lightweight_p0_n10"
+}

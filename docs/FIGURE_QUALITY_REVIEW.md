@@ -14,9 +14,9 @@ Internal H0–H4 keys remain only in raw CSVs and checkpoint filenames.
 
 | Fig | Status | Notes |
 |---|---|---|
-| 01 | Pass | Sections A/B/C; arrows routed around B title; no gradient-through-frvcpy implication |
+| 01 | Pass | Spaced layout; B title right of sequences→frvcpy corridor (x≥4.3); C below B |
 | 02–05 | Pass | Geography, curves, marginal SOC — clean |
-| 06–07 | Pass | Per-bar charging-model names; true-feas / planner-OK-fail / planner-reject separated; counts labeled |
+| 06–07 | Pass | Faceted per-size panels; model labels under bars; three outcome classes |
 | 08–09 | Pass | SOC schedule + estimation error |
 | 10–11 | Pass | Descriptive architecture names; travel dominates Δ |
 | 12 | Pass | Two panels: aggregate seed means ± std + **per-seed** History−State-only / Hist+DS−History |

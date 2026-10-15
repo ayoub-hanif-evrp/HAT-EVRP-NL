@@ -8,12 +8,16 @@ completed:
   - id: fingerprint_invariant_reanalysis
     command: python scripts/experiments/recompute_route_change_fingerprints.py
     cost: seconds
-    status: to_run_in_finalization
+    status: ran_previously
 
   - id: lightweight_p0_architecture
     command: python scripts/experiments/run_lightweight_architecture_compare.py
-    cost: ~10-30 CPU minutes (20 n10 instances × available ckpts)
-    status: to_run_in_finalization
+    cost: ~1–2 CPU minutes (20 n10 × available ckpts)
+    status: completed
+    output: results/raw/architecture_compare/lightweight_p0_n10/5680dfba_20261015T153414Z/
+    note: >
+      Seed-42 construction-only: H2≡H4 (21.8444 h). H4_open slightly lower but unmatched
+      perf checkpoint — not a controlled DeepSets claim.
 
 deferred_requires_authorization:
   - id: rq1_prefix_history_ablation

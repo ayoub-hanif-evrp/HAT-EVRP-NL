@@ -139,9 +139,10 @@ def fig_save(path: Path, *, tight: bool = True) -> None:
 # FIG 01 — Architecture
 # ---------------------------------------------------------------------------
 def make_fig01() -> None:
-    fig, ax = plt.subplots(figsize=(8.0, 5.6))
-    ax.set_xlim(0, 12.2)
-    ax.set_ylim(0, 11.2)
+    """Architecture schematic with generous vertical gaps (no arrows through headings)."""
+    fig, ax = plt.subplots(figsize=(8.4, 6.4))
+    ax.set_xlim(0, 12.4)
+    ax.set_ylim(0, 12.6)
     ax.axis("off")
 
     def box(x, y, w, h, text, color, fs=7.0):
@@ -171,57 +172,63 @@ def make_fig01() -> None:
             )
         )
 
-    # Section A — neural inference (row y≈9.1)
-    ax.text(0.25, 10.65, "A. Learned neural inference", fontsize=9, fontweight="bold")
-    box(0.25, 9.05, 1.85, 1.15, "Montoya\nnode features", "#F0F0F0")
-    box(2.35, 9.05, 1.85, 1.15, "Static node\nencoder", "#CFE2F3")
-    box(4.45, 9.05, 1.95, 1.15, "Causal route\nhistory Trans.", "#CFE2F3")
-    box(6.65, 9.05, 1.85, 1.15, "Dynamic EV\nstate fusion", "#CFE2F3")
-    box(8.75, 9.05, 1.95, 1.15, "DeepSets fleet\n(optional)", "#CFE2F3")
-    box(10.9, 9.05, 1.1, 1.15, "Hier.\npointer", "#CFE2F3", fs=6.5)
+    # --- A. Neural inference ---
+    ax.text(0.25, 12.15, "A. Learned neural inference", fontsize=9, fontweight="bold")
+    box(0.25, 10.55, 1.85, 1.15, "Montoya\nnode features", "#F0F0F0")
+    box(2.35, 10.55, 1.85, 1.15, "Static node\nencoder", "#CFE2F3")
+    box(4.45, 10.55, 1.95, 1.15, "Causal route\nhistory Trans.", "#CFE2F3")
+    box(6.65, 10.55, 1.85, 1.15, "Dynamic EV\nstate fusion", "#CFE2F3")
+    box(8.75, 10.55, 1.95, 1.15, "DeepSets fleet\n(optional)", "#CFE2F3")
+    box(10.9, 10.55, 1.2, 1.15, "Hier.\npointer", "#CFE2F3", fs=6.5)
     for x1, x2 in [(2.1, 2.35), (4.2, 4.45), (6.4, 6.65), (8.5, 8.75), (10.7, 10.9)]:
-        arrow(x1, 9.62, x2, 9.62)
+        arrow(x1, 11.12, x2, 11.12)
 
-    # Sequences sit left of center so the drop into frvcpy never crosses the B heading.
-    box(0.25, 7.45, 2.6, 1.0, "Customer sequences\n(learned routing)", "#FFF2CC")
-    # Vertical drop from hierarchical pointer, then left to sequences (stays in band A).
-    arrow(11.45, 9.05, 11.45, 7.95)
-    arrow(11.45, 7.95, 2.85, 7.95)
+    box(1.0, 8.85, 2.6, 1.05, "Customer sequences\n(learned routing)", "#FFF2CC")
+    arrow(11.5, 10.55, 11.5, 9.4)
+    arrow(11.5, 9.4, 3.6, 9.4)
+    arrow(2.3, 8.85, 2.3, 7.55)
 
-    # Section B — algorithmic (title clear of all arrows)
-    ax.text(0.25, 6.85, "B. Algorithmic charging & validation (non-differentiable)", fontsize=9, fontweight="bold")
-    box(0.25, 5.25, 3.5, 1.15, "frvcpy fixed-route\nnonlinear charging (FRVCP-NL)", "#FCE5CD")
-    box(4.15, 5.25, 3.4, 1.15, "Independent Python checker\nSOC · duration · coverage", "#FCE5CD")
-    box(7.95, 5.25, 3.85, 1.15, "Validated solution\nroutes + charge plan + Z_full", "#E8F5E9")
-    # Short vertical arrow from sequences into frvcpy (below B title).
-    arrow(1.55, 7.45, 1.55, 6.4)
-    arrow(3.75, 5.82, 4.15, 5.82)
-    arrow(7.55, 5.82, 7.95, 5.82)
+    # B title only above checker + validated columns (x≥4.3); arrow corridor is x≈2.3.
+    ax.text(
+        4.3,
+        8.15,
+        "B. Algorithmic charging & validation\n(non-differentiable)",
+        fontsize=8.5,
+        fontweight="bold",
+        va="center",
+        ha="left",
+        linespacing=1.15,
+    )
+    box(0.55, 6.2, 3.4, 1.2, "frvcpy fixed-route\nnonlinear charging (FRVCP-NL)", "#FCE5CD")
+    box(4.25, 6.2, 3.4, 1.2, "Independent Python checker\nSOC · duration · coverage", "#FCE5CD")
+    box(7.95, 6.2, 3.85, 1.2, "Validated solution\nroutes + charge plan + Z_full", "#E8F5E9")
+    arrow(3.95, 6.8, 4.25, 6.8)
+    arrow(7.65, 6.8, 7.95, 6.8)
 
-    # Section C — training
-    ax.text(0.25, 4.45, "C. Training (weights only; never through frvcpy)", fontsize=9, fontweight="bold")
-    box(0.25, 2.95, 2.6, 1.1, "Synthetic experts\n(greedy/LS + frvcpy)", "#E8F5E9")
-    box(3.2, 2.95, 2.3, 1.1, "Behavior\ncloning", "#E8F5E9")
-    box(5.85, 2.95, 2.5, 1.1, "Optional\nREINFORCE", "#E8F5E9")
-    box(8.7, 2.95, 3.1, 1.1, "Validation-selected\ncheckpoint", "#E8F5E9")
+    # --- C. Training (clear gap below B boxes) ---
+    ax.text(0.25, 5.55, "C. Training (weights only; never through frvcpy)", fontsize=9, fontweight="bold")
+    box(0.25, 4.0, 2.6, 1.1, "Synthetic experts\n(greedy/LS + frvcpy)", "#E8F5E9")
+    box(3.2, 4.0, 2.3, 1.1, "Behavior\ncloning", "#E8F5E9")
+    box(5.85, 4.0, 2.5, 1.1, "Optional\nREINFORCE", "#E8F5E9")
+    box(8.7, 4.0, 3.1, 1.1, "Validation-selected\ncheckpoint", "#E8F5E9")
     for x1, x2 in [(2.85, 3.2), (5.5, 5.85), (8.35, 8.7)]:
-        arrow(x1, 3.5, x2, 3.5)
+        arrow(x1, 4.55, x2, 4.55)
 
     ax.text(
         0.25,
-        1.85,
+        3.0,
         "Blue = learned neural · Orange = algorithmic / non-differentiable · Green = data & outputs",
         fontsize=7.5,
     )
     ax.text(
         0.25,
-        1.15,
+        2.3,
         "Ablations: State-only · History Transformer · DeepSets · History + DeepSets (HAT-EVRP-NL).",
         fontsize=7.5,
     )
     ax.text(
         0.25,
-        0.55,
+        1.6,
         "Policy gradients use sampled routing log-probabilities; charging is optimized post-decode.",
         fontsize=7.5,
         color="#444",
@@ -468,15 +475,22 @@ def _feas_categories(rows: list[dict], *, fixed: bool) -> dict:
 
 
 def _plot_feas_panel(ax, cats, title: str) -> None:
+    """Single-axis feasibility panel (used when a shared axis is preferred)."""
+    _plot_feas_grouped(ax, cats, title)
+
+
+def _plot_feas_grouped(ax, cats, title: str) -> None:
+    """Compact grouped bars: short model labels + bold size labels underneath."""
     sizes = [10, 20, 40]
     models = ["TRUE-NL", "LINEAR-SECANT", "LINEAR-EARLY-RATE"]
-    model_short = {"TRUE-NL": "TRUE-NL", "LINEAR-SECANT": "Secant", "LINEAR-EARLY-RATE": "Early-rate"}
-    # One tick per (size, model) so names sit under bars.
+    model_short = {"TRUE-NL": "TRUE-NL", "LINEAR-SECANT": "Secant", "LINEAR-EARLY-RATE": "Early"}
     xpos_all = []
-    labels = []
-    width = 0.75
-    idx = 0
+    model_labels = []
+    group_centers = []
+    width = 0.82
+    idx = 0.0
     for s in sizes:
+        group_x = []
         for model in models:
             tf = cats[(s, model)]["true_feas"]
             ff = cats[(s, model)]["false_feas"]
@@ -484,40 +498,75 @@ def _plot_feas_panel(ax, cats, title: str) -> None:
             ax.bar(idx, tf, width, color=C["true_feas"], edgecolor="white", lw=0.4)
             ax.bar(idx, ff, width, bottom=tf, color=C["false_feas"], edgecolor="white", lw=0.4)
             ax.bar(idx, pf, width, bottom=tf + ff, color=C["plan_fail"], edgecolor="white", lw=0.4)
-            ax.text(idx, 20.35, str(tf), ha="center", va="bottom", fontsize=6.5, fontweight="bold")
+            ax.text(idx, min(20.45, tf + ff + pf + 0.35), str(tf), ha="center", va="bottom", fontsize=7, fontweight="bold")
             xpos_all.append(idx)
-            labels.append(f"n={s}\n{model_short[model]}")
-            idx += 1
-        idx += 0.6  # gap between size groups
+            model_labels.append(model_short[model])
+            group_x.append(idx)
+            idx += 1.05
+        group_centers.append((0.5 * (group_x[0] + group_x[-1]), s))
+        idx += 0.55
     ax.set_xticks(xpos_all)
-    ax.set_xticklabels(labels, fontsize=6.5)
-    ax.set_ylim(0, 22.8)
+    ax.set_xticklabels(model_labels, fontsize=6.5)
+    ax.set_ylim(0, 23.5)
     ax.axhline(20, color="#CCC", ls=":", lw=0.8)
     ax.set_ylabel("Instances (of 20)")
     ax.set_title(title, fontsize=9)
+    # Draw size labels in a dedicated band below ticks (figure coordinates via axes).
+    ax.set_xlabel("")
+    for xc, s in group_centers:
+        ax.text(xc, -2.6, f"n={s}", ha="center", va="top", fontsize=8, fontweight="bold", clip_on=False)
+    ax.tick_params(axis="x", length=3, pad=1)
+
+
+def _plot_feas_facets(axes, cats, title_prefix: str) -> None:
+    """One small panel per size — clearest labeling for manuscript columns."""
+    sizes = [10, 20, 40]
+    models = ["TRUE-NL", "LINEAR-SECANT", "LINEAR-EARLY-RATE"]
+    model_short = {"TRUE-NL": "TRUE-NL", "LINEAR-SECANT": "Secant", "LINEAR-EARLY-RATE": "Early"}
+    for ax, s in zip(axes, sizes):
+        x = np.arange(len(models))
+        for i, model in enumerate(models):
+            tf = cats[(s, model)]["true_feas"]
+            ff = cats[(s, model)]["false_feas"]
+            pf = cats[(s, model)]["plan_fail"]
+            ax.bar(i, tf, 0.7, color=C["true_feas"], edgecolor="white", lw=0.4)
+            ax.bar(i, ff, 0.7, bottom=tf, color=C["false_feas"], edgecolor="white", lw=0.4)
+            ax.bar(i, pf, 0.7, bottom=tf + ff, color=C["plan_fail"], edgecolor="white", lw=0.4)
+            ax.text(i, 20.4, str(tf), ha="center", va="bottom", fontsize=7, fontweight="bold")
+        ax.set_xticks(x)
+        ax.set_xticklabels([model_short[m] for m in models], fontsize=7)
+        ax.set_ylim(0, 23.2)
+        ax.axhline(20, color="#CCC", ls=":", lw=0.8)
+        ax.set_title(f"{title_prefix}n={s}", fontsize=9)
+        if ax is axes[0]:
+            ax.set_ylabel("Instances (of 20)")
+        else:
+            ax.set_yticklabels([])
 
 
 def make_fig06() -> None:
     cats = _feas_categories(_read(NL_RAW / "fixed_route_charging_comparison.csv"), fixed=True)
-    fig, ax = plt.subplots(figsize=(6.8, 3.6))
-    _plot_feas_panel(ax, cats, "Fixed-route charging optimization (matched sequences)")
+    fig, axes = plt.subplots(1, 3, figsize=(7.6, 3.2), sharey=True)
+    _plot_feas_facets(axes, cats, "")
     legend_elems = [
         Patch(fc=C["true_feas"], label="True-physics feasible"),
         Patch(fc=C["false_feas"], label="Planner-OK, true-physics fail"),
         Patch(fc=C["plan_fail"], label="Planner rejected / no stops"),
     ]
-    fig.legend(handles=legend_elems, loc="upper center", ncol=3, frameon=False, bbox_to_anchor=(0.5, 1.06))
-    fig.suptitle("Fixed-route feasibility under true Montoya physics", fontsize=10, y=1.12)
-    fig_save(FIGURES / "fig06_fixed_route_charging_feasibility.png")
+    fig.legend(handles=legend_elems, loc="upper center", ncol=3, frameon=False, bbox_to_anchor=(0.5, 1.08))
+    fig.suptitle("Fixed-route feasibility under true Montoya physics (matched sequences)", fontsize=10, y=1.14)
+    fig.subplots_adjust(top=0.82, wspace=0.12)
+    fig_save(FIGURES / "fig06_fixed_route_charging_feasibility.png", tight=False)
 
 
 def make_fig07() -> None:
     cats = _feas_categories(_read(NL_RAW / "end_to_end_charging_sensitivity.csv"), fixed=False)
     changes = _read(NL_RAW / "end_to_end_decision_changes.csv")
-    fig, axes = plt.subplots(1, 2, figsize=(8.0, 3.5), gridspec_kw={"width_ratios": [1.35, 1.0]})
-    _plot_feas_panel(axes[0], cats, "A. True-physics feasibility")
-    # route change rates
-    ax = axes[1]
+    fig = plt.figure(figsize=(8.8, 3.6))
+    gs = fig.add_gridspec(1, 4, width_ratios=[1, 1, 1, 1.15], wspace=0.22)
+    axes = [fig.add_subplot(gs[0, i]) for i in range(3)]
+    _plot_feas_facets(axes, cats, "A. ")
+    ax = fig.add_subplot(gs[0, 3])
     sizes = [10, 20, 40]
     x = np.arange(len(sizes))
     w = 0.35
@@ -529,24 +578,25 @@ def make_fig07() -> None:
         ax.bar(x + (i - 0.5) * w, rates, w, color=col, label=model.replace("LINEAR-", ""))
     ax.set_xticks(x)
     ax.set_xticklabels([f"n={s}" for s in sizes])
-    ax.set_ylabel("% instances with changed routes")
-    ax.set_ylim(0, 100)
-    ax.set_title("B. Route sequences vs TRUE-NL", fontsize=9)
-    ax.legend(loc="upper right", frameon=True)
+    ax.set_ylabel("% changed routes")
+    ax.set_ylim(0, 105)
+    ax.set_title("B. Routes vs TRUE-NL", fontsize=9)
+    ax.legend(loc="upper right", frameon=True, fontsize=6.5)
     ax.grid(True, axis="y", alpha=0.25)
     legend_elems = [
         Patch(fc=C["true_feas"], label="True-physics feasible"),
         Patch(fc=C["false_feas"], label="Planner-OK, true-physics fail"),
         Patch(fc=C["plan_fail"], label="Planner rejected / no stops"),
     ]
-    fig.legend(handles=legend_elems, loc="upper left", ncol=3, frameon=False, bbox_to_anchor=(0.05, 1.08))
+    fig.legend(handles=legend_elems, loc="upper center", ncol=3, frameon=False, bbox_to_anchor=(0.38, 1.08))
     fig.suptitle(
         f"End-to-end routing: charging-law misspecification "
         f"(frozen {method_label('H2', short=True)} weights)",
         fontsize=10,
         y=1.14,
     )
-    fig_save(FIGURES / "fig07_end_to_end_charging_feasibility.png")
+    fig.subplots_adjust(top=0.78, bottom=0.14)
+    fig_save(FIGURES / "fig07_end_to_end_charging_feasibility.png", tight=False)
 
 
 # ---------------------------------------------------------------------------
@@ -1071,8 +1121,7 @@ def make_fig15() -> None:
         40: _read(CYCLE3 / "FINAL_n40_fairls.csv"),
         80: _read(CYCLE3 / "FINAL_n80_fairls.csv"),
     }
-    # Relative Δ (Hist+DeepSets − History) and feasibility where columns exist.
-    fig, axes = plt.subplots(1, 3, figsize=(9.0, 3.4))
+    fig, axes = plt.subplots(1, 3, figsize=(9.2, 3.6))
 
     ax = axes[0]
     for m in ("H2", "H4"):
@@ -1087,9 +1136,16 @@ def make_fig15() -> None:
     ax.set_xlabel("Test size n (trained on synth. n=10)")
     ax.set_ylabel("Mean Z_full (h)")
     ax.set_title("A. Absolute objective", fontsize=9)
-    ax.legend(frameon=True, fontsize=6.5)
+    ax.legend(loc="upper left", frameon=True, fontsize=6.5)
     ax.grid(True, alpha=0.25)
-    ax.text(0.98, 0.02, "n=80: 3 inst.", transform=ax.transAxes, ha="right", fontsize=6.5, color="#D55E00")
+    ax.annotate(
+        "n=80: 3 inst.\n(exploratory)",
+        xy=(80, ys[-1] if ys else 90),
+        xytext=(55, (ys[-1] if ys else 90) - 12),
+        fontsize=6.5,
+        color="#D55E00",
+        arrowprops=dict(arrowstyle="->", color="#D55E00", lw=0.8),
+    )
 
     ax = axes[1]
     xs, dys = [], []
@@ -1102,12 +1158,18 @@ def make_fig15() -> None:
         dys.append(float(r4["mean_h"]) - float(r2["mean_h"]))
     ax.axhline(0, color="k", lw=0.9)
     ax.plot(xs, dys, "D-", color="#333", lw=1.5, ms=6)
+    if dys:
+        pad = max(0.08, 0.15 * (max(dys) - min(dys) + 1e-9))
+        ax.set_ylim(min(dys) - pad - 0.05, max(dys) + pad + 0.08)
     for x, d in zip(xs, dys):
-        ax.text(x, d + (0.05 if d >= 0 else -0.12), f"{d:+.2f}", ha="center", fontsize=6.5)
+        # Place labels inside axes with offset that stays clear of markers.
+        offset = pad * 0.35 if d >= 0 else -pad * 0.45
+        ax.text(x, d + offset, f"{d:+.2f}", ha="center", va="bottom" if d >= 0 else "top", fontsize=6.5, clip_on=True)
     ax.set_xlabel("Test size n")
     ax.set_ylabel("Δ Z_full (h)\nHist.+DeepSets − History")
     ax.set_title("B. Architecture difference", fontsize=9)
     ax.grid(True, alpha=0.25)
+    ax.text(0.98, 0.02, "n=80 thin", transform=ax.transAxes, ha="right", fontsize=6, color="#D55E00")
 
     ax = axes[2]
     for m in ("H2", "H4"):
@@ -1138,9 +1200,9 @@ def make_fig15() -> None:
             ax.plot(xs, ys, "s-", color=MC[m], lw=1.6, label=method_label(m, short=True))
     ax.set_xlabel("Test size n")
     ax.set_ylabel("Feasibility (%)")
-    ax.set_ylim(0, 105)
+    ax.set_ylim(0, 108)
     ax.set_title("C. Feasibility rate", fontsize=9)
-    ax.legend(frameon=True, fontsize=6.5)
+    ax.legend(loc="lower right", frameon=True, fontsize=6.5)
     ax.grid(True, alpha=0.25)
 
     fig.suptitle(
@@ -1149,9 +1211,9 @@ def make_fig15() -> None:
     )
     fig.text(
         0.5,
-        -0.05,
-        "Absolute duration and runtime grow with n as expected. Overlapping History vs History+DeepSets "
-        "curves mean architecture differences are small relative to size effects; n=80 has only 3 instances.",
+        -0.06,
+        "Architecture differences are small relative to size effects. n=80 uses only 3 instances — "
+        "do not interpret as statistically established scalability.",
         ha="center",
         fontsize=7,
         color="#444",
@@ -1173,9 +1235,10 @@ def make_fig16() -> None:
         "neural_insert": "Neural\ninsert",
         "hybrid_insert": "Hybrid\ninsert",
     }
-    fig, ax = plt.subplots(figsize=(7.6, 3.9))
+    fig, ax = plt.subplots(figsize=(7.8, 4.0))
     x = np.arange(len(stages))
     w = 0.35
+    handles = []
     for i, m in enumerate(("H2", "H4")):
         means = []
         for st in stages:
@@ -1186,7 +1249,8 @@ def make_fig16() -> None:
             ]
             means.append(_mean(xs) if xs else float("nan"))
         xpos = x + (i - 0.5) * w
-        ax.bar(xpos, means, w, color=MC[m], label=method_label(m, short=True), zorder=2)
+        bars = ax.bar(xpos, means, w, color=MC[m], label=method_label(m, short=True), zorder=2)
+        handles.append(bars)
         for xi, v in zip(xpos, means):
             if math.isfinite(v):
                 ax.text(xi, v + 0.12, f"{v:.2f}", ha="center", va="bottom", fontsize=6, color="#333")
@@ -1194,9 +1258,18 @@ def make_fig16() -> None:
     ax.set_xticklabels([short_stage[s] for s in stages], fontsize=7)
     ax.set_ylabel("Mean Z_full (h); lower is better")
     ax.set_title("n=40 search modes as alternatives (20 instances; not a sequential trajectory)")
-    ax.legend(loc="lower left", frameon=True, fontsize=7)
-    ax.set_ylim(54.5, 61.5)
+    ax.set_ylim(54.5, 61.8)
     ax.grid(True, axis="y", alpha=0.25)
+    # Legend completely above the axes — never inside the data region.
+    fig.legend(
+        handles=handles,
+        labels=[method_label(m, short=True) for m in ("H2", "H4")],
+        loc="upper center",
+        ncol=2,
+        frameon=False,
+        bbox_to_anchor=(0.5, 1.02),
+        fontsize=8,
+    )
     fig.text(
         0.5,
         -0.06,
@@ -1205,7 +1278,8 @@ def make_fig16() -> None:
         ha="center",
         fontsize=7,
     )
-    fig_save(FIGURES / "fig16_search_improvement_stages.png")
+    fig.subplots_adjust(top=0.86, bottom=0.18)
+    fig_save(FIGURES / "fig16_search_improvement_stages.png", tight=False)
 
 
 # ---------------------------------------------------------------------------

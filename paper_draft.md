@@ -2,7 +2,7 @@
 
 **HAT-EVRP-NL — research manuscript**  
 Results: `results/README.md` · Nonlinear: `results/NONLINEAR_CHARGING_STUDY.md` · Learning: `results/REWARD_AND_LEARNING_STUDY.md`  
-Figures: `results/figures/` (21) · Catalog: `docs/FIGURE_CATALOG.md` · Tables: `results/tables/` · Raw: `results/raw/`
+Figures: `results/figures/` (20 main) + 1 supplementary diagnostic · Catalog: `docs/FIGURE_CATALOG.md` · Tables: `results/tables/` · Raw: `results/raw/`
 
 ---
 
@@ -92,11 +92,11 @@ Full study: `results/NONLINEAR_CHARGING_STUDY.md`.
 
 ![Figure 6. Fixed-route feasibility](results/figures/fig06_fixed_route_charging_feasibility.png)
 
-**Figure 6.** Fixed-route charging optimization on matched customer sequences (20 official instances per size). Stacked outcomes: true-physics feasible (green), planner-OK but true-physics fail (orange), planner rejected (grey). Numbers = true-feasible counts. At n=40: TRUE-NL 20/20; SECANT 11/20; EARLY 11/20—with different failure mechanisms.
+**Figure 6.** Fixed-route charging optimization on matched customer sequences (20 official instances per size; separate panels). Stacked outcomes: true-physics feasible (green), planner-OK but true-physics fail (orange), planner rejected (grey). Numbers = true-feasible counts. At n=40: TRUE-NL 20/20; SECANT 11/20; EARLY 11/20—with different failure mechanisms.
 
 ![Figure 7. End-to-end feasibility](results/figures/fig07_end_to_end_charging_feasibility.png)
 
-**Figure 7.** End-to-end neural routing with frozen History Transformer weights under different planning curves (left: true-physics feasibility; right: fraction of instances whose customer sequences change vs TRUE-NL). Unlike Figure 6, routing decisions may change. At n=40: TRUE-NL 20/20, SECANT 11/20, EARLY 9/20.
+**Figure 7.** End-to-end neural routing with frozen History Transformer weights. Panels A (n=10/20/40): true-physics feasibility under each planning curve. Panel B: fraction of instances whose customer sequences change vs TRUE-NL. Unlike Figure 6, routing decisions may change. At n=40: TRUE-NL 20/20, SECANT 11/20, EARLY 9/20.
 
 ![Figure 8. SOC charging schedule](results/figures/fig08_soc_charging_schedule.png)
 
