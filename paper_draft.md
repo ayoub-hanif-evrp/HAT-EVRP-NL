@@ -108,11 +108,11 @@ Full study: `results/NONLINEAR_CHARGING_STUDY.md`.
 
 ![Figure 10. Station usage](results/figures/fig10_station_usage_and_energy.png)
 
-**Figure 10.** Recovered n=40 hybrid_insert: total charger visits by technology and mean charged energy / charging duration for H2 vs H4 (20 instances). Describes what `frvcpy` chooses under TRUE-NL.
+**Figure 10.** Recovered n=40 hybrid_insert (20 instances): (A) charger visits by technology, (B) mean energy charged, (C) mean nonlinear charging duration—**separate panels, no twin-axis**. Describes what `frvcpy` chooses under TRUE-NL for H2 vs H4.
 
 ![Figure 11. Objective decomposition](results/figures/fig11_objective_decomposition.png)
 
-**Figure 11.** Mean travel + service + nonlinear charging for recovered n=40 hybrid_insert (20 instances). H2: 33.745 + 20.000 + 3.060 = 56.806 h; H4: 33.219 + 20.000 + 3.151 = 56.370 h. H4 improves mainly via travel, not charging—both use the same `frvcpy` optimizer.
+**Figure 11.** Mean travel + service + nonlinear charging for recovered n=40 hybrid_insert (20 instances). H2: 33.745 + 20.000 + 3.060 = 56.806 h; H4: 33.219 + 20.000 + 3.151 = 56.370 h. Legend outside axes. H4’s mean edge is mainly travel, not charging—both use the same `frvcpy` optimizer (not evidence that DeepSets improves the charging solver).
 
 **Answer to RQ3.** Nonlinear charging matters: linear surrogates frequently yield planner failures or true-physics infeasibility, with rates growing in \(n\).
 
@@ -126,11 +126,11 @@ Full study: `results/NONLINEAR_CHARGING_STUDY.md`.
 
 ![Figure 13. Paired effects](results/figures/fig13_history_deepsets_paired_effect.png)
 
-**Figure 13.** Paired full-duration differences (instance×seed): H2−H1, H3−H1, H4−H2. Negative = improvement. Diamonds = mean ± 1.96·SE over pairs (seed-correlated; not independent layouts). Complements Figure 12’s aggregate means.
+**Figure 13.** Layout-aware paired effects (n=10 Cycle-3 fair-LS): each point is one customer layout after averaging seed-level deltas; diamonds are mean ± 1.96·SE over **n=20 layouts**. Negative = improvement. Do not treat 60 instance×seed rows as 60 independent layouts. H4−H2 straddles zero—DeepSets is not a dependable paired win here.
 
 ![Figure 14. Literature BKS gaps](results/figures/fig14_literature_bks_gap.png)
 
-**Figure 14.** Mean literature-compatible BKS gaps on n=10 fair-LS using \(Z_\mathrm{lit}=Z_\mathrm{full}-\text{service}\) versus Froger Table 13. H2 ≈ 4.99% mean lit gap. Do not cite obsolete full-vs-BKS ~43% gaps. Source: `IMPROVEMENT_bks_gaps_corrected.csv`.
+**Figure 14.** Literature BKS gaps with \(Z_\mathrm{lit}=Z_\mathrm{full}-\text{service}\) (Froger Table 13), **protocol-separated**: (A) n=10 Cycle-3 fair-LS ≈ 4.99% H2 / 5.44% H4; (B) strongest labeled n=10 hybrid_insert H2_c3 ≈ **0.027%** under a more expensive repair protocol; (C) n=40 recovered hybrid_insert ≈ **17.72% / 16.79%** (H2/H4). Panels are not interchangeable rankings. We do **not** claim state-of-the-art performance.
 
 ![Figure 15. Generalization](results/figures/fig15_generalization_scalability.png)
 
@@ -138,11 +138,11 @@ Full study: `results/NONLINEAR_CHARGING_STUDY.md`.
 
 ![Figure 16. Search stages](results/figures/fig16_search_improvement_stages.png)
 
-**Figure 16.** Recovered n=40 pipeline stage means for H2/H4 (20 instances). Modes are alternative post-construction searches—not a forced sequential chain. Hybrid insert achieves the best mean full duration among reported modes.
+**Figure 16.** Recovered n=40 **categorical** search-mode means for H2/H4 (20 instances). Markers only—**no trajectory lines**. Modes are alternative post-construction searches from the same starts; strong LS need not dominate basic LS. Hybrid insert has the best mean among reported modes but is not an equal-budget claim.
 
 ![Figure 17. Quality vs compute](results/figures/fig17_quality_vs_compute.png)
 
-**Figure 17.** n=40 H2: mean full duration versus mean stage-level `frvcpy` oracle executions (20 instances, seed 42). Legend outside plot; runtimes where measured. **Unequal realized budgets—not an equal-budget experiment.**
+**Figure 17.** n=40 H2: mean full duration versus mean stage-level `frvcpy` oracle executions (20 instances, seed 42). Legend outside plot; runtimes where measured. **Unequal realized budgets—not an equal-budget experiment.** Do not claim hybrid search is more efficient.
 
 ---
 
@@ -150,19 +150,17 @@ Full study: `results/NONLINEAR_CHARGING_STUDY.md`.
 
 ![Figure 18. BC learning curves](results/figures/fig18_behavior_cloning_learning_curves.png)
 
-**Figure 18.** Cycle-3 behavior-cloning synthetic-validation objective at logged evaluation steps (not artificial continuous interpolation). Seed 42 bold; other seeds faint; stars mark best logged seed-42 points.
+**Figure 18.** Cycle-3 behavior-cloning synthetic-validation objective in **separate architecture panels** at logged evaluation steps (not continuous interpolation). Bold ≈ seed 42; faint = 43/44; ★ = best logged point per seed.
 
 ![Figure 19. Controlled BC vs RL](results/figures/fig19_bc_vs_rl_checkpoint_quality.png)
 
-**Figure 19.** Controlled RQ4 paired slopes: BC-only → RL-from-BC mean full duration on official n=10 construction-only (20/20 feasible). H2: RL better on 1/3 seeds; H4: 3/3. Distinct from historical Cycle-3 synthetic-validation RL endpoints (H4 worse on 3/3).
+**Figure 19.** Controlled RQ4 paired slopes: BC-only → RL-from-BC mean full duration on official n=10 **construction-only** (20/20 feasible). H2: RL better on 1/3 seeds; H4: 3/3. This is **not** proof that RL improves final hybrid routing. Distinct from historical Cycle-3 synthetic-validation RL endpoints (H4 often worse than best BC).
 
 ![Figure 20. Reward dynamics](results/figures/fig20_reinforce_reward_dynamics.png)
 
-**Figure 20.** Actual REINFORCE rewards from `reward_*_rl_from_bc_rq4.csv`. \(R=-Z_\mathrm{full}\) if feasible, else \(-100\). Faint = seeds; bold = mean rolling median (window=5); dashed = greedy baseline. Flat 100% feasibility panels omitted as uninformative.
+**Figure 20.** Actual REINFORCE rewards from `reward_*_rl_from_bc_rq4.csv`. \(R=-Z_\mathrm{full}\) if feasible, else \(-100\). Faint = seeds; bold = mean rolling median (window=5); dashed = greedy baseline. **Noisy traces do not by themselves demonstrate consistent RL learning**—interpret with Figure 19 checkpoint outcomes and validation-based selection.
 
-![Figure 21. RL stability](results/figures/fig21_rl_training_stability.png)
-
-**Figure 21.** RL diagnostics (gradient norm, advantage, entropy, PG loss): mean across seeds with min–max band. Co-occurrence of large gradients with unstable rewards is **correlational**, not a proven causal mechanism.
+Supplementary diagnostic (not a main-paper claim figure): `results/supplementary/figures/fig21_rl_training_stability.png` (gradient norm, advantage, entropy, PG loss; correlational only).
 
 Across Cycle-3 training seeds, RL endpoints do not consistently improve over best BC validation—especially H4 (0/3). Deployed checkpoints use validation selection.
 
@@ -185,7 +183,7 @@ History helps on matched n=10 fair-LS; DeepSets lacks consistent gain; linear ch
 
 ---
 
-## Manuscript figure index (21)
+## Manuscript figure index (20 main + 1 supplementary diagnostic)
 
 | Fig | File |
 |---|---|
@@ -209,7 +207,7 @@ History helps on matched n=10 fair-LS; DeepSets lacks consistent gain; linear ch
 | 18 | `results/figures/fig18_behavior_cloning_learning_curves.png` |
 | 19 | `results/figures/fig19_bc_vs_rl_checkpoint_quality.png` |
 | 20 | `results/figures/fig20_reinforce_reward_dynamics.png` |
-| 21 | `results/figures/fig21_rl_training_stability.png` |
+| Supp. | `results/supplementary/figures/fig21_rl_training_stability.png` |
 
 Catalog: `docs/FIGURE_CATALOG.md`. Supplementary: `results/supplementary/figures/`.
 

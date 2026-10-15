@@ -17,6 +17,16 @@ METHOD_DISPLAY: dict[str, str] = {
     "direct_plus_repair": "Direct CHARGE + frvcpy Repair",
 }
 
+# Compact axis/legend labels (avoid overlap in publication PNGs).
+METHOD_SHORT: dict[str, str] = {
+    "H0": "Greedy (H0)",
+    "H0_strong": "Greedy+LS (H0_strong)",
+    "H1": "State-only (H1)",
+    "H2": "History (H2)",
+    "H3": "DeepSets (H3)",
+    "H4": "HAT-EVRP-NL (H4)",
+}
+
 SEARCH_DISPLAY: dict[str, str] = {
     "construct": "Neural Construction Only",
     "basic_ls": "Basic Local Search",
@@ -37,10 +47,12 @@ STAGE_DISPLAY: dict[str, str] = {
 
 
 def method_label(key: str, *, short: bool = False) -> str:
-    """Primary descriptive name; optional short key in parentheses."""
+    """Full display name, or compact axis/legend label when short=True."""
+    if short:
+        return METHOD_SHORT.get(key, key)
     name = METHOD_DISPLAY.get(key, key)
-    if short or key not in METHOD_DISPLAY:
-        return name if key not in METHOD_DISPLAY else f"{name} ({key})"
+    if key not in METHOD_DISPLAY:
+        return name
     return f"{name} ({key})"
 
 

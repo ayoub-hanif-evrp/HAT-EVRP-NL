@@ -102,14 +102,15 @@ class TableAndFigureTests(unittest.TestCase):
         for path in main.iterdir():
             if path.is_file():
                 self.assertEqual(path.suffix.lower(), ".png", path.name)
-        # Main learning figures (expanded set)
+        # Main learning figures; RL gradient diagnostics are supplementary
         for name in (
             "fig18_behavior_cloning_learning_curves.png",
             "fig19_bc_vs_rl_checkpoint_quality.png",
             "fig20_reinforce_reward_dynamics.png",
-            "fig21_rl_training_stability.png",
         ):
             self.assertTrue((main / name).exists(), name)
+        self.assertTrue((supp / "fig21_rl_training_stability.png").exists())
+        self.assertFalse((main / "fig21_rl_training_stability.png").exists())
         # Historical learning plots are supplementary (not in main allowlist)
         for name in (
             "fig11_training_supervision_flow.png",

@@ -45,6 +45,7 @@ from reporting_paths import (  # noqa: E402
     RL_RAW,
     SOLUTIONS,
     SUPP_FIGURES,
+    SUPPLEMENTARY_FIGURES,
     TABLES,
     TRAIN_LOGS,
 )
@@ -636,7 +637,6 @@ def make_fig09() -> None:
 # ---------------------------------------------------------------------------
 def make_fig10() -> None:
     rows = _read(AUTH_N40_DECOMP)
-    # hybrid_insert feasible H2/H4
     counts = {"H2": defaultdict(int), "H4": defaultdict(int)}
     energy = {"H2": [], "H4": []}
     charge_h = {"H2": [], "H4": []}
@@ -651,39 +651,51 @@ def make_fig10() -> None:
         for st in (r.get("station_types") or "").split("|"):
             if st:
                 counts[m][st] += 1
-    fig, axes = plt.subplots(1, 2, figsize=(7.6, 3.4))
-    # visits by tech
-    ax = axes[0]
+    fig, axes = plt.subplots(1, 3, figsize=(8.4, 3.2))
     techs = ["slow", "normal", "fast"]
     x = np.arange(len(techs))
     w = 0.35
+    ax = axes[0]
     for i, m, col in ((0, "H2", C["h2"]), (1, "H4", C["h4"])):
         vals = [counts[m].get(t, 0) for t in techs]
         ax.bar(x + (i - 0.5) * w, vals, w, color=col, label=method_label(m, short=True))
     ax.set_xticks(x)
     ax.set_xticklabels(techs)
-    ax.set_ylabel("Total charger visits (20 instances)")
-    ax.set_title("A. Visits by technology")
-    ax.legend(loc="upper right", fontsize=7)
+    ax.set_ylabel("Total visits (20 instances)")
+    ax.set_title("A. Charger visits")
+    ax.legend(loc="upper left", fontsize=7, frameon=True)
     ax.grid(True, axis="y", alpha=0.25)
-    # energy / charge hours
+
     ax = axes[1]
     labs = [method_label(m, short=True) for m in ("H2", "H4")]
     e_means = [_mean(energy[m]) for m in ("H2", "H4")]
-    c_means = [_mean(charge_h[m]) for m in ("H2", "H4")]
-    x = np.arange(2)
-    ax.bar(x - 0.18, e_means, 0.35, color="#56B4E9", label="Energy (kWh)")
-    ax2 = ax.twinx()
-    ax2.bar(x + 0.18, c_means, 0.35, color=C["charge"], label="Charge time (h)")
-    ax.set_xticks(x)
-    ax.set_xticklabels(labs, fontsize=7.5)
+    ax.bar(labs, e_means, color=[C["h2"], C["h4"]], width=0.55)
+    for lab, v in zip(labs, e_means):
+        ax.text(lab, v + 0.8, f"{v:.1f}", ha="center", fontsize=8)
     ax.set_ylabel("Mean energy charged (kWh)")
-    ax2.set_ylabel("Mean nonlinear charge h")
-    ax.set_title("B. Energy and charging duration")
-    h1, l1 = ax.get_legend_handles_labels()
-    h2, l2 = ax2.get_legend_handles_labels()
-    ax.legend(h1 + h2, l1 + l2, loc="upper right", fontsize=7)
-    fig.suptitle("n=40 recovered hybrid_insert: frvcpy charging choices (TRUE-NL)", fontsize=10)
+    ax.set_title("B. Energy charged")
+    ax.set_ylim(0, max(e_means) * 1.18)
+    ax.grid(True, axis="y", alpha=0.25)
+
+    ax = axes[2]
+    c_means = [_mean(charge_h[m]) for m in ("H2", "H4")]
+    ax.bar(labs, c_means, color=[C["h2"], C["h4"]], width=0.55)
+    for lab, v in zip(labs, c_means):
+        ax.text(lab, v + 0.05, f"{v:.2f}", ha="center", fontsize=8)
+    ax.set_ylabel("Mean charging duration (h)")
+    ax.set_title("C. Nonlinear charge time")
+    ax.set_ylim(0, max(c_means) * 1.25)
+    ax.grid(True, axis="y", alpha=0.25)
+
+    fig.suptitle("n=40 recovered hybrid_insert: frvcpy charging choices (TRUE-NL)", fontsize=10, y=1.02)
+    fig.text(
+        0.5,
+        -0.02,
+        "Same frvcpy optimizer for H2 and H4; panels report what the charging plan chooses.",
+        ha="center",
+        fontsize=7.5,
+        color="#444",
+    )
     fig_save(FIGURES / "fig10_station_usage_and_energy.png")
 
 
@@ -706,28 +718,33 @@ def make_fig11() -> None:
         totals = [_mean([f for t, s, c, f in by[m]]) for m in order]
     else:
         travel, service, charge, totals = [33.745, 33.219], [20.0, 20.0], [3.060, 3.151], [56.806, 56.370]
-    fig, ax = plt.subplots(figsize=(7.2, 3.2))
+    fig, ax = plt.subplots(figsize=(7.2, 2.8))
     y = np.arange(len(order))
-    ax.barh(y, travel, color=C["travel"], height=0.5, label="Travel")
-    ax.barh(y, service, left=travel, color=C["service"], height=0.5, label="Service")
+    ax.barh(y, travel, color=C["travel"], height=0.55, label="Travel")
+    ax.barh(y, service, left=travel, color=C["service"], height=0.55, label="Service")
     left2 = [a + b for a, b in zip(travel, service)]
-    ax.barh(y, charge, left=left2, color=C["charge"], height=0.5, label="Nonlinear charging")
-    for yi, tot in zip(y, totals):
-        ax.text(tot + 0.4, yi, f"{tot:.3f} h", va="center", fontsize=8)
+    ax.barh(y, charge, left=left2, color=C["charge"], height=0.55, label="Nonlinear charging")
+    for yi, tot, tr, sv, ch in zip(y, totals, travel, service, charge):
+        ax.text(tot + 0.35, yi, f"{tot:.3f} h", va="center", fontsize=8)
+        ax.text(tr / 2, yi, f"{tr:.2f}", va="center", ha="center", fontsize=6.5, color="white")
+        ax.text(tr + sv / 2, yi, f"{sv:.1f}", va="center", ha="center", fontsize=6.5, color="white")
+        ax.text(tr + sv + ch / 2, yi, f"{ch:.2f}", va="center", ha="center", fontsize=6.5, color="white")
     ax.set_yticks(y)
     ax.set_yticklabels([method_label(m, short=True) for m in order])
-    ax.set_xlabel("Mean hours (20 official n=40; recovered hybrid_insert)")
-    ax.set_xlim(0, max(totals) + 10)
-    ax.legend(loc="lower right", bbox_to_anchor=(1.0, 1.02), ncol=3, frameon=False)
-    ax.set_title("Objective decomposition under true nonlinear charging")
+    ax.set_xlabel("Mean hours (20 official n=40; recovered hybrid_insert; Z_full)")
+    ax.set_xlim(0, max(totals) + 8)
+    ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.02), ncol=3, frameon=False, borderaxespad=0.0)
+    ax.set_title("Objective decomposition under true nonlinear charging", fontsize=10, pad=22)
     ax.grid(True, axis="x", alpha=0.25)
     fig.text(
-        0.01,
+        0.5,
         -0.02,
-        "H4 improves mainly via travel, not charging (same frvcpy optimizer).",
+        "H4 mean improvement is mainly lower travel time, not lower charging (identical frvcpy).",
+        ha="center",
         fontsize=7.5,
         color="#444",
     )
+    fig.subplots_adjust(top=0.82)
     fig_save(FIGURES / "fig11_objective_decomposition.png")
 
 
@@ -780,8 +797,13 @@ def make_fig12() -> None:
 # FIG 13 — Paired effects
 # ---------------------------------------------------------------------------
 def make_fig13() -> None:
-    # Pair by (instance, seed): H2-H1, H3-H1, H4-H2
-    pairs = {"H2−H1": [], "H3−H1": [], "H4−H2": []}
+    """Layout-aware paired effects: average seed deltas per instance, then SE over 20 layouts."""
+    # Collect per (pair, instance) list of seed-level deltas, then mean over seeds.
+    layout_deltas = {
+        "H2−H1\n(history)": defaultdict(list),
+        "H3−H1\n(DeepSets)": defaultdict(list),
+        "H4−H2\n(+DeepSets)": defaultdict(list),
+    }
     for seed in (42, 43, 44):
         rows = _read(CYCLE3 / f"compare_size10_fairls_final_seed{seed}_c3.csv")
         by = defaultdict(dict)
@@ -790,64 +812,145 @@ def make_fig13() -> None:
                 by[r["instance"]][r["method"]] = float(r["objective_h"])
         for inst, d in by.items():
             if "H1" in d and "H2" in d:
-                pairs["H2−H1"].append(d["H2"] - d["H1"])
+                layout_deltas["H2−H1\n(history)"][inst].append(d["H2"] - d["H1"])
             if "H1" in d and "H3" in d:
-                pairs["H3−H1"].append(d["H3"] - d["H1"])
+                layout_deltas["H3−H1\n(DeepSets)"][inst].append(d["H3"] - d["H1"])
             if "H2" in d and "H4" in d:
-                pairs["H4−H2"].append(d["H4"] - d["H2"])
-    fig, ax = plt.subplots(figsize=(6.8, 3.6))
-    keys = list(pairs)
-    data = [pairs[k] for k in keys]
-    bp = ax.boxplot(data, tick_labels=[f"{k}\nn={len(pairs[k])}" for k in keys], showmeans=True, patch_artist=True)
+                layout_deltas["H4−H2\n(+DeepSets)"][inst].append(d["H4"] - d["H2"])
+
+    keys = list(layout_deltas)
+    layout_means = []
+    for k in keys:
+        vals = [_mean(xs) for xs in layout_deltas[k].values() if xs]
+        layout_means.append(vals)
+
+    fig, ax = plt.subplots(figsize=(6.8, 3.8))
+    bp = ax.boxplot(
+        layout_means,
+        tick_labels=[f"{k.split(chr(10))[0]}\nn={len(v)} layouts" for k, v in zip(keys, layout_means)],
+        showmeans=False,
+        patch_artist=True,
+        widths=0.55,
+    )
     for patch, col in zip(bp["boxes"], [C["h2"], C["h3"], C["h4"]]):
         patch.set_facecolor(col)
-        patch.set_alpha(0.4)
+        patch.set_alpha(0.35)
     ax.axhline(0, color="k", lw=1.0)
-    # mean±CI-ish: mean±1.96*se with note that pairs are instance×seed (not independent layouts)
-    for i, k in enumerate(keys):
-        xs = pairs[k]
-        m = _mean(xs)
-        se = _stdev(xs) / math.sqrt(len(xs)) if xs else 0
-        ax.errorbar(i + 1, m, yerr=1.96 * se, fmt="D", color="#222", ms=5, capsize=3, zorder=4)
-    ax.set_ylabel("Δ full duration (h); negative = improvement")
-    ax.set_title("Paired architecture effects (n=10 fair-LS; instance×seed pairs)")
+    for i, vals in enumerate(layout_means):
+        # jittered layout means
+        jitter = (np.random.default_rng(0).random(len(vals)) - 0.5) * 0.12
+        ax.scatter(np.full(len(vals), i + 1) + jitter, vals, s=18, color="#333", alpha=0.45, zorder=3)
+        m = _mean(vals)
+        se = _stdev(vals) / math.sqrt(len(vals)) if len(vals) > 1 else 0.0
+        ax.errorbar(i + 1, m, yerr=1.96 * se, fmt="D", color="#111", ms=6, capsize=4, zorder=5)
+        ax.text(i + 1.28, m, f"{m:+.3f}", va="center", fontsize=7, color="#222")
+    ax.set_ylabel("Layout-mean Δ Z_full (h); negative = improvement")
+    ax.set_title("Paired architecture effects (n=10 Cycle-3 fair-LS)")
     ax.grid(True, axis="y", alpha=0.25)
     fig.text(
         0.5,
-        -0.03,
-        "Diamonds: mean ± 1.96·SE over pairs (correlated across seeds; not independent layouts).",
+        -0.04,
+        "Each point = one customer layout (seed-averaged). Diamonds: mean ± 1.96·SE over n=20 layouts "
+        "(descriptive; not a claim of independent instance×seed samples).",
         ha="center",
-        fontsize=7.5,
+        fontsize=7,
     )
     fig_save(FIGURES / "fig13_history_deepsets_paired_effect.png")
 
 
 # ---------------------------------------------------------------------------
-# FIG 14 — BKS gaps
+# FIG 14 — BKS gaps (protocol-separated)
 # ---------------------------------------------------------------------------
+def _lit_gap(full_h: float, bks_h: float, n_customers: int) -> float:
+    service = 0.5 * n_customers
+    return 100.0 * (full_h - service - bks_h) / bks_h
+
+
 def make_fig14() -> None:
-    rows = _read(AUTH_BKS_GAPS)
-    # Also show n20/n40 if available from other corrected sources — use n10 primary
-    methods = ["H0_strong", "H1", "H2", "H3", "H4"]
-    gaps = []
-    for m in methods:
-        r = next((x for x in rows if x["method"] == m), None)
-        gaps.append(float(r["mean_gap_lit_pct"]) if r else float("nan"))
-    fig, ax = plt.subplots(figsize=(6.6, 3.5))
-    y = np.arange(len(methods))
-    ax.barh(y, gaps, color=[MC[m] for m in methods], height=0.55)
-    for yi, g in zip(y, gaps):
-        ax.text(g + 0.08, yi, f"{g:.2f}%", va="center", fontsize=8)
+    bks_rows = _read(LITERATURE_BKS)
+    bks = {r["instance"]: float(r["bks_h"]) for r in bks_rows}
+
+    def gaps_from_fairls(methods):
+        out = {}
+        all_gaps = defaultdict(list)
+        for seed in (42, 43, 44):
+            rows = _read(CYCLE3 / f"compare_size10_fairls_final_seed{seed}_c3.csv")
+            for r in rows:
+                if r["method"] not in methods or r["feasible"] not in ("1", "True", 1):
+                    continue
+                inst = r["instance"]
+                if inst not in bks:
+                    continue
+                all_gaps[r["method"]].append(_lit_gap(float(r["objective_h"]), bks[inst], 10))
+        for m in methods:
+            out[m] = _mean(all_gaps[m]) if all_gaps[m] else float("nan")
+        return out
+
+    methods_n10 = ["H0_strong", "H1", "H2", "H3", "H4"]
+    fair = gaps_from_fairls(methods_n10)
+
+    # Strongest labeled n10 hybrid protocol (H2_c3 hybrid_insert)
+    ins = _read(RAW / "insertion_repair" / "INSERTION_official_n10.csv")
+    hybrid_gaps = []
+    for r in ins:
+        if r["method"] == "H2_c3" and r["mode"] == "hybrid_insert" and r["feasible"] in ("1", "True", 1):
+            hybrid_gaps.append(float(r["bks_gap_lit_pct"]))
+    hybrid_mean = _mean(hybrid_gaps) if hybrid_gaps else float("nan")
+
+    # n40 recovered hybrid_insert
+    pipe = _read(AUTH_N40_RECOVERY_PIPE)
+    n40 = {"H2": [], "H4": []}
+    for r in pipe:
+        if r["stage"] != "hybrid_insert" or r["feasible"] != "1" or r["method"] not in n40:
+            continue
+        inst = r["instance"]
+        if inst not in bks:
+            continue
+        n40[r["method"]].append(_lit_gap(float(r["objective_h"]), bks[inst], 40))
+
+    fig, axes = plt.subplots(1, 3, figsize=(9.2, 3.6), gridspec_kw={"width_ratios": [1.35, 0.85, 0.95]})
+
+    ax = axes[0]
+    y = np.arange(len(methods_n10))
+    vals = [fair[m] for m in methods_n10]
+    ax.barh(y, vals, color=[MC[m] for m in methods_n10], height=0.55)
+    for yi, g in zip(y, vals):
+        ax.text(g + 0.12, yi, f"{g:.2f}%", va="center", fontsize=7.5)
     ax.set_yticks(y)
-    ax.set_yticklabels([METHOD_DISPLAY[m] for m in methods])
-    ax.set_xlabel("Mean literature gap %  [(Z_lit − BKS)/BKS]")
-    ax.set_title("n=10 fair-LS vs Froger Table 13 BKS (Z_lit = full − service)")
-    ax.set_xlim(0, max(gaps) + 1.5)
+    ax.set_yticklabels([method_label(m, short=True) for m in methods_n10])
+    ax.set_xlabel("Mean lit. gap %")
+    ax.set_title("A. n=10 Cycle-3 fair-LS\n(3 seeds × 20 inst.)")
+    ax.set_xlim(0, max(vals) + 1.8)
     ax.grid(True, axis="x", alpha=0.25)
+
+    ax = axes[1]
+    ax.bar([0], [hybrid_mean], color=C["h2"], width=0.55)
+    ax.text(0, hybrid_mean + 0.02, f"{hybrid_mean:.3f}%", ha="center", fontsize=8)
+    ax.set_xticks([0])
+    ax.set_xticklabels(["H2_c3\nhybrid_insert"])
+    ax.set_ylabel("Mean lit. gap %")
+    ax.set_title("B. Strongest n=10\nhybrid protocol")
+    ax.set_ylim(0, max(0.15, hybrid_mean * 3))
+    ax.grid(True, axis="y", alpha=0.25)
+
+    ax = axes[2]
+    labs = ["History (H2)", "HAT-EVRP-NL (H4)"]
+    vals40 = [_mean(n40["H2"]), _mean(n40["H4"])]
+    ax.bar(labs, vals40, color=[C["h2"], C["h4"]], width=0.55)
+    for lab, g in zip(labs, vals40):
+        ax.text(lab, g + 0.25, f"{g:.2f}%", ha="center", fontsize=8)
+    ax.set_ylabel("Mean lit. gap %")
+    ax.set_title("C. n=40 recovered\nhybrid_insert (20 inst.)")
+    ax.set_ylim(0, max(vals40) + 3)
+    ax.grid(True, axis="y", alpha=0.25)
+
+    fig.suptitle("Literature BKS gaps (Z_lit = Z_full − fixed service; Froger Table 13)", fontsize=10, y=1.02)
     fig.text(
-        0.01,
-        -0.02,
-        "Protocol: Cycle-3 fair-LS; 20 instances; lit objective excludes fixed service. Source: IMPROVEMENT_bks_gaps_corrected.csv",
+        0.5,
+        -0.06,
+        "Protocols are NOT interchangeable: A ≈ cheap fair-LS (~5% H2); B ≈ expensive hybrid insert (~0.03% H2); "
+        "C ≈ n40 recovered hybrid (~17%). Do not rank across panels.",
+        ha="center",
         fontsize=7,
         color="#444",
     )
@@ -910,30 +1013,34 @@ def make_fig15() -> None:
 def make_fig16() -> None:
     rows = _read(AUTH_N40_RECOVERY_PIPE)
     stages = ["construct", "basic_ls", "strong_ls", "classical_ruin", "neural_insert", "hybrid_insert"]
-    # Independent branches from same construction — show as dots not a chain implying dominance
-    fig, ax = plt.subplots(figsize=(7.2, 3.8))
+    # Categorical dots — NO connecting lines (branches are independent alternatives).
+    fig, ax = plt.subplots(figsize=(7.4, 4.0))
+    x = np.arange(len(stages))
+    offsets = {"H2": -0.12, "H4": 0.12}
     for m, marker in (("H2", "o"), ("H4", "s")):
         means = []
         for st in stages:
             xs = [float(r["objective_h"]) for r in rows if r["method"] == m and r["stage"] == st and r["feasible"] == "1"]
             means.append(_mean(xs) if xs else float("nan"))
-        ax.plot(range(len(stages)), means, marker=marker, lw=1.4, color=MC[m], label=method_label(m, short=True))
-        for i, v in enumerate(means):
+        xpos = x + offsets[m]
+        ax.scatter(xpos, means, s=70, marker=marker, color=MC[m], zorder=3, label=method_label(m, short=True))
+        for xi, v in zip(xpos, means):
             if math.isfinite(v):
-                ax.text(i, v + 0.12, f"{v:.2f}", ha="center", fontsize=6.5, color=MC[m])
-    ax.set_xticks(range(len(stages)))
-    ax.set_xticklabels([SEARCH_DISPLAY.get(s, s) for s in stages], rotation=25, ha="right", fontsize=7)
-    ax.set_ylabel("Mean full duration (h)")
-    ax.set_title("n=40 recovered pipeline stages (20 instances; independent search modes)")
+                ax.text(xi, v - 0.18, f"{v:.2f}", ha="center", va="top", fontsize=6.5, color=MC[m])
+    ax.set_xticks(x)
+    ax.set_xticklabels([SEARCH_DISPLAY.get(s, s) for s in stages], rotation=22, ha="right", fontsize=7)
+    ax.set_ylabel("Mean full duration (h); lower is better")
+    ax.set_title("n=40 recovered search modes (20 instances; categorical comparison)")
     ax.legend(loc="upper right", frameon=True)
     ax.grid(True, axis="y", alpha=0.25)
     ax.invert_yaxis()
     fig.text(
         0.5,
         -0.08,
-        "Modes are alternative post-construction searches (not a forced sequential chain). Lower is better.",
+        "No trajectory lines: modes are alternative post-construction searches from the same starts, "
+        "not a sequential optimization path. Strong LS need not dominate basic LS.",
         ha="center",
-        fontsize=7.5,
+        fontsize=7,
     )
     fig_save(FIGURES / "fig16_search_improvement_stages.png")
 
@@ -997,8 +1104,9 @@ def make_fig17() -> None:
 # FIG 18 — BC learning curves
 # ---------------------------------------------------------------------------
 def make_fig18() -> None:
-    fig, ax = plt.subplots(figsize=(6.8, 3.6))
-    for model, color in (("H1", C["h1"]), ("H2", C["h2"]), ("H3", C["h3"]), ("H4", C["h4"])):
+    fig, axes = plt.subplots(2, 2, figsize=(7.6, 5.0), sharex=True, sharey=True)
+    panels = (("H1", C["h1"]), ("H2", C["h2"]), ("H3", C["h3"]), ("H4", C["h4"]))
+    for ax, (model, color) in zip(axes.ravel(), panels):
         for seed in (42, 43, 44):
             rows = _read(TRAIN_LOGS / f"training_{model}_n10_seed{seed}_c3.csv")
             bc = [r for r in rows if r.get("stage") == "bc" and r.get("validation_objective")]
@@ -1006,16 +1114,24 @@ def make_fig18() -> None:
                 continue
             steps = [int(r["step"]) for r in bc]
             vals = [float(r["validation_objective"]) for r in bc]
-            ax.plot(steps, vals, "o-", color=color, alpha=0.25 if seed != 42 else 0.95, lw=1.2 if seed == 42 else 0.8, ms=3.5, label=model if seed == 42 else None)
-            # mark best
-            if seed == 42:
-                bi = int(np.argmin(vals))
-                ax.scatter([steps[bi]], [vals[bi]], marker="*", s=80, color=color, zorder=4)
-    ax.set_xlabel("BC evaluation step")
-    ax.set_ylabel("Synthetic-validation full h")
-    ax.set_title("Behavior-cloning validation (Cycle-3; markers = logged eval points)")
-    ax.legend(title="Seed 42 bold; ★ = best logged", frameon=True, fontsize=7)
-    ax.grid(True, alpha=0.25)
+            ax.plot(steps, vals, "o-", color=color, alpha=0.35 if seed != 42 else 0.95, lw=1.3, ms=3.5)
+            bi = int(np.argmin(vals))
+            ax.scatter([steps[bi]], [vals[bi]], marker="*", s=70, color=color if seed == 42 else "#888", zorder=4)
+        ax.set_title(method_label(model, short=True), fontsize=9)
+        ax.grid(True, alpha=0.25)
+    axes[1, 0].set_xlabel("BC evaluation step")
+    axes[1, 1].set_xlabel("BC evaluation step")
+    axes[0, 0].set_ylabel("Synthetic-val Z_full (h)")
+    axes[1, 0].set_ylabel("Synthetic-val Z_full (h)")
+    fig.suptitle("Behavior-cloning validation curves (Cycle-3; markers = logged eval points)", fontsize=10)
+    fig.text(
+        0.5,
+        -0.02,
+        "One panel per architecture. Bold ≈ seed 42; faint = seeds 43/44. ★ = best logged point on that seed "
+        "(sparse evaluations — not a continuous trajectory).",
+        ha="center",
+        fontsize=7,
+    )
     fig_save(FIGURES / "fig18_behavior_cloning_learning_curves.png")
 
 
@@ -1065,7 +1181,7 @@ def make_fig19() -> None:
 # ---------------------------------------------------------------------------
 def make_fig20() -> None:
     window = 5
-    fig, axes = plt.subplots(1, 2, figsize=(7.8, 3.4), sharey=True)
+    fig, axes = plt.subplots(1, 2, figsize=(7.8, 3.6), sharey=True)
     for ax, model, color in ((axes[0], "H2", C["h2"]), (axes[1], "H4", C["h4"])):
         series = []
         for seed in (42, 43, 44):
@@ -1075,32 +1191,53 @@ def make_fig20() -> None:
             steps = [int(r["step"]) for r in rows]
             rew = [float(r["mean_sampled_reward"]) for r in rows]
             base = [float(r["baseline_reward"]) for r in rows]
-            ax.plot(steps, rew, color=color, alpha=0.2, lw=0.8)
-            ax.plot(steps, base, color="#999", alpha=0.2, lw=0.8, ls="--")
+            ax.plot(steps, rew, color=color, alpha=0.22, lw=0.8)
+            ax.plot(steps, base, color="#999", alpha=0.22, lw=0.8, ls="--")
             smooth = [float(np.median(rew[max(0, i - window + 1) : i + 1])) for i in range(len(rew))]
             series.append((steps, smooth, base))
         if series:
             n = min(len(s[1]) for s in series)
             steps = series[0][0][:n]
-            ax.plot(steps, np.mean([s[1][:n] for s in series], axis=0), color=color, lw=2.2, label="Reward (roll. med.)")
-            ax.plot(steps, np.mean([s[2][:n] for s in series], axis=0), color="#666", lw=1.5, ls="--", label="Greedy baseline")
-        ax.set_title(model)
+            ax.plot(
+                steps,
+                np.mean([s[1][:n] for s in series], axis=0),
+                color=color,
+                lw=2.2,
+                label=f"Reward (roll. med. w={window})",
+            )
+            ax.plot(
+                steps,
+                np.mean([s[2][:n] for s in series], axis=0),
+                color="#666",
+                lw=1.5,
+                ls="--",
+                label="Greedy baseline",
+            )
+        ax.set_title(method_label(model, short=True))
         ax.set_xlabel("RL step")
         ax.grid(True, alpha=0.25)
-        ax.legend(loc="lower right", fontsize=7)
+        ax.legend(loc="lower right", fontsize=7, frameon=True)
     axes[0].set_ylabel("R (−Z_full or −100)")
-    fig.suptitle(f"REINFORCE reward dynamics (rolling median w={window}; faint = seeds)", fontsize=10)
-    fig.text(0.5, -0.03, "R = −Z_full if feasible; R = −100 if infeasible. Source: reward_*_rl_from_bc_rq4.csv", ha="center", fontsize=7.5)
+    fig.suptitle("REINFORCE reward dynamics (official RQ4; faint = per-seed raw)", fontsize=10)
+    fig.text(
+        0.5,
+        -0.06,
+        "R = −Z_full if feasible; R = −100 if infeasible. Noisy reward traces do NOT demonstrate consistent RL "
+        "learning by themselves — interpret together with official n10 construction checkpoints (Fig. 19) "
+        "and validation-based checkpoint selection.",
+        ha="center",
+        fontsize=7,
+        color="#444",
+    )
     fig_save(FIGURES / "fig20_reinforce_reward_dynamics.png")
 
 
 # ---------------------------------------------------------------------------
-# FIG 21 — RL stability diagnostics
+# FIG 21 — RL stability diagnostics (SUPPLEMENTARY)
 # ---------------------------------------------------------------------------
 def make_fig21() -> None:
     fig, axes = plt.subplots(2, 2, figsize=(7.8, 5.2), sharex=True)
     for model, color in (("H2", C["h2"]), ("H4", C["h4"])):
-        # aggregate mean across seeds
         mats = {"grad_norm": [], "mean_advantage": [], "entropy": [], "loss": []}
         steps_ref = None
         for seed in (42, 43, 44):
@@ -1130,16 +1267,16 @@ def make_fig21() -> None:
     axes[0, 0].legend(frameon=True, fontsize=7)
     axes[1, 0].set_xlabel("RL step")
     axes[1, 1].set_xlabel("RL step")
-    fig.suptitle("RL training diagnostics (mean across seeds; band = min–max)", fontsize=10)
+    fig.suptitle("Supplementary: RL training diagnostics (mean; band = min–max seeds)", fontsize=10)
     fig.text(
         0.5,
         -0.02,
-        "Diagnostic only — co-occurrence of large grads with unstable rewards is correlational, not proven causal.",
+        "Diagnostic only — large grads co-occurring with unstable rewards is correlational, not causal.",
         ha="center",
         fontsize=7.5,
         color="#444",
     )
-    fig_save(FIGURES / "fig21_rl_training_stability.png")
+    fig_save(SUPP_FIGURES / "fig21_rl_training_stability.png")
 
 
 # ---------------------------------------------------------------------------
@@ -1150,6 +1287,16 @@ def enforce_figure_layout() -> None:
     SUPP_FIGURES.mkdir(parents=True, exist_ok=True)
     ARCHIVE_FIGURES.mkdir(parents=True, exist_ok=True)
     main_set = set(MAIN_FIGURES)
+    supp_set = set(SUPPLEMENTARY_FIGURES)
+    # Keep supplementary diagnostics out of the main-paper directory.
+    for name in supp_set:
+        main_path = FIGURES / name
+        if main_path.exists():
+            dest = SUPP_FIGURES / name
+            if dest.exists():
+                dest.unlink()
+            shutil.move(str(main_path), str(dest))
+            print(f"moved {name} -> supplementary")
     for path in list(FIGURES.glob("*.png")):
         if path.name in main_set:
             continue
@@ -1165,7 +1312,10 @@ def enforce_figure_layout() -> None:
         raise RuntimeError(f"Missing main figures: {missing}")
     if extras:
         raise RuntimeError(f"Extra files in results/figures: {extras}")
-    print(f"main figures OK ({len(present)})")
+    for name in supp_set:
+        if not (SUPP_FIGURES / name).exists():
+            raise RuntimeError(f"Missing supplementary figure: {name}")
+    print(f"main figures OK ({len(present)}); supplementary OK ({len(supp_set)})")
 
 
 def make_contact_sheet() -> None:

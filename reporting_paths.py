@@ -20,7 +20,8 @@ SCRIPTS = ROOT / "scripts"
 DOCS = ROOT / "docs"
 LITERATURE_BKS = RESULTS / "literature_bks_froger2021.csv"
 
-# Final main-paper figure allowlist (~21 sequential PNGs).
+# Main-paper figure allowlist (evidence-bearing PNGs only).
+# fig21 RL gradient diagnostics is supplementary (diagnostic, not a primary claim).
 MAIN_FIGURES: tuple[str, ...] = (
     "fig01_hat_evrp_nl_architecture.png",
     "fig02_montoya_instance_layouts.png",
@@ -42,6 +43,9 @@ MAIN_FIGURES: tuple[str, ...] = (
     "fig18_behavior_cloning_learning_curves.png",
     "fig19_bc_vs_rl_checkpoint_quality.png",
     "fig20_reinforce_reward_dynamics.png",
+)
+
+SUPPLEMENTARY_FIGURES: tuple[str, ...] = (
     "fig21_rl_training_stability.png",
 )
 
