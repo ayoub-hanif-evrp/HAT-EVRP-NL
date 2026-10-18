@@ -18,4 +18,4 @@
 
 ## Interpretation
 
-Across three Cycle-3 seeds, RL **endpoint** validation beats best-BC on only **1/3 History Transformer seeds** and **0/3 History+DeepSets seeds** (and State-only/DeepSets). Mean RL endpoints are worse because several seeds collapse. Checkpoint selection retains BC weights when RL worsens validation — deployed History+DeepSets (and often State-only/DeepSets) are BC-selected. Do **not** claim RL improves HAT-EVRP-NL from Cycle-3 alone.
+Across three Cycle-3 seeds, RL **endpoint** validation beats best-BC on only **1/3 Route Transformer (RT) seeds** and **0/3 RT+DeepSets seeds** (and State Pointer/Fleet DeepSets). Mean RL endpoints are worse because several seeds collapse. Checkpoint selection retains BC weights when RL worsens validation — deployed RT+DeepSets (and often State Pointer/Fleet DeepSets) are BC-selected. Do **not** claim RL improves HAT-EVRP-NL from Cycle-3 alone.

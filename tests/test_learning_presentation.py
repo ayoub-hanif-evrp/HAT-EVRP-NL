@@ -118,7 +118,7 @@ class TableAndFigureTests(unittest.TestCase):
             self.skipTest("table12 missing")
         text = path.read_text(encoding="utf-8")
         self.assertIn("unavailable", text.lower())
-        self.assertIn("History Transformer", text)
+        self.assertIn("Route Transformer", text)
 
     def test_learning_figures_png_only(self):
         main = ROOT / "results" / "figures"

@@ -1399,6 +1399,7 @@ def decode(
         served = {c for route in routes for c in route["customers"]}
         unserved = set(instance.customers) - served
     log_probs: list[torch.Tensor] = []
+    entropy_terms: list[torch.Tensor] = []
     entropy = 0.0
     reason = ""
     max_decisions = 3 * len(instance.customers) + 5
@@ -1499,7 +1500,9 @@ def decode(
         route_dist = torch.distributions.Categorical(logits=route_scores)
         route_action = route_dist.sample() if sample else torch.argmax(route_scores)
         log_probs.append(route_dist.log_prob(route_action))
-        entropy += float(route_dist.entropy().detach())
+        route_entropy = route_dist.entropy()
+        entropy_terms.append(route_entropy)
+        entropy += float(route_entropy.detach())
         route_position = int(route_action)
         is_new = route_position == len(open_indices)
         selected_index = None if is_new else open_indices[route_position]
@@ -1590,7 +1593,9 @@ def decode(
             customer_dist.sample() if sample else torch.argmax(customer_scores)
         )
         log_probs.append(customer_dist.log_prob(customer_action))
-        entropy += float(customer_dist.entropy().detach())
+        customer_entropy = customer_dist.entropy()
+        entropy_terms.append(customer_entropy)
+        entropy += float(customer_entropy.detach())
         action = int(customer_action)
         if not is_new and action == len(order):
             routes[selected_index]["closed"] = True
@@ -1683,6 +1688,10 @@ def decode(
         "reason": reason,
         "log_prob": torch.stack(log_probs).sum() if log_probs else None,
         "entropy": entropy / max(1, len(log_probs)),
+        "entropy_tensor": torch.stack(entropy_terms).sum() if entropy_terms else None,
+        "n_unserved": len(unserved),
+        "n_customers": len(instance.customers),
+        "n_routes": len(customer_routes),
         "decisions": decision + 1,
         "local_improvements": improvements,
         "cost_lambda": float(cost_lambda),
@@ -2123,6 +2132,33 @@ def main() -> None:
         default=4,
         help="Number of repair rollouts per repair-RL step",
     )
+    parser.add_argument(
+        "--pipeline",
+        choices=("legacy", "primary"),
+        default="legacy",
+        help="primary = BC then RL only; legacy keeps historical POMO/repair flags",
+    )
+    parser.add_argument("--bc-lr", type=float, default=None)
+    parser.add_argument("--rl-lr", type=float, default=None)
+    parser.add_argument("--bc-patience", type=int, default=0)
+    parser.add_argument("--rl-patience", type=int, default=0)
+    parser.add_argument("--rollouts", type=int, default=4)
+    parser.add_argument("--baseline", choices=("greedy", "loo"), default="loo")
+    parser.add_argument("--reward", choices=("legacy", "normalized"), default="normalized")
+    parser.add_argument("--reward-epsilon", type=float, default=0.05)
+    parser.add_argument("--reward-alpha", type=float, default=1.0)
+    parser.add_argument("--reward-beta", type=float, default=1.0)
+    parser.add_argument("--entropy-coef", type=float, default=0.0)
+    parser.add_argument("--advantage-scale", choices=("none", "std"), default="none")
+    parser.add_argument("--grad-clip", type=float, default=1.0)
+    parser.add_argument("--batch-size", type=int, default=1)
+    parser.add_argument("--route-lambda", type=float, default=0.0)
+    parser.add_argument(
+        "--run-dir",
+        type=Path,
+        default=Path("results/raw/bc_rl_v1"),
+        help="Versioned directory for primary BC/RL artifacts",
+    )
     parser.add_argument("--results", type=Path, default=Path("results"))
     parser.add_argument("--checkpoints", type=Path, default=Path("checkpoints"))
     parser.add_argument(
@@ -2134,6 +2170,10 @@ def main() -> None:
     args = parser.parse_args()
     if args.model == "CHARGE":
         train_direct(args)
+    elif args.pipeline == "primary":
+        from bc_rl import train_primary
+
+        train_primary(args)
     else:
         train_model(args)
 

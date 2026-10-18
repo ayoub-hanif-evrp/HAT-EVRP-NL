@@ -26,12 +26,25 @@ duration is \(Z_\text{lit} = Z_\text{full} - \sum \text{service}\).
 
 | Key | Display name | History | DeepSets |
 |---|---|---|---|
-| H1 | State-Only Hierarchical Pointer | no | no |
-| H2 | History Transformer Routing | yes | no |
-| H3 | DeepSets Fleet Routing | no | yes |
-| H4 | History Transformer + DeepSets (HAT-EVRP-NL) | yes | yes |
+| H1 | State Pointer | no | no |
+| H2 | Route Transformer (RT) | yes | no |
+| H3 | Fleet DeepSets | no | yes |
+| H4 | Route Transformer + DeepSets (HAT-EVRP-NL) | yes | yes |
+
+RT encodes optimizer-enriched route-stop sequences (node embedding plus SOC, energy, and charging features). A token is a stop representation, not necessarily one committed historical action.
 
 Defaults: `d_model=128`, `layers=2`, `heads=4` (`PolicyConfig` in `model.py`).
+
+The primary training entry point is `python train.py --pipeline primary`. It runs only behavior cloning, then REINFORCE (`bc_rl.train_primary`). POMO and repair-RL remain on `--pipeline legacy` for historical reproduction and are refused by the primary path.
+
+Normalized reward (primary default):
+
+\[
+R_{\text{feasible}} = -Z_{\text{full}} / (n T_{\max}), \quad
+R_{\text{infeasible}} = -1 - \epsilon - \alpha \, u - \beta \, v
+\]
+
+where \(u\) is the unserved fraction when known and \(v\) is a normalized violation only if the decode result already carries a finite `normalized_violation`. The legacy reward \(R=-Z_{\text{full}}\) or \(-100\) remains available with `--reward legacy`. Checkpoint selection uses feasibility first, then the mean duration in which infeasible evaluations count as \(n T_{\max}\) rather than being dropped.
 
 ## 3. Training pipeline (what Cycle-3 actually used)
 

@@ -117,7 +117,7 @@ class PublicationFigureTests(unittest.TestCase):
         self.assertRegex(paper, r"Figure 15\..*3 instances", re.S)
         self.assertRegex(paper, r"Figure 16\..*categorical", re.S | re.I)
         self.assertRegex(paper, r"Figure 17\..*[Uu]nequal", re.S)
-        self.assertRegex(paper, r"Figure 7\..*frozen History Transformer", re.S)
+        self.assertRegex(paper, r"Figure 7\..*frozen Route Transformer", re.S)
 
     def test_fig15_delta_matches_raw_fairls(self):
         cycle3 = ROOT / "results" / "raw" / "cycle3"

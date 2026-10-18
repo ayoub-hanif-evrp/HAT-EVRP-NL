@@ -10,12 +10,12 @@ from __future__ import annotations
 METHOD_DISPLAY: dict[str, str] = {
     "H0": "Greedy Construction",
     "H0_strong": "Greedy + Local Search",
-    "H1": "State-only Pointer",
-    "H2": "History Transformer",
-    "H3": "DeepSets Fleet Model",
-    "H4": "History Transformer + DeepSets",
-    "H4_open": "History Transformer + Open-route DeepSets",
-    "hybrid_H4": "History Transformer + DeepSets + frvcpy",
+    "H1": "State Pointer",
+    "H2": "Route Transformer (RT)",
+    "H3": "Fleet DeepSets",
+    "H4": "Route Transformer + DeepSets (HAT-EVRP-NL)",
+    "H4_open": "Route Transformer + Open-route DeepSets",
+    "hybrid_H4": "Route Transformer + DeepSets + frvcpy",
     "direct_CHARGE": "Learned Direct CHARGE Controller",
     "direct_plus_repair": "Direct CHARGE + frvcpy Repair",
 }
@@ -27,29 +27,29 @@ METHOD_DISPLAY_NAMES = METHOD_DISPLAY
 METHOD_SHORT: dict[str, str] = {
     "H0": "Greedy",
     "H0_strong": "Greedy + LS",
-    "H1": "State-only",
-    "H2": "History Trans.",
-    "H3": "DeepSets",
-    "H4": "History + DeepSets",
-    "H4_open": "Hist. + Open DeepSets",
+    "H1": "State Pointer",
+    "H2": "RT",
+    "H3": "Fleet DeepSets",
+    "H4": "RT + DeepSets",
+    "H4_open": "RT + Open DeepSets",
 }
 
 # Multi-line axis labels when space is tight.
 METHOD_WRAP: dict[str, str] = {
     "H0": "Greedy\nConstruction",
     "H0_strong": "Greedy +\nLocal Search",
-    "H1": "State-only\nPointer",
-    "H2": "History\nTransformer",
-    "H3": "DeepSets\nFleet Model",
-    "H4": "History Trans.\n+ DeepSets",
-    "H4_open": "History +\nOpen DeepSets",
+    "H1": "State\nPointer",
+    "H2": "Route\nTransformer",
+    "H3": "Fleet\nDeepSets",
+    "H4": "RT +\nDeepSets",
+    "H4_open": "RT +\nOpen DeepSets",
 }
 
 PAIR_DISPLAY: dict[str, str] = {
-    "H2-H1": "History Trans.\n− State-only",
-    "H3-H1": "DeepSets\n− State-only",
-    "H4-H2": "History + DeepSets\n− History Trans.",
-    "H4-H1": "History + DeepSets\n− State-only",
+    "H2-H1": "RT\n− State Pointer",
+    "H3-H1": "Fleet DeepSets\n− State Pointer",
+    "H4-H2": "RT + DeepSets\n− RT",
+    "H4-H1": "RT + DeepSets\n− State Pointer",
 }
 
 SEARCH_DISPLAY: dict[str, str] = {
@@ -137,7 +137,10 @@ def methodology_name_note() -> str:
     return (
         "Internal ablation keys (H0–H4) map to display names: "
         "H0 Greedy Construction; H0_strong Greedy + Local Search; "
-        "H1 State-only Pointer; H2 History Transformer; "
-        "H3 DeepSets Fleet Model; H4 History Transformer + DeepSets "
-        "(HAT-EVRP-NL). Reader-facing figures and tables use display names only."
+        "H1 State Pointer; H2 Route Transformer (RT); "
+        "H3 Fleet DeepSets; H4 Route Transformer + DeepSets "
+        "(HAT-EVRP-NL). RT encodes optimizer-enriched route-stop sequences, "
+        "including charging-related features; a token is a stop representation, "
+        "not necessarily a committed historical action. "
+        "Reader-facing figures and tables use display names only."
     )
