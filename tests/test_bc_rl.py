@@ -187,6 +187,35 @@ class DecodeGradientTests(unittest.TestCase):
         self.assertTrue(math_isfinite(grad_norm))
 
 
+class P2AccountingTests(unittest.TestCase):
+    def test_hybrid_oracle_counts_include_both_phases(self):
+        import sys
+
+        sys.path.insert(0, str(ROOT / "scripts" / "experiments"))
+        from eval_bc_rl_official import combine_oracle_counts
+
+        combined = combine_oracle_counts(
+            {"oracle_calls": 55, "oracle_requests": 62, "oracle_cache_hits": 7},
+            {"oracle_solver_executions": 400, "oracle_requests": 500, "oracle_cache_hits": 100},
+        )
+        self.assertEqual(combined["oracle_calls"], 455)
+        self.assertEqual(combined["oracle_requests"], 562)
+        self.assertEqual(combined["oracle_cache_hits"], 107)
+
+    def test_construction_only_when_hybrid_did_not_run(self):
+        import sys
+
+        sys.path.insert(0, str(ROOT / "scripts" / "experiments"))
+        from eval_bc_rl_official import combine_oracle_counts
+
+        combined = combine_oracle_counts(
+            {"oracle_calls": 55, "oracle_requests": 62, "oracle_cache_hits": 7},
+            None,
+        )
+        self.assertEqual(combined["oracle_calls"], 55)
+        self.assertEqual(combined["oracle_requests"], 62)
+
+
 def math_isfinite(value: float) -> bool:
     return value == value and abs(value) != float("inf")
 

@@ -25,7 +25,7 @@ Audit: `results/SCIENTIFIC_RESULTS_AUDIT.md` · Quality: `docs/FIGURE_QUALITY_RE
 | 14 | `fig14_literature_bks_gap.png` | BKS gaps | bc_rl_full_v1 n=10 | 20×5 | P0 ~21–25%, P2 ~5–8% | Protocols stay separate |
 | 15 | `fig15_generalization_scalability.png` | Size transfer | bc_rl_full_v1 P0 | 20 at n=80 | n=10 policy | RL n=80 RT+DS worse |
 | 16 | `fig16_search_improvement_stages.png` | Categorical protocols | bc_rl_full_v1 n=10 | 20×5 | P0/P1/P2 | Unequal budgets |
-| 17 | `fig17_quality_vs_compute.png` | Quality/oracle calls | bc_rl_full_v1 n=10 | 20×5 | Unequal budgets | ~55 vs ~160 calls |
+| 17 | `fig17_quality_vs_compute.png` | Quality/oracle calls | bc_rl_full_v1 n=10 | 20×5 | Unequal budgets | P0 ~55, P1 ~162, P2 ~418 |
 | 18 | `fig18_behavior_cloning_learning_curves.png` | BC curves | training.csv | 100 val | Five seeds | Star = best log |
 | 19 | `fig19_bc_vs_rl_checkpoint_quality.png` | BC vs RL | eval P0 n=10 | 20×5 | RT 3/5; others 1/5 | Construction only |
 | 20 | `fig20_reinforce_reward_dynamics.png` | Normalized reward | reward.csv | 300 steps | Noisy traces | With Fig 19 |
