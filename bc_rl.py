@@ -14,6 +14,7 @@ import copy
 import dataclasses
 import json
 import math
+import pickle
 import platform
 import random
 import time
@@ -239,6 +240,48 @@ def _finite_grads(model) -> bool:
     return True
 
 
+def load_or_build_teachers(args, train_seed_start: int, val_seed_start: int, generator_version: str):
+    """Build expert data once and reuse it across model/seed runs."""
+    key = {
+        "size": int(args.size),
+        "n_train": int(args.train_instances),
+        "n_val": int(args.val_instances),
+        "train_seed_start": int(train_seed_start),
+        "val_seed_start": int(val_seed_start),
+        "teacher": getattr(args, "teacher", "basic"),
+        "generator": generator_version,
+    }
+    cache = getattr(args, "teacher_cache", None)
+    path = Path(cache) if cache else None
+    if path is not None and path.exists():
+        blob = pickle.loads(path.read_bytes())
+        if blob.get("key") != key:
+            raise SystemExit(f"teacher cache key mismatch at {path}")
+        print({"teacher_cache": "loaded", "path": str(path), "n_train": len(blob["train"])})
+        return blob["train"], blob["val"]
+    started = time.perf_counter()
+    train_data = make_teacher_data(
+        args.size,
+        args.train_instances,
+        train_seed_start,
+        teacher=key["teacher"],
+        generator_version=generator_version,
+    )
+    validation = make_teacher_data(
+        args.size,
+        args.val_instances,
+        val_seed_start,
+        teacher=key["teacher"],
+        generator_version=generator_version,
+    )
+    print({"teacher_build_s": round(time.perf_counter() - started, 3), "n_train": len(train_data), "n_val": len(validation)})
+    if path is not None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(pickle.dumps({"key": key, "train": train_data, "val": validation}))
+        print({"teacher_cache": "wrote", "path": str(path)})
+    return train_data, validation
+
+
 def train_primary(args) -> dict:
     """BC then RL. Refuses POMO and repair-RL."""
     if int(getattr(args, "pomo_k", 0) or 0) > 0:
@@ -253,23 +296,23 @@ def train_primary(args) -> dict:
     if version in {"c2", "c3"} or str(version).endswith("_c3"):
         raise SystemExit(f"refusing to write primary artifacts under historical version {version}")
 
+    run_root_early = Path(getattr(args, "run_dir", Path("results/raw/bc_rl_v1")))
+    run_id_early = getattr(args, "run_id", None)
+    if run_id_early:
+        done = run_root_early / str(run_id_early)
+        if all((done / name).exists() for name in ("run_meta.json", "bc_best.pt", "rl_best.pt", "deployed_best.pt")):
+            print({"skip_complete": str(done)})
+            return json.loads((done / "run_meta.json").read_text(encoding="utf-8"))
+
     generator_version = getattr(args, "generator", "v2")
+    # data_seed fixes the instance band. args.seed still controls initialization
+    # and sampling, so matched models can share one dataset.
+    data_seed = int(getattr(args, "data_seed", None) if getattr(args, "data_seed", None) is not None else args.seed)
     # Disjoint from Cycle-3 bands (700000/800000 and 920000/930000).
-    train_seed_start = 1_100_000 + int(args.seed) * 10_000
-    val_seed_start = 1_200_000 + int(args.seed) * 10_000
-    train_data = make_teacher_data(
-        args.size,
-        args.train_instances,
-        train_seed_start,
-        teacher=getattr(args, "teacher", "basic"),
-        generator_version=generator_version,
-    )
-    validation = make_teacher_data(
-        args.size,
-        args.val_instances,
-        val_seed_start,
-        teacher=getattr(args, "teacher", "basic"),
-        generator_version=generator_version,
+    train_seed_start = 1_100_000 + data_seed * 10_000
+    val_seed_start = 1_200_000 + data_seed * 10_000
+    train_data, validation = load_or_build_teachers(
+        args, train_seed_start, val_seed_start, generator_version
     )
     train_seeds = list(range(train_seed_start, train_seed_start + len(train_data)))
     val_seeds = list(range(val_seed_start, val_seed_start + len(validation)))
@@ -389,6 +432,7 @@ def train_primary(args) -> dict:
     rl_optimizer = torch.optim.Adam(model.parameters(), lr=rl_lr)
     rl_best_score = (-1.0, float("-inf"))
     rl_best_state = None
+    rl_best_source = "no_rl_validation_copied_bc"
     rl_stall = 0
     rl_start = _log_eval("rl_start", 0, 0.0)
     model.train()
@@ -533,6 +577,7 @@ def train_primary(args) -> dict:
             if packed["score"] > rl_best_score:
                 rl_best_score = packed["score"]
                 rl_best_state = copy.deepcopy(model.state_dict())
+                rl_best_source = "best_post_rl_validation"
                 rl_stall = 0
             else:
                 rl_stall += 1
@@ -551,9 +596,9 @@ def train_primary(args) -> dict:
     deployed_state = rl_best_state if deployed_from == "rl" else bc_state
 
     stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
-    run_id = f"{args.model}_n{args.size}_seed{args.seed}_{version}_{stamp}"
-    out = run_root / run_id
-    out.mkdir(parents=True, exist_ok=False)
+    run_id = getattr(args, "run_id", None) or f"{args.model}_n{args.size}_seed{args.seed}_{version}_{stamp}"
+    out = run_root / str(run_id)
+    out.mkdir(parents=True, exist_ok=True)
 
     def _payload(state, role: str) -> dict:
         return {
@@ -603,6 +648,7 @@ def train_primary(args) -> dict:
         "seed": args.seed,
         "device": str(device),
         "platform": platform.platform(),
+        "data_seed": data_seed,
         "train_seed_start": train_seed_start,
         "val_seed_start": val_seed_start,
         "n_train": len(train_data),
@@ -629,6 +675,11 @@ def train_primary(args) -> dict:
         "rl_start_score": list(rl_start["score"]),
         "rl_best_score": list(rl_best_score),
         "rl_improved_on_validation": bool(rl_improved),
+        "rl_best_source": rl_best_source,
+        "completed_bc_updates": max((int(r["step"]) for r in rows if r.get("stage") == "bc"), default=0),
+        "completed_rl_updates": max((int(r["step"]) for r in rows if r.get("stage") == "rl"), default=0),
+        "requested_bc_updates": int(args.steps),
+        "requested_rl_updates": int(args.rl_steps),
         "deployed_from": deployed_from,
         "checkpoints": {
             "bc_best": str(bc_path),

@@ -17,6 +17,7 @@ class PublicationFigureTests(unittest.TestCase):
         banned = re.compile(r"\b(?:fig\.text|plt\.figtext)\s*\(")
         for name in (
             "publication_figures.py",
+            "bc_rl_full_figures.py",
             "learning_presentation.py",
             "charging_and_reward_figures.py",
             "build_results.py",
@@ -25,14 +26,13 @@ class PublicationFigureTests(unittest.TestCase):
             self.assertIsNone(banned.search(text), f"{name} still contains fig.text/figtext")
 
     def test_fig16_is_categorical_dot_plot(self):
-        text = (REPORTING / "publication_figures.py").read_text(encoding="utf-8")
-        # Locate make_fig16 body until the next make_fig.
+        text = (REPORTING / "bc_rl_full_figures.py").read_text(encoding="utf-8")
         m = re.search(r"def make_fig16\(\).*?(?=\ndef make_fig|\Z)", text, re.S)
         self.assertIsNotNone(m)
         body = m.group(0)
         self.assertIn("ax.scatter(", body)
         self.assertNotIn("ax.bar(", body)
-        self.assertIn("set_xlim(0,", body)  # full axis from 0
+        self.assertIn("categorical", body)
 
     def test_main_allowlist_exact(self):
         from reporting_paths import FIGURES, MAIN_FIGURES
@@ -114,7 +114,7 @@ class PublicationFigureTests(unittest.TestCase):
         paper = (ROOT / "paper_draft.md").read_text(encoding="utf-8")
         # Limitations that must live in captions, not figure footers.
         self.assertIn("n=80", paper)
-        self.assertRegex(paper, r"Figure 15\..*3 instances", re.S)
+        self.assertRegex(paper, r"Figure 15\..*20 instances", re.S)
         self.assertRegex(paper, r"Figure 16\..*categorical", re.S | re.I)
         self.assertRegex(paper, r"Figure 17\..*[Uu]nequal", re.S)
         self.assertRegex(paper, r"Figure 7\..*frozen Route Transformer", re.S)

@@ -1,0 +1,16 @@
+{
+  "size": 10,
+  "train_instances": 500,
+  "val_instances": 100,
+  "steps": 1000,
+  "rl_steps": 300,
+  "eval_every": 25,
+  "bc_lr": 0.0005,
+  "rl_lr": 5e-05,
+  "batch_size": 2,
+  "rollouts": 4,
+  "baseline": "loo",
+  "reward": "normalized",
+  "generator": "v2",
+  "data_seed": 1000
+}

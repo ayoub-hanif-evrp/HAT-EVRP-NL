@@ -10,7 +10,7 @@ Figures: `results/figures/` (20 main) + 1 supplementary diagnostic · Catalog: `
 
 The electric vehicle routing problem with nonlinear charging (E-VRP-NL) couples customer sequencing with station choice and charge quantity under piecewise-linear, state-of-charge–dependent charging times. We study a hybrid architecture—HAT-EVRP-NL—that combines a static node encoder, a causal route-history Transformer, dynamic EV-state fusion, optional DeepSets fleet aggregation, and a hierarchical route/customer pointer, with **exact fixed-route nonlinear charging optimization** via `frvcpy` and independent Python physical validation. Policies are pretrained by behavior cloning and may be fine-tuned with REINFORCE; because `frvcpy` is non-differentiable, policy gradients use sampled routing-action log-probabilities and post-optimization rewards.
 
-On matched Cycle-3 fair one-shot local search (n=10, seeds 42–44), Route Transformer (RT) achieves 19.813 h mean full duration versus 19.993 h for a State Pointer and 20.142 h for randomized greedy+LS; DeepSets does **not** consistently improve upon history alone (19.886 h). The History versus State-only gain is **seed-sensitive** (≈ −0.58 / +0.04 / ≈0 h on seeds 42–44). A nonlinear-versus-linear study on all 20 official instances at n=10, 20, and 40 shows that linear charging surrogates frequently become **infeasible under true Montoya physics** (e.g., 11/20 at n=40 fixed-route vs 20/20 TRUE-NL). Controlled BC→RL on official n=10 construction-only improves RT + DeepSets on 3/3 seeds but Route Transformer (RT) on only 1/3; historical Cycle-3 synthetic-validation RL endpoints were often worse than best BC. Contribution: a rigorous experimental evaluation—not a claim of global routing optimality or reliable RL improvement for all architectures.
+On the completed behavior-cloning then REINFORCE matrix (four architectures, seeds 42–46, one shared synthetic teacher set), official n=10 construction means after behavior cloning are 22.253 h (State Pointer), 22.379 h (Route Transformer), 22.060 h (Fleet DeepSets), and 22.065 h (RT + DeepSets). REINFORCE changes those means to 22.655, 22.287, 22.700, and 22.282 h. Only the Route Transformer mean improves, and only on 3 of 5 seeds. A nonlinear-versus-linear study on all 20 official instances at n=10, 20, and 40 shows that linear charging surrogates frequently become **infeasible under true Montoya physics** (e.g., 11/20 at n=40 fixed-route vs 20/20 TRUE-NL). Contribution: a rigorous experimental evaluation. These results do not establish global routing optimality or a reliable RL gain for every architecture.
 
 ---
 
@@ -122,27 +122,27 @@ Full study: `results/NONLINEAR_CHARGING_STUDY.md`.
 
 ![Figure 12. Architecture ablation](results/figures/fig12_neural_architecture_ablation.png)
 
-**Figure 12.** Matched n=10 Cycle-3 fair one-shot LS (20 instances × 3 seeds). **A:** seed means ± std across seeds. **B:** per-seed paired means showing RT − State Pointer is seed-sensitive (≈ −0.58 / +0.04 / ≈0 h). Route Transformer (RT) 19.813 h average beats State Pointer 19.993 h and Greedy+LS 20.142 h; RT + DeepSets 19.886 h does not consistently beat RT alone.
+**Figure 12.** Official n=10 construction (protocol P0; 20 instances × seeds 42–46) from the completed BC→RL matrix. Each point is one seed mean; the diamond is the mean of those five seeds. Behavior-cloning means: State Pointer 22.253 h, Route Transformer (RT) 22.379 h, Fleet DeepSets 22.060 h, RT + DeepSets 22.065 h. REINFORCE means: 22.655, 22.287, 22.700, and 22.282 h. Seed ranges overlap, so a lower mean is not a stable ranking.
 
 ![Figure 13. Paired effects](results/figures/fig13_history_deepsets_paired_effect.png)
 
-**Figure 13.** Layout-aware paired effects (n=10 Cycle-3 fair-LS): each point is one customer layout after averaging seed-level deltas; diamonds are mean ± 1.96·SE over **n=20 layouts**. Negative = second method better. Do not treat 60 instance×seed rows as 60 independent layouts. RT+DeepSets − RT straddles zero—DeepSets is not a dependable paired win here.
+**Figure 13.** Paired change on the same official n=10 construction instances: each point is one seed’s (RL mean − BC mean), and the diamond is the mean of the five seeds. Negative means the REINFORCE checkpoint has the lower full duration. Route Transformer is the only model whose mean change is negative (−0.092 h, better on 3/5 seeds). State Pointer, Fleet DeepSets, and RT + DeepSets are better on 1/5 seeds.
 
 ![Figure 14. Literature BKS gaps](results/figures/fig14_literature_bks_gap.png)
 
-**Figure 14.** Literature BKS gaps with \(Z_\mathrm{lit}=Z_\mathrm{full}-\text{service}\) (Froger Table 13), **protocol-separated**: (A) n=10 Cycle-3 fair-LS ≈ 4.99% RT / 5.44% RT+DeepSets; (B) expensive n=10 hybrid insert ≈ **0.027%** (near-BKS; different compute regime—panel B uses a much smaller vertical scale than A/C and is not zero); (C) n=40 recovered hybrid ≈ **17.72% / 16.79%**. Panels are not interchangeable rankings. We do **not** claim state-of-the-art performance.
+**Figure 14.** Mean gap of \(Z_\mathrm{lit}\) to Froger et al. (2021) Table 13 on official n=10 (20 instances, five seeds). Circles are behavior-cloning checkpoints and squares are REINFORCE checkpoints. Construction gaps are about 21–25%, one-shot local search about 14–17%, and hybrid insertion about 5–8%. The three panels use different search procedures, so they are separate measurements. These gaps do not support a state-of-the-art claim.
 
 ![Figure 15. Generalization](results/figures/fig15_generalization_scalability.png)
 
-**Figure 15.** Size transfer of n10-trained Route Transformer (RT) and RT + DeepSets under fair one-shot LS: (A) absolute mean \(Z_\mathrm{full}\), (B) architecture difference Δ = (RT+DeepSets) − RT, (C) feasibility rate. Absolute curves largely overlap. The n=80 point uses only 3 instances and is exploratory—not a strong large-instance generalization claim. Recovered hybrid n=40 (different protocol) reaches 56.806 / 56.370 h.
+**Figure 15.** Construction-only transfer of the n=10 policy to official n=10, 20, 40, and 80 (20 instances at each size, five seeds). Solid lines are behavior cloning and dashed lines are REINFORCE. Panel B is (RT + DeepSets) − RT: the BC difference stays within about 0.6 h, while the RL difference at n=80 is +3.82 h (91.318 vs 87.501 h). Panel C is feasibility; every model and checkpoint is feasible on all evaluated instances, so the markers sit on 100%. The n=80 point is transfer of a policy trained at n=10.
 
 ![Figure 16. Search stages](results/figures/fig16_search_improvement_stages.png)
 
-**Figure 16.** Recovered n=40 search-mode comparison as a categorical dot plot (Route Transformer (RT) vs Route Transformer + DeepSets; 20 instances; mean \(Z_\mathrm{full}\), lower better). Modes are independent alternatives from the same starts—not a sequential optimization trajectory. Strong LS need not dominate Basic LS. Hybrid insert has the best mean among reported modes; this is not an equal-budget efficiency claim.
+**Figure 16.** Official n=10 categorical comparison of construction, one-shot local search, and hybrid insertion (20 instances, mean of five seeds). The horizontal axis is limited to the observed range, about 19.8–22.7 h. The three protocols are alternatives with unequal search budgets, so a lower hybrid-insert mean is not an equal-budget ranking.
 
 ![Figure 17. Quality vs compute](results/figures/fig17_quality_vs_compute.png)
 
-**Figure 17.** Exploratory: Route Transformer (RT) n=40 quality versus stage-level `frvcpy` oracle executions (20 instances, seed 42). Legend outside plot; runtimes where measured. **Unequal realized budgets—not an equal-budget efficiency experiment.**
+**Figure 17.** Official n=10 mean full duration against mean `frvcpy` oracle calls (20 instances, five seeds). Marker shape is the protocol and color is the architecture; a black edge marks the REINFORCE checkpoint. Construction and hybrid insertion cluster near 55 oracle calls, while one-shot local search is near 160. **Unequal protocol budgets, so horizontal position is not a controlled efficiency ranking.**
 
 ---
 
@@ -150,25 +150,25 @@ Full study: `results/NONLINEAR_CHARGING_STUDY.md`.
 
 ![Figure 18. BC learning curves](results/figures/fig18_behavior_cloning_learning_curves.png)
 
-**Figure 18.** Cycle-3 behavior-cloning synthetic-validation objective in **separate architecture panels** at logged evaluation steps (not continuous interpolation). Bold ≈ seed 42; faint = 43/44; ★ = best logged point per seed.
+**Figure 18.** Behavior-cloning validation full duration on the shared synthetic set (100 instances, evaluation every 25 steps through 1000 updates). Each panel is one architecture; faint lines are seeds 42–46 and the star is the best logged point of that seed. The curves drop early and then fluctuate.
 
 ![Figure 19. Controlled BC vs RL](results/figures/fig19_bc_vs_rl_checkpoint_quality.png)
 
-**Figure 19.** Controlled RQ4 paired slopes: BC-only → RL-from-BC mean full duration on official n=10 **construction-only** (20/20 feasible). Route Transformer (RT): RL better on 1/3 seeds; RT+DeepSets: 3/3. This is **not** proof that RL improves final hybrid routing. Distinct from historical Cycle-3 synthetic-validation RL endpoints (RT+DeepSets often worse than best BC). RT tokens are optimizer-enriched stop representations (including charging features), not a claim that every token is a committed historical action.
+**Figure 19.** Official n=10 construction means for the behavior-cloning checkpoint and the REINFORCE checkpoint (20/20 feasible). The vertical axis is reversed, so a lower duration is higher on the plot. One line is one seed. REINFORCE is lower on 1/5 State Pointer seeds, 3/5 Route Transformer seeds, 1/5 Fleet DeepSets seeds, and 1/5 RT + DeepSets seeds. This construction comparison does not establish an improvement under one-shot local search or hybrid insertion.
 
 ![Figure 20. Reward dynamics](results/figures/fig20_reinforce_reward_dynamics.png)
 
-**Figure 20.** Actual REINFORCE rewards from `reward_*_rl_from_bc_rq4.csv`. \(R=-Z_\mathrm{full}\) if feasible, else \(-100\). Faint = seeds; bold = mean rolling median (window=5); dashed = greedy baseline. **Noisy traces do not by themselves demonstrate consistent RL learning**—interpret with Figure 19 checkpoint outcomes and validation-based selection.
+**Figure 20.** Normalized REINFORCE reward from the completed runs. Feasible returns are \(-Z_\mathrm{full}/(n T_\max)\). Faint lines are the five seeds and the bold line is their mean rolling median (window 5). The traces stay noisy through 300 updates. Read them together with the checkpoint outcomes in Figure 19 and with validation-based selection: validation preferred the REINFORCE checkpoint on 2/5, 3/5, 1/5, and 1/5 runs for State Pointer, Route Transformer, Fleet DeepSets, and RT + DeepSets.
 
-Supplementary diagnostic (not a main-paper claim figure): `results/supplementary/figures/fig21_rl_training_stability.png` (gradient norm, advantage, entropy, PG loss; correlational only).
+Supplementary diagnostic: `results/supplementary/figures/fig21_rl_training_stability.png` (gradient norm, entropy, policy-gradient loss, and infeasible-rollout fraction; mean across five seeds).
 
-Across Cycle-3 training seeds, RL endpoints do not consistently improve over best BC validation—especially History+DeepSets (0/3). Deployed checkpoints use validation selection.
+Validation preferred the REINFORCE checkpoint on 7 of 20 runs. When it did not, the deployed checkpoint stayed at the behavior-cloning weights.
 
 ---
 
 ## 10. Ablations and Limitations
 
-History helps on matched n=10 fair-LS; DeepSets lacks consistent gain; linear charging assumptions harm true-physics feasibility; frvcpy hybrid ≫ direct learned charging (4/20 vs 20/20 on tested n=10); post-search ≠ architecture; RL gains are protocol-dependent; n=40 hybrid is single-seed / unequal compute; n=80 thin.
+On official n=10 construction, architecture means differ by a few tenths of an hour and the seed ranges overlap. REINFORCE improves the Route Transformer mean and worsens the other three. Linear charging assumptions harm true-physics feasibility; `frvcpy` hybrid remains far more feasible than direct learned charging (4/20 vs 20/20 on tested n=10). Protocols P0, P1, and P2 use unequal search budgets. The n=80 curves transfer an n=10 policy onto 20 instances.
 
 ---
 
@@ -176,10 +176,10 @@ History helps on matched n=10 fair-LS; DeepSets lacks consistent gain; linear ch
 
 | RQ | Answer |
 |---|---|
-| RQ1 | Yes under Cycle-3 fair-LS n=10 (history vs state-only). |
-| RQ2 | No consistent DeepSets gain over history on matched n=10. |
+| RQ1 | On official n=10 construction, Route Transformer (22.379 h) does not beat Fleet DeepSets (22.060 h) after behavior cloning. |
+| RQ2 | RT + DeepSets (22.065 h) is close to Fleet DeepSets at n=10 and is worse than Route Transformer at n=80 under the REINFORCE checkpoint (91.318 vs 87.501 h). |
 | RQ3 | Yes—linear surrogates often fail true Montoya physics. |
-| RQ4 | Protocol-dependent; do not claim RL always improves deployed Cycle-3 History+DeepSets. |
+| RQ4 | Official construction improves on 3/5 Route Transformer seeds and on 1/5 seeds for each other model. Validation keeps the REINFORCE checkpoint on 7/20 runs. |
 
 ---
 

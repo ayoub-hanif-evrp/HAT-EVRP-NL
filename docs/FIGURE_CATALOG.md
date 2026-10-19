@@ -20,15 +20,15 @@ Audit: `results/SCIENTIFIC_RESULTS_AUDIT.md` · Quality: `docs/FIGURE_QUALITY_RE
 | 09 | `fig09_linear_charging_estimation_error.png` | Time error | fixed_route CSV | recorded | EARLY bias | Selected subset |
 | 10 | `fig10_station_usage_and_energy.png` | frvcpy choices | n40 decomp | 20 hybrid | Visits/energy/time | 3 panels |
 | 11 | `fig11_objective_decomposition.png` | Obj. parts | n40 decomp | 20 hybrid | Travel drives Δ | Same frvcpy |
-| 12 | `fig12_neural_architecture_ablation.png` | Ablation + per-seed | Cycle-3 fair-LS | 20×3 | History helps; seed-sensitive | Panel B |
-| 13 | `fig13_history_deepsets_paired_effect.png` | Paired Δ | Cycle-3 fair-LS | 20 layouts | Layout-aware SE | Not 60 indep. |
-| 14 | `fig14_literature_bks_gap.png` | BKS gaps | fair-LS + INSERTION + n40 | multi | Protocol-separated | Do not mix |
-| 15 | `fig15_generalization_scalability.png` | Size transfer | FINAL_n*_fairls | 10–80 | Exploratory; curves overlap | n80=3 |
-| 16 | `fig16_search_improvement_stages.png` | Search modes | recovered pipe | 20 | Categorical bars | Not a trajectory |
-| 17 | `fig17_quality_vs_compute.png` | Quality/compute | fair_search | 20 | Unequal budgets | Exploratory |
-| 18 | `fig18_behavior_cloning_learning_curves.png` | BC curves | training_logs | synth val | Per-arch panels | Sparse steps |
-| 19 | `fig19_bc_vs_rl_checkpoint_quality.png` | BC vs RL | reward summary | 20×3 constr. | Hist+DS 3/3; Hist 1/3 | ≠ hybrid |
-| 20 | `fig20_reinforce_reward_dynamics.png` | Rewards | reward_*.csv | RQ4 | Noisy ≠ learning | w/ Fig19 |
+| 12 | `fig12_neural_architecture_ablation.png` | BC and RL seed means | bc_rl_full_v1 P0 n=10 | 20×5 | Overlapping seeds | Separate BC and RL |
+| 13 | `fig13_history_deepsets_paired_effect.png` | Paired RL−BC | bc_rl_full_v1 P0 n=10 | 5 seeds | RT mean only negative | One point per seed |
+| 14 | `fig14_literature_bks_gap.png` | BKS gaps | bc_rl_full_v1 n=10 | 20×5 | P0 ~21–25%, P2 ~5–8% | Protocols stay separate |
+| 15 | `fig15_generalization_scalability.png` | Size transfer | bc_rl_full_v1 P0 | 20 at n=80 | n=10 policy | RL n=80 RT+DS worse |
+| 16 | `fig16_search_improvement_stages.png` | Categorical protocols | bc_rl_full_v1 n=10 | 20×5 | P0/P1/P2 | Unequal budgets |
+| 17 | `fig17_quality_vs_compute.png` | Quality/oracle calls | bc_rl_full_v1 n=10 | 20×5 | Unequal budgets | ~55 vs ~160 calls |
+| 18 | `fig18_behavior_cloning_learning_curves.png` | BC curves | training.csv | 100 val | Five seeds | Star = best log |
+| 19 | `fig19_bc_vs_rl_checkpoint_quality.png` | BC vs RL | eval P0 n=10 | 20×5 | RT 3/5; others 1/5 | Construction only |
+| 20 | `fig20_reinforce_reward_dynamics.png` | Normalized reward | reward.csv | 300 steps | Noisy traces | With Fig 19 |
 | Supp | `supplementary/.../fig21_rl_training_stability.png` | Diagnostics | reward_*.csv | RQ4 | Grad spikes | Correlation only |
 
 **Naming:** Reader-facing labels use descriptive names from `presentation_names.py` (no bare H1–H4).

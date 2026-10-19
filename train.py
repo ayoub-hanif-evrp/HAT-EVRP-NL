@@ -2089,7 +2089,31 @@ def main() -> None:
     parser.add_argument("--eval-every", type=int, default=10)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--version", type=str, default="c3")
+    parser.add_argument(
+        "--data-seed",
+        type=int,
+        default=None,
+        help="Instance-band seed for primary BC/RL. Defaults to --seed. "
+        "Set the same value for every model so the comparison is matched.",
+    )
+    parser.add_argument(
+        "--teacher-cache",
+        type=Path,
+        default=None,
+        help="Pickle of shared expert data for the primary pipeline.",
+    )
+    parser.add_argument(
+        "--run-id",
+        type=str,
+        default=None,
+        help="Stable primary-run directory name. Completed runs are not overwritten.",
+    )
+    parser.add_argument(
+        "--version",
+        type=str,
+        default="c3",
+        help="Artifact version. Primary pipeline rejects c2/c3; pass e.g. bcrl_full_v1.",
+    )
     parser.add_argument("--teacher", choices=("basic", "strong"), default="basic")
     parser.add_argument("--generator", choices=("v1", "v2", "v2c"), default="v2")
     parser.add_argument(
@@ -2136,7 +2160,9 @@ def main() -> None:
         "--pipeline",
         choices=("legacy", "primary"),
         default="legacy",
-        help="primary = BC then RL only; legacy keeps historical POMO/repair flags",
+        help="legacy (default) reproduces historical training, including optional POMO/repair. "
+        "primary is BC then RL only and refuses version c3. Full experiments must pass "
+        "--pipeline primary --version bcrl_full_v1.",
     )
     parser.add_argument("--bc-lr", type=float, default=None)
     parser.add_argument("--rl-lr", type=float, default=None)
@@ -2171,6 +2197,12 @@ def main() -> None:
     if args.model == "CHARGE":
         train_direct(args)
     elif args.pipeline == "primary":
+        if args.version in {"c2", "c3"} or str(args.version).endswith("_c3"):
+            raise SystemExit(
+                "Refusing --pipeline primary with version "
+                f"{args.version}. Historical Cycle-3 stays on --pipeline legacy. "
+                "Full runs must pass --pipeline primary --version bcrl_full_v1."
+            )
         from bc_rl import train_primary
 
         train_primary(args)

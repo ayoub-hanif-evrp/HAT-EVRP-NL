@@ -1,7 +1,7 @@
 # BC → RL v1 — what was implemented and what was actually run
 
 Branch: `bc-rl-v1` (from `f4494d0de99395ffbabb272e45615957ce38c347`).
-Not pushed.
+Published at https://github.com/ayoub-hanif-evrp/HAT-EVRP-NL/tree/bc-rl-v1. `main` was not updated by that push.
 
 ## Pipeline
 
