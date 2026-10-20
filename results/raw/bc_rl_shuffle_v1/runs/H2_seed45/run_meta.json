@@ -1,0 +1,7717 @@
+{
+  "run_id": "H2_seed45",
+  "pipeline": [
+    "saved_bc",
+    "rl"
+  ],
+  "instance_order": "shuffled",
+  "bc_source_checkpoint": "C:\\Users\\AYOUB\\OneDrive - EMSI\\Bureau\\PHD_WORK\\HAT-EVRP-NL\\results\\raw\\bc_rl_full_v1\\runs\\H2_seed45\\bc_best.pt",
+  "model": "H2",
+  "seed": 45,
+  "device": "cpu",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "data_seed": 1000,
+  "train_seed_start": 11100000,
+  "val_seed_start": 11200000,
+  "n_train": 500,
+  "n_val": 100,
+  "bc_lr": 0.0005,
+  "rl_lr": 5e-05,
+  "reward": {
+    "mode": "normalized",
+    "epsilon": 0.05,
+    "alpha": 1.0,
+    "beta": 1.0,
+    "feasible": "-Z_full/(n*T_max)",
+    "infeasible": "-1-epsilon-alpha*unserved_fraction-beta*normalized_violation"
+  },
+  "rollouts": 4,
+  "baseline": "loo",
+  "entropy_coef": 0.0,
+  "entropy_regularizer_differentiable": false,
+  "bc_score": [
+    1.0,
+    -21.332149784428417
+  ],
+  "rl_start_score": [
+    1.0,
+    -21.332149784428417
+  ],
+  "rl_best_score": [
+    1.0,
+    -21.273521583635297
+  ],
+  "rl_improved_on_validation": true,
+  "rl_best_source": "best_post_rl_validation",
+  "completed_bc_updates": 1000,
+  "completed_rl_updates": 300,
+  "requested_bc_updates": 0,
+  "requested_rl_updates": 300,
+  "deployed_from": "rl",
+  "checkpoints": {
+    "bc_best": "C:\\Users\\AYOUB\\OneDrive - EMSI\\Bureau\\PHD_WORK\\HAT-EVRP-NL\\results\\raw\\bc_rl_shuffle_v1\\runs\\H2_seed45\\bc_best.pt",
+    "rl_best": "C:\\Users\\AYOUB\\OneDrive - EMSI\\Bureau\\PHD_WORK\\HAT-EVRP-NL\\results\\raw\\bc_rl_shuffle_v1\\runs\\H2_seed45\\rl_best.pt",
+    "deployed_best": "C:\\Users\\AYOUB\\OneDrive - EMSI\\Bureau\\PHD_WORK\\HAT-EVRP-NL\\results\\raw\\bc_rl_shuffle_v1\\runs\\H2_seed45\\deployed_best.pt"
+  },
+  "profiles": [
+    {
+      "seed": 11100000,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_s_s11100000",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100001,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_ns_s11100001",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100002,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fs_s11100002",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100003,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fs_s11100003",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100004,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d20_fs_s11100004",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100005,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d40_n_s11100005",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100006,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_n_s11100006",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100007,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_ns_s11100007",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 2,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100009,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_ns_s11100009",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100010,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_fn_s11100010",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100011,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_s_s11100011",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100012,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fs_s11100012",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100013,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d40_fs_s11100013",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 3,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100014,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_fs_s11100014",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100015,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_fs_s11100015",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 3,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100016,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_n_s11100016",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100017,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d40_ns_s11100017",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100018,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fs_s11100018",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100023,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d20_ns_s11100023",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100024,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_fs_s11100024",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100025,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d30_fns_s11100025",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 1,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100027,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_fs_s11100027",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100028,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d20_s_s11100028",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100029,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_s_s11100029",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100030,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d40_fs_s11100030",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100031,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_f_s11100031",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100032,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_f_s11100032",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100033,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_fns_s11100033",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100034,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d20_n_s11100034",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100035,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_fn_s11100035",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100036,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fn_s11100036",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100037,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_ns_s11100037",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100038,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_fns_s11100038",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100039,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fs_s11100039",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100040,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_ns_s11100040",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100043,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fn_s11100043",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100047,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_ns_s11100047",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 1,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100048,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d20_fs_s11100048",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100050,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fs_s11100050",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100051,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fs_s11100051",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100052,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fs_s11100052",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100053,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_fs_s11100053",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100054,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_fn_s11100054",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 2,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100055,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_fn_s11100055",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100057,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_f_s11100057",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100058,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fs_s11100058",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100059,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_f_s11100059",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100060,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fns_s11100060",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100061,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_f_s11100061",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100063,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_fs_s11100063",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100065,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_n_s11100065",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100067,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_ns_s11100067",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100068,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_s_s11100068",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100069,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d20_ns_s11100069",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100070,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d30_fs_s11100070",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100071,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_f_s11100071",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100072,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_ns_s11100072",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100073,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fs_s11100073",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100075,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_f_s11100075",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100077,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_fs_s11100077",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100078,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_f_s11100078",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100079,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_fn_s11100079",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 1,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100080,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_f_s11100080",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100081,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_ns_s11100081",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 1,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100082,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d20_s_s11100082",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100083,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fs_s11100083",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100084,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_fs_s11100084",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100086,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d20_f_s11100086",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100087,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_fs_s11100087",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100090,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_fs_s11100090",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100091,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_fs_s11100091",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 3,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100092,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d40_ns_s11100092",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 3,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100093,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d20_s_s11100093",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100095,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fn_s11100095",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 1,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100096,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_fs_s11100096",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100097,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_ns_s11100097",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100098,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_f_s11100098",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100099,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fs_s11100099",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100100,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d40_n_s11100100",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100103,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d40_fn_s11100103",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 3,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100104,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_fs_s11100104",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100105,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_fs_s11100105",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100106,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d40_ns_s11100106",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 1,
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100107,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_fs_s11100107",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100108,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_f_s11100108",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100110,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_fs_s11100110",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100112,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d20_fs_s11100112",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100114,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_fn_s11100114",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100115,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d40_fs_s11100115",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100116,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_f_s11100116",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100117,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_ns_s11100117",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 3,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100118,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_fn_s11100118",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100120,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fn_s11100120",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100121,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d40_fs_s11100121",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 3,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100122,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_ns_s11100122",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 1,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100123,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fs_s11100123",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100124,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_ns_s11100124",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100125,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_ns_s11100125",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100126,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d40_ns_s11100126",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100128,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fs_s11100128",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100131,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d40_fs_s11100131",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 3,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100132,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d40_fn_s11100132",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 3,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100133,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fs_s11100133",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100135,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_s_s11100135",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100137,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_ns_s11100137",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 1,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100139,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_n_s11100139",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100140,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fs_s11100140",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100141,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_ns_s11100141",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 1,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100142,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fs_s11100142",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100143,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d40_ns_s11100143",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 2,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100144,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_n_s11100144",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100146,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_fs_s11100146",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100148,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_fs_s11100148",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100150,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fns_s11100150",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100151,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d40_ns_s11100151",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100152,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d20_s_s11100152",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100153,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_fns_s11100153",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100155,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_ns_s11100155",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100156,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_ns_s11100156",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100157,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fs_s11100157",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100158,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d40_fs_s11100158",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100159,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_fs_s11100159",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100160,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_ns_s11100160",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100161,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_fs_s11100161",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 3,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100162,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_fs_s11100162",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100163,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_ns_s11100163",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100164,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_n_s11100164",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100170,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fs_s11100170",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100171,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d20_fns_s11100171",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100172,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d40_fn_s11100172",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 2,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100173,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fs_s11100173",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100175,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d40_fs_s11100175",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 3,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100176,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_fs_s11100176",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100178,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_fn_s11100178",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100179,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fs_s11100179",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100180,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d40_ns_s11100180",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 2,
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100181,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d40_ns_s11100181",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 2,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100182,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fs_s11100182",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100183,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fs_s11100183",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100184,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_ns_s11100184",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100185,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d40_fs_s11100185",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100186,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fs_s11100186",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100187,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_fn_s11100187",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 3,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100188,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_ns_s11100188",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100189,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d40_fs_s11100189",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100190,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d20_f_s11100190",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100191,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d40_fs_s11100191",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 3,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100192,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_fs_s11100192",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100193,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fs_s11100193",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100196,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fs_s11100196",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100197,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d40_fs_s11100197",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100198,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_f_s11100198",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100199,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_ns_s11100199",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 3,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100200,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_ns_s11100200",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100201,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d40_ns_s11100201",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 3,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100203,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_ns_s11100203",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100204,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fns_s11100204",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100205,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fs_s11100205",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100207,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_ns_s11100207",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100208,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_f_s11100208",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100210,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d40_ns_s11100210",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 1,
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100211,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_fns_s11100211",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100212,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_ns_s11100212",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 1,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100213,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_ns_s11100213",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100214,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_ns_s11100214",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100215,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_fn_s11100215",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100216,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fs_s11100216",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100217,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_n_s11100217",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100218,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_ns_s11100218",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100219,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d20_fns_s11100219",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100220,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fs_s11100220",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100221,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d40_fns_s11100221",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100222,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_fs_s11100222",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100223,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d40_ns_s11100223",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 2,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100226,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fs_s11100226",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100228,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_fs_s11100228",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100229,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_n_s11100229",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100232,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_ns_s11100232",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100235,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fs_s11100235",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100236,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d40_ns_s11100236",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100237,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d40_fs_s11100237",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100238,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fns_s11100238",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 1,
+        "normal": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100239,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fs_s11100239",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100240,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fns_s11100240",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100241,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_ns_s11100241",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100242,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fs_s11100242",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100244,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_fs_s11100244",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100245,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d30_ns_s11100245",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100246,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_fs_s11100246",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100247,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_ns_s11100247",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100248,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d40_ns_s11100248",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 2,
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100249,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fs_s11100249",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100250,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fn_s11100250",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100251,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_ns_s11100251",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100252,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_f_s11100252",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100253,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d40_n_s11100253",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100255,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_fns_s11100255",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100258,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d20_f_s11100258",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100261,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_s_s11100261",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100262,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_s_s11100262",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100263,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_fs_s11100263",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100264,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fs_s11100264",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100265,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_n_s11100265",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100269,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_fns_s11100269",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100270,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_ns_s11100270",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100274,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_fns_s11100274",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 2,
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100275,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_fs_s11100275",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100276,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fs_s11100276",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100277,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_f_s11100277",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100278,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d40_ns_s11100278",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100282,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fs_s11100282",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100283,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fn_s11100283",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100284,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_fs_s11100284",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100285,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_fns_s11100285",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100286,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fn_s11100286",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100287,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_f_s11100287",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100288,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d30_fn_s11100288",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100289,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_ns_s11100289",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 2,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100291,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_ns_s11100291",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100292,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_fs_s11100292",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100293,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d40_f_s11100293",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100294,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_fs_s11100294",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100295,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d40_n_s11100295",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100298,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d40_fs_s11100298",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 3,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100300,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_f_s11100300",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100301,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d30_ns_s11100301",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100302,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d40_n_s11100302",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100304,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d40_fns_s11100304",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 1,
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100305,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fn_s11100305",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 1,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100306,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_fs_s11100306",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100307,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fs_s11100307",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100308,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_fs_s11100308",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100309,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fs_s11100309",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100311,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_ns_s11100311",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 2,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100312,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_fn_s11100312",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100313,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_ns_s11100313",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100314,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fn_s11100314",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100316,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_f_s11100316",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100317,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_ns_s11100317",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100318,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_ns_s11100318",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100319,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fs_s11100319",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100321,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_ns_s11100321",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100322,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fs_s11100322",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100323,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d30_fs_s11100323",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100324,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fns_s11100324",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100325,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fn_s11100325",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100326,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_fs_s11100326",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100327,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fs_s11100327",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100328,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d30_fs_s11100328",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100329,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fs_s11100329",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100330,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_n_s11100330",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100331,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d40_f_s11100331",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100332,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d40_fns_s11100332",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 2,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100333,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_f_s11100333",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100334,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fs_s11100334",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100336,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_fn_s11100336",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100338,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_n_s11100338",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100339,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_fn_s11100339",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 1,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100341,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fs_s11100341",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100343,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d20_fs_s11100343",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100344,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_fs_s11100344",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100346,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_fns_s11100346",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100347,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fs_s11100347",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100348,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d40_fs_s11100348",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 3,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100349,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d20_fns_s11100349",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100350,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fn_s11100350",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100352,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_fs_s11100352",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100354,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d40_fs_s11100354",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 3,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100355,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_f_s11100355",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100356,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fs_s11100356",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100357,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fs_s11100357",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100359,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fs_s11100359",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100360,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_ns_s11100360",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100361,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d20_ns_s11100361",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100362,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_fns_s11100362",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100363,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d30_fs_s11100363",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100366,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d30_fn_s11100366",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100367,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fs_s11100367",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100368,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_fs_s11100368",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100369,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fs_s11100369",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100371,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d20_f_s11100371",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100372,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d20_ns_s11100372",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100373,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d30_fs_s11100373",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100374,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_s_s11100374",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100375,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fs_s11100375",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100378,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fn_s11100378",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100379,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_ns_s11100379",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100380,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fs_s11100380",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100381,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fs_s11100381",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100382,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d40_f_s11100382",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100383,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d40_fns_s11100383",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 3,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100385,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_ns_s11100385",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100388,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fns_s11100388",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100390,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d20_fn_s11100390",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100391,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fs_s11100391",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100392,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_fn_s11100392",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 1,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100393,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d40_ns_s11100393",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 3,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100394,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_fns_s11100394",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 2,
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100395,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_fs_s11100395",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100396,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_f_s11100396",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100399,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_f_s11100399",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100401,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fs_s11100401",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100402,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fs_s11100402",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100403,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d30_fs_s11100403",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100405,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fs_s11100405",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100406,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fs_s11100406",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100407,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d30_fs_s11100407",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100409,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_ns_s11100409",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100410,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fn_s11100410",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100412,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d30_fs_s11100412",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100413,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_fs_s11100413",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100415,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_f_s11100415",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100417,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d40_f_s11100417",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100419,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_fs_s11100419",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 3,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100421,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_f_s11100421",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100423,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fns_s11100423",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 1,
+        "fast": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100425,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d30_ns_s11100425",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100426,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_fn_s11100426",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100428,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d40_ns_s11100428",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 2,
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100430,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fs_s11100430",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100431,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d40_fs_s11100431",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100432,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fs_s11100432",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100434,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fs_s11100434",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100436,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d40_fs_s11100436",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 3,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100439,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d30_fs_s11100439",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100441,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d40_ns_s11100441",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 2,
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100442,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_f_s11100442",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100443,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_ns_s11100443",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100444,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fs_s11100444",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100445,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d40_fns_s11100445",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100446,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d40_n_s11100446",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100448,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d30_fns_s11100448",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 1,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100452,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d20_ns_s11100452",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100453,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_fn_s11100453",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 3,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100457,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fns_s11100457",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100458,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fs_s11100458",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100459,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_f_s11100459",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100460,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d20_ns_s11100460",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100462,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d40_fs_s11100462",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 3,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100464,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_ns_s11100464",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100466,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d40_fs_s11100466",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100467,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_s_s11100467",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100469,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d40_fs_s11100469",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100471,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d20_s_s11100471",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100475,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_ns_s11100475",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100476,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d40_ns_s11100476",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 3,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100477,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d40_fs_s11100477",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100478,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fs_s11100478",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100480,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_s_s11100480",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100481,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_fs_s11100481",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 3,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100482,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d30_ns_s11100482",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100483,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d40_f_s11100483",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100485,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_ns_s11100485",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100486,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fs_s11100486",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100487,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_s_s11100487",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100488,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fs_s11100488",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100489,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_ns_s11100489",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100490,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d40_f_s11100490",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100491,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_ns_s11100491",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100493,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fs_s11100493",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100494,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_ns_s11100494",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100495,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d40_ns_s11100495",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 2,
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100497,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_ns_s11100497",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100498,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d30_fs_s11100498",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100502,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_ns_s11100502",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 3,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100503,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fns_s11100503",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100504,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_ns_s11100504",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100506,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fs_s11100506",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100510,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_n_s11100510",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100511,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_fs_s11100511",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 3,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100512,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d30_fs_s11100512",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100513,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d40_fs_s11100513",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 3,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100515,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_fns_s11100515",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100516,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_ns_s11100516",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100517,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d20_ns_s11100517",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100518,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_fs_s11100518",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 3,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100519,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_ns_s11100519",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100520,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_ns_s11100520",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100521,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_fs_s11100521",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100522,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fs_s11100522",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100523,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fs_s11100523",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100524,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_fs_s11100524",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100525,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fs_s11100525",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100526,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fs_s11100526",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100527,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d20_fs_s11100527",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100528,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fns_s11100528",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100529,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d30_fs_s11100529",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100533,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d20_n_s11100533",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100536,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fs_s11100536",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100537,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_s_s11100537",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100538,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d40_fns_s11100538",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 3,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100539,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fns_s11100539",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100540,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fn_s11100540",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100541,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_fn_s11100541",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 3,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100542,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d20_ns_s11100542",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100544,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d20_ns_s11100544",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100545,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d20_fns_s11100545",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100546,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d40_f_s11100546",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100547,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fs_s11100547",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100548,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fs_s11100548",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100552,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_fs_s11100552",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100553,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d40_fn_s11100553",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 2,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100554,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_f_s11100554",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100555,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_fns_s11100555",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100556,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_ns_s11100556",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100557,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_ns_s11100557",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100558,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d20_n_s11100558",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100559,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_ns_s11100559",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100560,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d30_ns_s11100560",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100561,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_s_s11100561",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100563,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_fn_s11100563",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100564,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fns_s11100564",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100566,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fn_s11100566",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100568,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d20_ns_s11100568",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100569,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fns_s11100569",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 1,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100570,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_fs_s11100570",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100571,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fs_s11100571",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100572,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_ns_s11100572",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100573,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_fs_s11100573",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100574,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_ns_s11100574",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100575,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d20_fn_s11100575",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100576,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fs_s11100576",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100577,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d30_fs_s11100577",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100578,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_ns_s11100578",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100579,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_s_s11100579",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100581,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fs_s11100581",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100582,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_fn_s11100582",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100584,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fs_s11100584",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100586,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d40_s_s11100586",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100588,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_fs_s11100588",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100589,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d30_fs_s11100589",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100590,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_ns_s11100590",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 1,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100591,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fs_s11100591",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100592,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d40_f_s11100592",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100593,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fs_s11100593",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100594,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fns_s11100594",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100596,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_n_s11100596",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100597,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_f_s11100597",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100599,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d20_fn_s11100599",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 1,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100600,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_fs_s11100600",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100602,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fns_s11100602",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100603,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_fn_s11100603",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100604,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_n_s11100604",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100605,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fs_s11100605",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100606,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_n_s11100606",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100607,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_ns_s11100607",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 2,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100608,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fs_s11100608",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100610,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fs_s11100610",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100611,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_ns_s11100611",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100612,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fs_s11100612",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100613,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fs_s11100613",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100614,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_fs_s11100614",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100616,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d20_n_s11100616",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100618,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_ns_s11100618",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100621,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_f_s11100621",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100623,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fns_s11100623",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100624,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_s_s11100624",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100625,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_fs_s11100625",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100626,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fs_s11100626",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100628,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d40_fns_s11100628",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 3,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100629,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_fs_s11100629",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100630,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_ns_s11100630",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100632,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_f_s11100632",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100633,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d20_ns_s11100633",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100634,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d20_f_s11100634",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100637,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_ns_s11100637",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100638,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_fs_s11100638",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100640,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_ns_s11100640",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100641,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fn_s11100641",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100642,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fn_s11100642",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100643,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fs_s11100643",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100644,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_ns_s11100644",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100645,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_fn_s11100645",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100646,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fs_s11100646",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100647,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d40_fs_s11100647",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 3,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100648,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_ns_s11100648",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100649,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d30_fs_s11100649",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100650,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_fs_s11100650",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100651,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_fn_s11100651",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100654,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_ns_s11100654",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 2,
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100655,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_ns_s11100655",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100656,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_fs_s11100656",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100657,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_ns_s11100657",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100658,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_fs_s11100658",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100660,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fs_s11100660",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100661,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d40_s_s11100661",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100663,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_f_s11100663",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100664,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d40_fn_s11100664",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 2,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100666,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fn_s11100666",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 1,
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100669,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_ns_s11100669",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 1,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100673,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d20_fs_s11100673",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100674,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_ns_s11100674",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100675,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_fs_s11100675",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100677,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fn_s11100677",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100678,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fs_s11100678",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100679,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d20_s_s11100679",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100680,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_fs_s11100680",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100682,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d40_fs_s11100682",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 3,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100683,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_fs_s11100683",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11100684,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_fs_s11100684",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 11200000,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_fs_s11200000",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200001,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_f_s11200001",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200003,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_fs_s11200003",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200004,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_fs_s11200004",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200007,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fs_s11200007",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200008,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d20_fs_s11200008",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200009,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_fn_s11200009",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200011,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_s_s11200011",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200012,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fn_s11200012",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200014,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fs_s11200014",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200015,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d40_fs_s11200015",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200016,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d40_f_s11200016",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200017,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_fn_s11200017",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200018,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_ns_s11200018",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200019,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_f_s11200019",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200020,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d40_f_s11200020",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200021,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_fns_s11200021",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200022,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fs_s11200022",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200023,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d40_ns_s11200023",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 2,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200024,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_ns_s11200024",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200025,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_f_s11200025",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200026,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_n_s11200026",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200028,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_fns_s11200028",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200029,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fs_s11200029",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200030,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_ns_s11200030",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200031,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fs_s11200031",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200032,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_n_s11200032",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200033,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d40_ns_s11200033",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 3,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200034,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d40_fn_s11200034",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 1,
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200035,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_ns_s11200035",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200037,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fs_s11200037",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200039,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_fs_s11200039",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200040,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fs_s11200040",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200041,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fs_s11200041",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200042,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d20_fs_s11200042",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200045,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fs_s11200045",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200047,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_fs_s11200047",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200048,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_fns_s11200048",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 1,
+        "fast": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200049,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fs_s11200049",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200052,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_s_s11200052",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200053,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fs_s11200053",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200054,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d40_fs_s11200054",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200056,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fs_s11200056",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200058,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fns_s11200058",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200059,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_fs_s11200059",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200060,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d40_fs_s11200060",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200061,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_fs_s11200061",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200062,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_f_s11200062",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200063,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d40_fn_s11200063",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 2,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200064,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_f_s11200064",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200065,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_f_s11200065",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200066,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_ns_s11200066",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200068,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_fs_s11200068",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200069,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d40_ns_s11200069",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 3,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200070,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_ns_s11200070",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200071,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_fs_s11200071",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200072,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_fns_s11200072",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200073,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_n_s11200073",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200074,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_ns_s11200074",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200075,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_f_s11200075",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200076,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fs_s11200076",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200078,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fs_s11200078",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200079,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_fs_s11200079",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200080,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_ns_s11200080",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200081,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_s_s11200081",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200084,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d40_fs_s11200084",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 3,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200085,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d40_fs_s11200085",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200086,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fn_s11200086",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200088,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_fs_s11200088",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200090,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d40_fs_s11200090",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200091,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_ns_s11200091",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200092,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fs_s11200092",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200093,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_ns_s11200093",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200094,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d40_fs_s11200094",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200096,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d20_fns_s11200096",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200097,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_ns_s11200097",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200098,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_fs_s11200098",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200099,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fn_s11200099",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 1,
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200101,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d20_f_s11200101",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200105,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d40_fns_s11200105",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 1,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200106,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fns_s11200106",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200108,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_fs_s11200108",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200109,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fs_s11200109",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200110,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d20_fs_s11200110",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200113,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d20_f_s11200113",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200114,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_fs_s11200114",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200115,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fns_s11200115",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 1,
+        "slow": 1,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200117,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_ns_s11200117",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200118,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_n_s11200118",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200119,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d20_fn_s11200119",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200120,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d40_ns_s11200120",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 2,
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200122,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fns_s11200122",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200123,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d40_ns_s11200123",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 3,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200124,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_fs_s11200124",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200125,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fs_s11200125",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200126,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_ns_s11200126",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200127,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fs_s11200127",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200128,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fs_s11200128",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200129,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fns_s11200129",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 11200132,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_ns_s11200132",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    }
+  ],
+  "official_test_used_for_selection": false
+}

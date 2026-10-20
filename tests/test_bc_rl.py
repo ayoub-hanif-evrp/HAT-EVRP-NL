@@ -187,6 +187,51 @@ class DecodeGradientTests(unittest.TestCase):
         self.assertTrue(math_isfinite(grad_norm))
 
 
+class InstanceSamplerTests(unittest.TestCase):
+    def test_cyclic_rl_budget_misses_part_of_the_training_set(self):
+        from bc_rl import cyclic_batch_indices
+
+        seen = []
+        for step in range(1, 301):
+            seen.extend(cyclic_batch_indices(step, batch_size=2, n_items=500))
+        self.assertEqual(min(seen), 0)
+        self.assertEqual(max(seen), 300)
+        self.assertEqual(len(set(seen)), 301)
+
+    def test_shuffler_covers_every_index_before_repeating(self):
+        from bc_rl import EpochShuffler
+
+        sampler = EpochShuffler(500, seed=42)
+        first = []
+        while len(first) < 500:
+            first.extend(sampler.take(2))
+        self.assertEqual(sorted(first[:500]), list(range(500)))
+        second = []
+        while len(second) < 500:
+            second.extend(sampler.take(2))
+        self.assertEqual(sorted(second[:500]), list(range(500)))
+        self.assertNotEqual(first[:500], second[:500])
+
+    def test_shuffler_is_reproducible_and_in_range(self):
+        from bc_rl import EpochShuffler
+
+        left = EpochShuffler(17, seed=7)
+        right = EpochShuffler(17, seed=7)
+        a = left.take(40)
+        b = right.take(40)
+        self.assertEqual(a, b)
+        self.assertTrue(all(0 <= index < 17 for index in a))
+
+    def test_epoch_boundary_does_not_skip_the_last_index(self):
+        from bc_rl import EpochShuffler
+
+        sampler = EpochShuffler(5, seed=1)
+        drawn = sampler.take(4)
+        boundary = sampler.take(2)
+        self.assertEqual(len(set(drawn + boundary[:1])), 5)
+        self.assertEqual(len(boundary), 2)
+
+
 class P2AccountingTests(unittest.TestCase):
     def test_hybrid_oracle_counts_include_both_phases(self):
         import sys

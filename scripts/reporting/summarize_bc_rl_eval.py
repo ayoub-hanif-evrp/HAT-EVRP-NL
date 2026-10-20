@@ -89,18 +89,38 @@ def main() -> None:
         writer.writeheader()
         writer.writerows(table)
     print(f"wrote {OUT}")
+    md_lines = [
+        "# Paired RL minus BC on the original matrix",
+        "",
+        "Unit: five seed means. Interval: Student t, df=4. Negative means RL has the lower duration.",
+        "",
+    ]
     for size in SIZES:
         print(f"\n### n={size}")
         print("| Model | Protocol | BC | RL | RL-BC | 95% interval | RL better |")
         print("|---|---|---:|---:|---:|---|---:|")
+        md_lines.extend(
+            [
+                "",
+                f"## n={size}",
+                "",
+                "| Model | Protocol | BC | RL | RL-BC | 95% interval | RL better |",
+                "|---|---|---:|---:|---:|---|---:|",
+            ]
+        )
         for row in table:
             if row["size"] != size:
                 continue
             interval = f"[{row['ci95_low_h']:+.3f}, {row['ci95_high_h']:+.3f}]"
-            print(
+            line = (
                 f"| {row['model']} | {row['protocol']} | {row['bc_mean_h']:.3f} | {row['rl_mean_h']:.3f} | "
                 f"{row['delta_rl_minus_bc_h']:+.3f} | {interval} | {row['rl_better_seeds']}/5 |"
             )
+            print(line)
+            md_lines.append(line)
+    md_path = OUT.with_suffix(".md")
+    md_path.write_text("\n".join(md_lines) + "\n", encoding="utf-8")
+    print(f"wrote {md_path}")
 
 
 if __name__ == "__main__":

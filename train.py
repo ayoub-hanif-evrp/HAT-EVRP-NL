@@ -2178,6 +2178,19 @@ def main() -> None:
     parser.add_argument("--advantage-scale", choices=("none", "std"), default="none")
     parser.add_argument("--grad-clip", type=float, default=1.0)
     parser.add_argument("--batch-size", type=int, default=1)
+    parser.add_argument(
+        "--instance-order",
+        choices=("shuffled", "cyclic"),
+        default="shuffled",
+        help="shuffled covers every training instance before repeating. "
+        "cyclic is the original matrix order.",
+    )
+    parser.add_argument(
+        "--rl-from-bc",
+        type=Path,
+        default=None,
+        help="Run only REINFORCE from this immutable bc_best checkpoint.",
+    )
     parser.add_argument("--route-lambda", type=float, default=0.0)
     parser.add_argument(
         "--run-dir",

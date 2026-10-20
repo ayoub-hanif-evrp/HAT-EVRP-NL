@@ -1,0 +1,11 @@
+model,seed,bc_validation_h,original_rl_validation_h,shuffled_rl_validation_h,original_rl_improved,shuffled_rl_improved,shuffled_rl_updates
+H2,42,21.4257,21.4228,21.4415,True,False,300
+H2,43,21.5822,21.6361,21.6178,False,False,300
+H2,44,21.5193,21.7612,21.7886,False,False,300
+H2,45,21.3321,21.2733,21.2735,True,True,300
+H2,46,21.5171,21.4851,21.6327,True,False,300
+H4,42,21.7212,21.7465,21.7977,False,False,300
+H4,43,21.7441,21.7048,21.7808,True,False,300
+H4,44,21.8326,21.9141,22.0405,False,False,300
+H4,45,21.6801,21.7454,21.7301,False,False,300
+H4,46,21.5948,21.8144,21.7947,False,False,300

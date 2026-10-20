@@ -34,6 +34,44 @@ from train import (
 from model import HATPolicy
 
 
+def _inherited_bc_updates(source_bc: Path) -> int:
+    meta_path = source_bc.parent / "run_meta.json"
+    if not meta_path.exists():
+        return 0
+    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+    return int(meta.get("completed_bc_updates") or 0)
+
+
+def cyclic_batch_indices(step: int, batch_size: int, n_items: int) -> list[int]:
+    """Original fixed stride. With 300 steps and batch 2 this misses part of a 500-set."""
+    if n_items <= 0 or step < 1 or batch_size < 1:
+        raise ValueError("cyclic indices need a positive step, batch, and dataset")
+    return [(step - 1 + offset) % n_items for offset in range(batch_size)]
+
+
+class EpochShuffler:
+    """Deterministic shuffle that exhausts every index before any index repeats."""
+
+    def __init__(self, n_items: int, seed: int):
+        if n_items <= 0:
+            raise ValueError("cannot shuffle an empty dataset")
+        self.n_items = int(n_items)
+        self._rng = random.Random(int(seed))
+        self._queue: list[int] = []
+
+    def take(self, count: int) -> list[int]:
+        if count < 1:
+            raise ValueError("count must be positive")
+        chosen: list[int] = []
+        while len(chosen) < count:
+            if not self._queue:
+                order = list(range(self.n_items))
+                self._rng.shuffle(order)
+                self._queue = order
+            chosen.append(self._queue.pop(0))
+        return chosen
+
+
 def reward_value(
     result: dict,
     *,
@@ -334,11 +372,23 @@ def train_primary(args) -> dict:
     entropy_coef = float(getattr(args, "entropy_coef", 0.0))
     adv_scale = getattr(args, "advantage_scale", "none")
     batch_size = max(1, int(getattr(args, "batch_size", 1)))
+    instance_order = getattr(args, "instance_order", "shuffled")
+    if instance_order not in {"shuffled", "cyclic"}:
+        raise SystemExit(f"unknown instance order {instance_order}")
+    source_bc = getattr(args, "rl_from_bc", None)
+    source_bc = Path(source_bc) if source_bc else None
     bc_patience = int(getattr(args, "bc_patience", 0) or 0)
     rl_patience = int(getattr(args, "rl_patience", 0) or 0)
     multi_target = bool(getattr(args, "multi_target", False))
     fleet_counterfactual = bool(getattr(args, "fleet_counterfactual", False))
 
+    if source_bc is not None:
+        blob = torch.load(source_bc, map_location=device, weights_only=False)
+        if blob.get("model") not in (None, args.model):
+            raise SystemExit(
+                f"checkpoint model {blob.get('model')} does not match --model {args.model}"
+            )
+        model.load_state_dict(blob["state_dict"])
     bc_optimizer = torch.optim.Adam(model.parameters(), lr=bc_lr)
     rows: list[dict] = []
     reward_rows: list[dict] = []
@@ -379,14 +429,24 @@ def train_primary(args) -> dict:
         print(row)
         return {"score": score, "metrics": metrics, "row": row}
 
-    # ----- Phase 1: behavior cloning -----
+    bc_sampler = EpochShuffler(len(train_data), int(args.seed) + 101) if instance_order == "shuffled" else None
+    rl_sampler = EpochShuffler(len(train_data), int(args.seed) + 303) if instance_order == "shuffled" else None
+
+    def _batch_pairs(step: int, sampler: EpochShuffler | None):
+        if sampler is None:
+            indices = cyclic_batch_indices(step, batch_size, len(train_data))
+        else:
+            indices = sampler.take(batch_size)
+        return [train_data[index] for index in indices]
+
+    # ----- Phase 1: behavior cloning (skipped when RL resumes from a saved BC checkpoint) -----
     model.train()
-    for step in range(1, args.steps + 1):
+    bc_steps = 0 if source_bc is not None else args.steps
+    for step in range(1, bc_steps + 1):
         bc_optimizer.zero_grad()
         loss_acc = None
         decisions = 0
-        for b in range(batch_size):
-            instance, routes = train_data[(step - 1 + b) % len(train_data)]
+        for instance, routes in _batch_pairs(step, bc_sampler):
             loss, decisions, _stats = teacher_loss(
                 model,
                 instance,
@@ -443,8 +503,7 @@ def train_primary(args) -> dict:
         n_infeasible = 0
         oracle_calls = 0
         entropies = []
-        for b in range(batch_size):
-            instance, _routes = train_data[(rl_step - 1 + b) % len(train_data)]
+        for b, (instance, _routes) in enumerate(_batch_pairs(rl_step, rl_sampler)):
             sampled_rows = []
             for k in range(rollouts):
                 sampled = decode(
@@ -598,6 +657,8 @@ def train_primary(args) -> dict:
     stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
     run_id = getattr(args, "run_id", None) or f"{args.model}_n{args.size}_seed{args.seed}_{version}_{stamp}"
     out = run_root / str(run_id)
+    if source_bc is not None and out.resolve() == source_bc.resolve().parent:
+        raise SystemExit("refusing to write an RL rerun into the original checkpoint directory")
     out.mkdir(parents=True, exist_ok=True)
 
     def _payload(state, role: str) -> dict:
@@ -643,7 +704,9 @@ def train_primary(args) -> dict:
     )
     meta = {
         "run_id": run_id,
-        "pipeline": ["bc", "rl"],
+        "pipeline": ["bc", "rl"] if source_bc is None else ["saved_bc", "rl"],
+        "instance_order": instance_order,
+        "bc_source_checkpoint": str(source_bc) if source_bc is not None else "",
         "model": args.model,
         "seed": args.seed,
         "device": str(device),
@@ -676,7 +739,11 @@ def train_primary(args) -> dict:
         "rl_best_score": list(rl_best_score),
         "rl_improved_on_validation": bool(rl_improved),
         "rl_best_source": rl_best_source,
-        "completed_bc_updates": max((int(r["step"]) for r in rows if r.get("stage") == "bc"), default=0),
+        "completed_bc_updates": (
+            _inherited_bc_updates(source_bc)
+            if source_bc is not None
+            else max((int(r["step"]) for r in rows if r.get("stage") == "bc"), default=0)
+        ),
         "completed_rl_updates": max((int(r["step"]) for r in rows if r.get("stage") == "rl"), default=0),
         "requested_bc_updates": int(args.steps),
         "requested_rl_updates": int(args.rl_steps),

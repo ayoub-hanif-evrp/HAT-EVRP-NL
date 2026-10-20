@@ -134,6 +134,45 @@ def checkpoints_ok(run_dir: Path) -> bool:
     return all((run_dir / name).exists() for name in ("bc_best.pt", "rl_best.pt", "deployed_best.pt", "run_meta.json", "training.csv"))
 
 
+def training_record_ok(run_dir: Path) -> tuple[bool, str]:
+    """Require update counts and checkpoint payloads, not only nonempty files."""
+    if not checkpoints_ok(run_dir):
+        return False, "missing checkpoint or log"
+    meta = json.loads((run_dir / "run_meta.json").read_text(encoding="utf-8"))
+    if int(meta.get("completed_bc_updates") or 0) < PROTOCOL["steps"]:
+        return False, f"bc updates {meta.get('completed_bc_updates')}"
+    if int(meta.get("completed_rl_updates") or 0) < PROTOCOL["rl_steps"]:
+        return False, f"rl updates {meta.get('completed_rl_updates')}"
+    if int(meta.get("n_train") or 0) != PROTOCOL["train_instances"]:
+        return False, "n_train mismatch"
+    try:
+        import torch
+
+        for name in ("bc_best.pt", "rl_best.pt", "deployed_best.pt"):
+            blob = torch.load(run_dir / name, map_location="cpu", weights_only=False)
+            if "state_dict" not in blob or blob.get("model") != meta.get("model"):
+                return False, f"{name} payload"
+    except Exception as exc:
+        return False, f"checkpoint read {exc}"
+    return True, ""
+
+
+def evaluation_record_ok(csv_path: Path) -> tuple[bool, str]:
+    if not csv_path.exists() or csv_path.stat().st_size == 0:
+        return False, "missing eval csv"
+    with csv_path.open(encoding="utf-8") as handle:
+        rows = list(csv.DictReader(handle))
+    # 2 checkpoints x 4 sizes x 20 instances x 3 protocols.
+    if len(rows) != 480:
+        return False, f"eval rows {len(rows)}"
+    p2 = [row for row in rows if row.get("protocol") == "P2"]
+    if len(p2) != 160:
+        return False, f"p2 rows {len(p2)}"
+    if any(row.get("accounting") != "construction_plus_hybrid" for row in p2):
+        return False, "p2 accounting"
+    return True, ""
+
+
 def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
     LOGS.mkdir(parents=True, exist_ok=True)
@@ -164,16 +203,19 @@ def main() -> int:
                 "eval_csv": str(OUT / "eval" / f"{run_id}.csv"),
             }
             if checkpoints_ok(run_dir):
+                ok, reason = training_record_ok(run_dir)
                 meta = json.loads((run_dir / "run_meta.json").read_text(encoding="utf-8"))
                 row.update(
                     {
-                        "status": "trained",
+                        "status": "trained" if ok else "record_invalid",
                         "completed_bc_updates": meta.get("completed_bc_updates", ""),
                         "completed_rl_updates": meta.get("completed_rl_updates", ""),
-                        "failure": "",
+                        "failure": "" if ok else reason,
                     }
                 )
-                print({"skip_complete": run_id}, flush=True)
+                if not ok:
+                    failures += 1
+                print({"skip_complete": run_id, "ok": ok, "reason": reason}, flush=True)
                 rows.append(row)
                 write_manifest(rows)
                 continue
@@ -222,10 +264,13 @@ def main() -> int:
         run_id = f"{row['model']}_seed{row['seed']}"
         run_dir = Path(row["run_dir"])
         eval_csv = OUT / "eval" / f"{run_id}.csv"
-        if eval_csv.exists() and eval_csv.stat().st_size > 0:
+        eval_ok, eval_reason = evaluation_record_ok(eval_csv)
+        if eval_ok:
             row["status"] = "trained_and_evaluated"
             row["eval_csv"] = str(eval_csv)
             continue
+        if eval_csv.exists():
+            print({"eval_incomplete": run_id, "reason": eval_reason}, flush=True)
         eval_cmd = [
             sys.executable,
             str(ROOT / "scripts" / "experiments" / "eval_bc_rl_official.py"),
@@ -235,9 +280,10 @@ def main() -> int:
         ]
         with (LOGS / f"{run_id}_eval.log").open("w", encoding="utf-8") as log:
             eval_proc = subprocess.run(eval_cmd, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT)
-        if eval_proc.returncode != 0 or not eval_csv.exists():
+        eval_ok, eval_reason = evaluation_record_ok(eval_csv)
+        if eval_proc.returncode != 0 or not eval_ok:
             row["status"] = "trained_eval_failed"
-            row["failure"] = f"training finished; official eval exit {eval_proc.returncode}"
+            row["failure"] = f"training finished; official eval exit {eval_proc.returncode}; {eval_reason}"
             failures += 1
         else:
             row["status"] = "trained_and_evaluated"

@@ -1,0 +1,23 @@
+{
+  "hypothesis": "Shuffled RL, started from the original bc_best weights, has a lower synthetic validation duration than the original cyclic RL.",
+  "models": [
+    "H2",
+    "H4"
+  ],
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "rl_steps": 300,
+  "batch_size": 2,
+  "rollouts": 4,
+  "baseline": "loo",
+  "reward": "normalized",
+  "rl_lr": 5e-05,
+  "instance_order": "shuffled",
+  "data_seed": 1000,
+  "official_eval": "same P0/P1/P2 protocol; not used for selection"
+}
