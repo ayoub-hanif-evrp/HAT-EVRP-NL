@@ -261,6 +261,61 @@ class P2AccountingTests(unittest.TestCase):
         self.assertEqual(combined["oracle_requests"], 62)
 
 
+class NeuralConstructionTests(unittest.TestCase):
+    def test_primary_evaluation_does_not_call_postprocessing(self):
+        import inspect
+        import sys
+
+        sys.path.insert(0, str(ROOT / "scripts" / "experiments"))
+        from eval_bc_rl_official import evaluate_neural_construction
+
+        source = inspect.getsource(evaluate_neural_construction)
+        self.assertNotIn("local_search", source)
+        self.assertNotIn("ruin_and_repair", source)
+        self.assertNotIn("hybrid_lns", source)
+        self.assertNotIn("local_passes", source)
+
+    def test_construction_decode_does_not_invoke_search(self):
+        import solver
+        import solver_ls
+        from data import generate_synthetic
+        from model import HATPolicy, PolicyConfig
+        from train import decode
+
+        def forbidden(*_args, **_kwargs):
+            raise AssertionError("classical postprocessing was called")
+
+        instance = generate_synthetic(5, 3, generator_version="v2")
+        model = HATPolicy(PolicyConfig(history=True, deepsets=False, d_model=32, layers=1, heads=4))
+        original_ls = solver.local_search
+        original_ruin = solver_ls.ruin_and_repair
+        solver.local_search = forbidden
+        solver_ls.ruin_and_repair = forbidden
+        try:
+            result = decode(model, instance, sample=False, seed=0)
+        finally:
+            solver.local_search = original_ls
+            solver_ls.ruin_and_repair = original_ruin
+        self.assertIn("feasible", result)
+
+    def test_identical_reference_matches_live_log_prob(self):
+        import copy
+
+        from data import generate_synthetic
+        from model import HATPolicy, PolicyConfig
+        from train import decode
+
+        torch.manual_seed(0)
+        instance = generate_synthetic(5, 3, generator_version="v2")
+        model = HATPolicy(PolicyConfig(history=True, deepsets=False, d_model=32, layers=1, heads=4))
+        reference = copy.deepcopy(model)
+        reference.eval()
+        result = decode(model, instance, sample=True, seed=2, reference_model=reference)
+        self.assertIsNotNone(result["log_prob"])
+        self.assertIsNotNone(result["ref_log_prob"])
+        self.assertAlmostEqual(float(result["log_prob"].detach()), float(result["ref_log_prob"]), places=4)
+
+
 def math_isfinite(value: float) -> bool:
     return value == value and abs(value) != float("inf")
 

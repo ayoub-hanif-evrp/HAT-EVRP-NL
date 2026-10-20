@@ -53,6 +53,49 @@ def combine_oracle_counts(base: dict, extra: dict | None) -> dict[str, int]:
     }
 
 
+def evaluate_neural_construction(run_dir: Path, data_dir: Path, out_csv: Path, sizes=(10, 20, 40, 80)) -> None:
+    """Score BC and RL checkpoints by neural construction only.
+
+    This is the primary evaluation. It does not call local search, ruin-and-repair,
+    or hybrid insertion. Those remain in ``evaluate_run``.
+    """
+    rows = []
+    for role, filename in (("bc_best", "bc_best.pt"), ("rl_best", "rl_best.pt")):
+        model = load_policy(run_dir / filename)
+        for size in sizes:
+            paths = instances_of_size(data_dir, size)
+            for path in paths:
+                instance = parse_instance(path)
+                result = decode(model, instance, sample=False)
+                rows.append(
+                    {
+                        "role": role,
+                        "size": size,
+                        "n_available": len(paths),
+                        "protocol": "neural-construction",
+                        "instance": instance.name,
+                        "feasible": int(bool(result["feasible"])),
+                        "objective_h": result["objective"] if result["feasible"] else "",
+                        "objective_lit_h": result.get("objective_lit", "") if result["feasible"] else "",
+                        "runtime_s": result.get("runtime", ""),
+                        "oracle_calls": result.get("oracle_calls", ""),
+                        "oracle_requests": result.get("oracle_requests", ""),
+                        "oracle_cache_hits": result.get("oracle_cache_hits", ""),
+                        "reason": result.get("reason", ""),
+                        "accounting": "decode",
+                    }
+                )
+                print(
+                    {"role": role, "protocol": "neural-construction", "instance": instance.name, "feasible": rows[-1]["feasible"]},
+                    flush=True,
+                )
+    out_csv.parent.mkdir(parents=True, exist_ok=True)
+    with out_csv.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
+        writer.writeheader()
+        writer.writerows(rows)
+
+
 def evaluate_run(run_dir: Path, data_dir: Path, out_csv: Path, sizes=(10, 20, 40, 80)) -> None:
     rows = []
     for role, filename in (("bc_best", "bc_best.pt"), ("rl_best", "rl_best.pt")):
@@ -217,5 +260,7 @@ if __name__ == "__main__":
             print({"refresh": csv_path.name}, flush=True)
             total += refresh_p2_csv(run_dir, data_dir, csv_path, mismatch_log)
         print({"objective_mismatches": total}, flush=True)
+    elif len(sys.argv) > 1 and sys.argv[1] == "--evaluation" and sys.argv[2] == "neural-construction":
+        evaluate_neural_construction(Path(sys.argv[3]), Path(sys.argv[4]), Path(sys.argv[5]))
     else:
         evaluate_run(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]))

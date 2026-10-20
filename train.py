@@ -1350,6 +1350,55 @@ def diagnose_deepsets(model: HATPolicy, instance: Instance) -> dict:
     }
 
 
+def _frozen_action_log_prob(
+    reference: HATPolicy,
+    instance: Instance,
+    routes: list[dict],
+    unserved: set[int],
+    route_mask: list[bool],
+    route_action: torch.Tensor,
+    customer_mask: list[bool],
+    customer_action: torch.Tensor,
+    is_new: bool,
+    selected_index: int | None,
+    order: list[int],
+    last_node: int,
+    cache: dict,
+    nodes,
+):
+    """Log-probability of the live policy's action under a frozen model.
+
+    The mask is the feasibility mask already computed for the live decision.
+    The reference weights do not receive gradients.
+    """
+    with torch.no_grad():
+        nodes, route_vectors, _open_indices, context = reference.encode_state(
+            instance, routes, unserved, nodes=nodes, history_cache=cache
+        )
+        route_scores = reference.route_logits(route_vectors, _open_indices, context)
+        route_scores = route_scores.masked_fill(
+            ~torch.tensor(route_mask, dtype=torch.bool, device=reference.device),
+            float("-inf"),
+        )
+        route_lp = torch.distributions.Categorical(logits=route_scores).log_prob(route_action)
+        selected_vector = None if is_new else route_vectors[selected_index]
+        customer_scores = reference.customer_logits(
+            instance,
+            nodes,
+            selected_vector,
+            last_node,
+            context,
+            order,
+            allow_close=not is_new,
+        )
+        customer_scores = customer_scores.masked_fill(
+            ~torch.tensor(customer_mask, dtype=torch.bool, device=reference.device),
+            float("-inf"),
+        )
+        customer_lp = torch.distributions.Categorical(logits=customer_scores).log_prob(customer_action)
+    return nodes, (route_lp + customer_lp).detach()
+
+
 def decode(
     model: HATPolicy,
     instance: Instance,
@@ -1368,6 +1417,7 @@ def decode(
     only_customers: set[int] | None = None,
     repair_insertion: bool = False,
     oracle: FixedRouteOracle | None = None,
+    reference_model: HATPolicy | None = None,
 ) -> dict:
     """Greedy/sampled hierarchical decode with optional oracle-aware scoring.
 
@@ -1399,7 +1449,10 @@ def decode(
         served = {c for route in routes for c in route["customers"]}
         unserved = set(instance.customers) - served
     log_probs: list[torch.Tensor] = []
+    ref_log_probs: list[torch.Tensor] = []
     entropy_terms: list[torch.Tensor] = []
+    ref_cache: dict = {}
+    ref_nodes = None
     entropy = 0.0
     reason = ""
     max_decisions = 3 * len(instance.customers) + 5
@@ -1593,6 +1646,24 @@ def decode(
             customer_dist.sample() if sample else torch.argmax(customer_scores)
         )
         log_probs.append(customer_dist.log_prob(customer_action))
+        if reference_model is not None:
+            ref_nodes, ref_lp = _frozen_action_log_prob(
+                reference_model,
+                instance,
+                routes,
+                unserved,
+                route_mask,
+                route_action,
+                masks,
+                customer_action,
+                is_new,
+                selected_index,
+                order,
+                last_node,
+                ref_cache,
+                ref_nodes,
+            )
+            ref_log_probs.append(ref_lp)
         customer_entropy = customer_dist.entropy()
         entropy_terms.append(customer_entropy)
         entropy += float(customer_entropy.detach())
@@ -1687,6 +1758,7 @@ def decode(
         "oracle_solver_executions": oracle_stats["oracle_solver_executions"],
         "reason": reason,
         "log_prob": torch.stack(log_probs).sum() if log_probs else None,
+        "ref_log_prob": torch.stack(ref_log_probs).sum() if ref_log_probs else None,
         "entropy": entropy / max(1, len(log_probs)),
         "entropy_tensor": torch.stack(entropy_terms).sum() if entropy_terms else None,
         "n_unserved": len(unserved),
@@ -2175,6 +2247,12 @@ def main() -> None:
     parser.add_argument("--reward-alpha", type=float, default=1.0)
     parser.add_argument("--reward-beta", type=float, default=1.0)
     parser.add_argument("--entropy-coef", type=float, default=0.0)
+    parser.add_argument(
+        "--bc-kl",
+        type=float,
+        default=0.0,
+        help="REINFORCE penalty on log pi - log pi_BC. Zero leaves the original loss.",
+    )
     parser.add_argument("--advantage-scale", choices=("none", "std"), default="none")
     parser.add_argument("--grad-clip", type=float, default=1.0)
     parser.add_argument("--batch-size", type=int, default=1)

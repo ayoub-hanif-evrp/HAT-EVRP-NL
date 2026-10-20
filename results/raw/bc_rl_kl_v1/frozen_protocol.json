@@ -1,0 +1,22 @@
+{
+  "hypothesis": "A 0.01 penalty toward the frozen BC policy lowers synthetic validation duration relative to the BC checkpoint, for Route Transformer and RT + DeepSets, seeds 42-46.",
+  "models": [
+    "H2",
+    "H4"
+  ],
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "rl_steps": 300,
+  "bc_kl": 0.01,
+  "entropy_coef": 0.0,
+  "instance_order": "shuffled",
+  "reward": "normalized",
+  "baseline": "loo",
+  "rl_lr": 5e-05,
+  "official_eval": "neural-construction only, and only if validation improves"
+}

@@ -38,6 +38,6 @@ Two primary comparisons were declared for the original matrix: Route Transformer
 - Official scores for the shuffled checkpoints are recorded (10 files, 4,800/4,800 feasible, P2 accounting included). They do not overturn the validation result above.
 - Matched wall-clock classical search is recorded. It changes the n=10 reading: classical search is competitive when the budget is time rather than solver executions. At n=20 and above, Route Transformer behavior cloning remains lower.
 - The manuscript now states the formulation, the two training losses, the oracle accounting, and the execution-matched protocol. It is still a draft: the related-work discussion is short of a full review, and the wall-clock arm is absent.
-- REINFORCE is not an established improvement. DeepSets is not an established improvement over the Route Transformer. The execution-matched gap versus this classical search is real on the recorded instances and is not a claim of state-of-the-art status against the Froger best known solutions.
+- REINFORCE is not an established improvement. A frozen-BC penalty of 0.01 did not change that on validation (`docs/RL_DIAGNOSIS.md`, `results/raw/bc_rl_kl_v1`). DeepSets is not an established improvement over the Route Transformer. Classical search is supplementary and is not the primary RL result.
 
 The test suite against this revision passed 95 tests (`results/raw/bc_rl_current_test_transcript.txt`).

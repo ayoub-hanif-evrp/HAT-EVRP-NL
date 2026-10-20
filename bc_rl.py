@@ -487,6 +487,16 @@ def train_primary(args) -> dict:
     model.load_state_dict(best_bc_state)
     bc_ref = _log_eval("bc_best", 0, 0.0)
     bc_state = copy.deepcopy(model.state_dict())
+    kl_coef = float(getattr(args, "bc_kl", 0.0) or 0.0)
+    reference = None
+    if kl_coef > 0:
+        if cost_lambda != 0.0 or route_lambda != 0.0:
+            raise SystemExit("bc-kl reference scoring is defined for unadjusted construction logits")
+        reference = HATPolicy(VARIANTS[args.model]).to(device)
+        reference.load_state_dict(bc_state)
+        reference.eval()
+        for parameter in reference.parameters():
+            parameter.requires_grad_(False)
 
     # ----- Phase 2: REINFORCE from the best BC checkpoint -----
     rl_optimizer = torch.optim.Adam(model.parameters(), lr=rl_lr)
@@ -500,6 +510,9 @@ def train_primary(args) -> dict:
     for rl_step in range(1, args.rl_steps + 1):
         batch_losses = []
         batch_rewards = []
+        batch_reward_std = []
+        batch_adv_abs = []
+        batch_kl = []
         n_infeasible = 0
         oracle_calls = 0
         entropies = []
@@ -513,6 +526,7 @@ def train_primary(args) -> dict:
                     seed=args.seed + 10007 * rl_step + 17 * b + k,
                     cost_lambda=cost_lambda,
                     route_lambda=route_lambda,
+                    reference_model=reference,
                 )
                 sampled_rows.append(sampled)
                 oracle_calls += int(sampled.get("oracle_calls") or 0)
@@ -591,6 +605,18 @@ def train_primary(args) -> dict:
                 [p[2] for p in paired],
                 entropy_coef=entropy_coef,
             )
+            kl_terms = [
+                row["log_prob"] - row["ref_log_prob"]
+                for row in sampled_rows
+                if row.get("log_prob") is not None and row.get("ref_log_prob") is not None
+            ]
+            if kl_coef > 0 and kl_terms:
+                kl_mean = torch.stack(kl_terms).mean()
+                loss = loss + kl_coef * kl_mean
+                batch_kl.append(float(kl_mean.detach()))
+            reward_mean = sum(rewards) / len(rewards)
+            batch_reward_std.append(math.sqrt(sum((r - reward_mean) ** 2 for r in rewards) / len(rewards)))
+            batch_adv_abs.append(sum(abs(adv) for _lp, adv, _ent in paired) / len(paired))
             batch_losses.append(loss)
             batch_rewards.extend(rewards)
         if not batch_losses:
@@ -625,6 +651,9 @@ def train_primary(args) -> dict:
                 "oracle_calls": oracle_calls,
                 "grad_norm": grad_norm,
                 "entropy": (sum(entropies) / len(entropies)) if entropies else "",
+                "reward_std": (sum(batch_reward_std) / len(batch_reward_std)) if batch_reward_std else "",
+                "advantage_abs": (sum(batch_adv_abs) / len(batch_adv_abs)) if batch_adv_abs else "",
+                "bc_kl": (sum(batch_kl) / len(batch_kl)) if batch_kl else "",
                 "reward_mode": reward_mode,
                 "baseline": baseline_name,
                 "learning_rate": rl_lr,
@@ -734,6 +763,7 @@ def train_primary(args) -> dict:
         "baseline": baseline_name,
         "entropy_coef": entropy_coef,
         "entropy_regularizer_differentiable": entropy_coef > 0,
+        "bc_kl": kl_coef,
         "bc_score": list(bc_ref["score"]),
         "rl_start_score": list(rl_start["score"]),
         "rl_best_score": list(rl_best_score),
