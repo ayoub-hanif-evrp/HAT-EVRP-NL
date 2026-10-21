@@ -298,7 +298,7 @@ class NeuralConstructionTests(unittest.TestCase):
             solver_ls.ruin_and_repair = original_ruin
         self.assertIn("feasible", result)
 
-    def test_identical_reference_matches_live_log_prob(self):
+    def test_distribution_kl_is_zero_for_identical_policies(self):
         import copy
 
         from data import generate_synthetic
@@ -310,10 +310,51 @@ class NeuralConstructionTests(unittest.TestCase):
         model = HATPolicy(PolicyConfig(history=True, deepsets=False, d_model=32, layers=1, heads=4))
         reference = copy.deepcopy(model)
         reference.eval()
+        for parameter in reference.parameters():
+            parameter.requires_grad_(False)
         result = decode(model, instance, sample=True, seed=2, reference_model=reference)
-        self.assertIsNotNone(result["log_prob"])
-        self.assertIsNotNone(result["ref_log_prob"])
-        self.assertAlmostEqual(float(result["log_prob"].detach()), float(result["ref_log_prob"]), places=4)
+        self.assertIsNotNone(result["distribution_kl"])
+        self.assertAlmostEqual(float(result["distribution_kl"].detach()), 0.0, places=4)
+
+    def test_distribution_kl_gradient_moves_toward_frozen_bc(self):
+        import copy
+
+        from data import generate_synthetic
+        from model import HATPolicy, PolicyConfig
+        from train import _masked_categorical_kl, decode
+
+        live_logits = torch.tensor([1.5, -0.5, 0.2, float("-inf")], requires_grad=True)
+        frozen_logits = torch.tensor([0.0, 0.0, 0.0, float("-inf")])
+        identical = _masked_categorical_kl(frozen_logits, frozen_logits)
+        self.assertAlmostEqual(float(identical), 0.0, places=6)
+        divergence = _masked_categorical_kl(live_logits, frozen_logits)
+        self.assertGreater(float(divergence.detach()), 0.0)
+        divergence.backward()
+        self.assertTrue(torch.isfinite(live_logits.grad).all())
+        self.assertEqual(float(live_logits.grad[-1]), 0.0)
+        stepped = (live_logits - 0.5 * live_logits.grad).detach()
+        after = _masked_categorical_kl(stepped, frozen_logits)
+        self.assertLess(float(after.detach()), float(divergence.detach()))
+
+        torch.manual_seed(0)
+        instance = generate_synthetic(5, 3, generator_version="v2")
+        frozen = HATPolicy(PolicyConfig(history=True, deepsets=False, d_model=32, layers=1, heads=4))
+        frozen.eval()
+        for parameter in frozen.parameters():
+            parameter.requires_grad_(False)
+        live = copy.deepcopy(frozen)
+        with torch.no_grad():
+            for parameter in live.parameters():
+                parameter.add_(0.2)
+        for parameter in live.parameters():
+            parameter.requires_grad_(True)
+        result = decode(live, instance, sample=False, seed=0, reference_model=frozen)
+        self.assertGreater(float(result["distribution_kl"].detach()), 1e-4)
+        result["distribution_kl"].backward()
+        self.assertTrue(any(parameter.grad is not None and float(parameter.grad.abs().sum()) > 0 for parameter in live.parameters()))
+        for parameter in frozen.parameters():
+            self.assertFalse(parameter.requires_grad)
+            self.assertIsNone(parameter.grad)
 
 
 def math_isfinite(value: float) -> bool:

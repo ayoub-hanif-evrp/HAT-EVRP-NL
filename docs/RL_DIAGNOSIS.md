@@ -28,15 +28,17 @@ The KL runs record the within-update reward spread that the older CSVs did not. 
 
 Every rollout in these runs is also feasible. Entropy still falls, for example from 0.70 to 0.57 on Route Transformer seed 42 and from 0.97 to 0.39 on seed 46.
 
-## The one intervention that was run
+## The first penalty did not have the KL gradient
 
-REINFORCE stays the update. The loss gains `0.01 * (log π_θ(a) - log π_BC(a))`, with `π_BC` frozen at the behavior-cloning checkpoint. Entropy regularization stays off. The learning rate, reward, rollout count, and 300-update budget stay as in the original phase. Sampling is the shuffled order. Runs start from the saved `bc_best.pt` files for Route Transformer and RT + DeepSets, seeds 42–46. They are in `results/raw/bc_rl_kl_v1`.
+`results/raw/bc_rl_kl_v1` added `log π_θ(a) - log π_BC(a)` for the sampled action. Sampling is discrete, so PyTorch does not differentiate through the action. The expected gradient of that term, given the state, is zero. The recorded validation failure therefore does not show that a real KL penalty fails. Those files stay as the record of that incorrect term.
 
-Validation duration minus the behavior-cloning duration is +0.068 h for Route Transformer (lower on 1/5 seeds) and +0.125 h for RT + DeepSets (lower on 0/5 seeds). Neither paired interval excludes zero. The deployed checkpoint remains behavior cloning except where a single Route Transformer seed, seed 45, is lower by about 0.05 h. That is the same seed, and about the same margin, as the unregularized shuffled run. The 0.01 penalty did not create a new improvement.
+On that incorrect term, validation duration minus behavior cloning was +0.068 h for Route Transformer (lower on 1/5 seeds) and +0.125 h for RT + DeepSets (lower on 0/5 seeds). Those numbers stay in `results/raw/bc_rl_kl_v1`. They are not evidence about a KL regularizer.
 
-By the last update the trajectory KL is no longer negligible on every seed. It averages 2.25, so the penalty term averages about 0.023, which is the same order as the mean absolute advantage. The policy still leaves the behavior-cloning solution, and the greedy validation constructor is still worse. A larger penalty was not tested. Choosing one after these validation numbers would be a new experiment, not a correction of this one.
+## The corrected intervention
 
-Official Montoya evaluation was not started. The frozen rule was to evaluate construction only if at least four seeds improved and the interval excluded zero. That rule was not met.
+REINFORCE stays the update. The added term is now `0.01 * KL(π_θ || π_BC)` on the masked route distribution and the masked customer distribution at each decision. The behavior-cloning weights are frozen and receive no gradient. Entropy regularization stays off. The learning rate, reward, rollout count, and 300-update budget stay as before. Sampling is the shuffled order. Runs start from the same saved `bc_best.pt` files for Route Transformer and RT + DeepSets, seeds 42–46, and write to `results/raw/bc_rl_kl_v2`.
+
+Official neural-construction evaluation starts only if validation improves on at least four of five seeds and the paired interval excludes zero. That rule was not met. Route Transformer validation duration minus behavior cloning is +0.045 h, interval [−0.109, +0.199], lower on 2/5 seeds. RT + DeepSets is +0.049 h, interval [−0.076, +0.174], lower on 2/5 seeds. Means are 21.475 h to 21.520 h, and 21.715 h to 21.764 h. The files are `results/raw/bc_rl_kl_v2`. Official evaluation was not started. This is a negative result for this coefficient and this budget. It does not justify a larger coefficient chosen after seeing these numbers.
 
 ## What this does not claim
 

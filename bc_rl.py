@@ -587,36 +587,29 @@ def train_primary(args) -> dict:
                 for lp, adv, ent in zip(log_probs, advantages, entropy_tensors)
                 if lp is not None
             ]
-            if not paired:
-                continue
-            if all(abs(adv) <= 1e-12 for _lp, adv, _ent in paired):
-                reward_rows.append(
-                    {
-                        "stage": "rl",
-                        "step": rl_step,
-                        "skipped": "zero_advantage",
-                        "mean_reward": sum(rewards) / len(rewards),
-                    }
+            loss = None
+            if paired and not all(abs(adv) <= 1e-12 for _lp, adv, _ent in paired):
+                loss = reinforce_loss(
+                    [p[0] for p in paired],
+                    [p[1] for p in paired],
+                    [p[2] for p in paired],
+                    entropy_coef=entropy_coef,
                 )
-                continue
-            loss = reinforce_loss(
-                [p[0] for p in paired],
-                [p[1] for p in paired],
-                [p[2] for p in paired],
-                entropy_coef=entropy_coef,
-            )
             kl_terms = [
-                row["log_prob"] - row["ref_log_prob"]
+                row["distribution_kl"]
                 for row in sampled_rows
-                if row.get("log_prob") is not None and row.get("ref_log_prob") is not None
+                if row.get("distribution_kl") is not None
             ]
             if kl_coef > 0 and kl_terms:
                 kl_mean = torch.stack(kl_terms).mean()
-                loss = loss + kl_coef * kl_mean
+                loss = kl_coef * kl_mean if loss is None else loss + kl_coef * kl_mean
                 batch_kl.append(float(kl_mean.detach()))
+            if loss is None:
+                continue
             reward_mean = sum(rewards) / len(rewards)
             batch_reward_std.append(math.sqrt(sum((r - reward_mean) ** 2 for r in rewards) / len(rewards)))
-            batch_adv_abs.append(sum(abs(adv) for _lp, adv, _ent in paired) / len(paired))
+            if paired:
+                batch_adv_abs.append(sum(abs(adv) for _lp, adv, _ent in paired) / len(paired))
             batch_losses.append(loss)
             batch_rewards.extend(rewards)
         if not batch_losses:
@@ -764,6 +757,7 @@ def train_primary(args) -> dict:
         "entropy_coef": entropy_coef,
         "entropy_regularizer_differentiable": entropy_coef > 0,
         "bc_kl": kl_coef,
+        "bc_kl_gradient": "distribution" if kl_coef > 0 else "none",
         "bc_score": list(bc_ref["score"]),
         "rl_start_score": list(rl_start["score"]),
         "rl_best_score": list(rl_best_score),

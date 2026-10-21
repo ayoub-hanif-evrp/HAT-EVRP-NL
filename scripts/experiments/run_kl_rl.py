@@ -1,10 +1,10 @@
-"""REINFORCE from saved BC checkpoints with a frozen-BC log-probability penalty.
+"""REINFORCE from saved BC checkpoints with a distribution KL penalty.
 
-One intervention, chosen from the original logs: unregularized REINFORCE
-lowers entropy and raises validation duration by the last update. This run
-adds bc_kl * (log pi - log pi_BC) and nothing else. It does not retrain BC,
-does not write into earlier result folders, and does not run ruin-and-repair.
-Official neural-construction evaluation starts only if validation supports it.
+The penalty is KL(pi_theta || pi_BC) on the masked route distribution and the
+masked customer distribution. It replaces the earlier sampled log-ratio, whose
+expected gradient was zero. This run does not retrain BC, does not write into
+bc_rl_kl_v1, and does not run ruin-and-repair. Official neural-construction
+evaluation starts only if validation supports it.
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "results" / "raw" / "bc_rl_full_v1"
 SHUFFLE = ROOT / "results" / "raw" / "bc_rl_shuffle_v1"
-OUT = ROOT / "results" / "raw" / "bc_rl_kl_v1"
+OUT = ROOT / "results" / "raw" / "bc_rl_kl_v2"
 LOGS = OUT / "logs"
 CACHE = SOURCE / "teacher_cache_n10_train500_val100.pkl"
 KL = "0.01"
@@ -29,14 +29,15 @@ MODELS = ("H2", "H4")
 SEEDS = (42, 43, 44, 45, 46)
 PROTOCOL = {
     "hypothesis": (
-        "A 0.01 penalty toward the frozen BC policy lowers synthetic validation "
-        "duration relative to the BC checkpoint, for Route Transformer and "
-        "RT + DeepSets, seeds 42-46."
+        "A 0.01 KL between the live and frozen-BC action distributions lowers "
+        "synthetic validation duration relative to the BC checkpoint, for "
+        "Route Transformer and RT + DeepSets, seeds 42-46."
     ),
     "models": list(MODELS),
     "seeds": list(SEEDS),
     "rl_steps": 300,
     "bc_kl": 0.01,
+    "bc_kl_gradient": "distribution",
     "entropy_coef": 0.0,
     "instance_order": "shuffled",
     "reward": "normalized",
@@ -56,7 +57,7 @@ def command(model: str, seed: int) -> list[str]:
         "--pipeline",
         "primary",
         "--version",
-        "bcrl_kl_v1",
+        "bcrl_kl_v2",
         "--model",
         model,
         "--size",
@@ -178,7 +179,11 @@ def main() -> int:
             meta_path = run_dir / "run_meta.json"
             if meta_path.exists() and (run_dir / "rl_best.pt").exists():
                 meta = json.loads(meta_path.read_text(encoding="utf-8"))
-                if int(meta.get("completed_rl_updates") or 0) >= 300 and float(meta.get("bc_kl") or 0) == 0.01:
+                if (
+                    int(meta.get("completed_rl_updates") or 0) >= 300
+                    and float(meta.get("bc_kl") or 0) == 0.01
+                    and meta.get("bc_kl_gradient") == "distribution"
+                ):
                     print({"skip_complete": run_id}, flush=True)
                     continue
             source = SOURCE / "runs" / run_id / "bc_best.pt"

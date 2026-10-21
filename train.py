@@ -1350,15 +1350,43 @@ def diagnose_deepsets(model: HATPolicy, instance: Instance) -> dict:
     }
 
 
-def _frozen_action_log_prob(
+def _masked_categorical_kl(live_logits: torch.Tensor, reference_logits: torch.Tensor) -> torch.Tensor:
+    """KL(live || reference) on one masked categorical decision.
+
+    ``live_logits`` keep their gradient. ``reference_logits`` are detached, so
+    the frozen behavior-cloning model is not updated. This is the divergence
+    between the two full distributions, not a sampled log-ratio.
+
+    Masked actions are stored as ``-inf``. ``kl_divergence`` on a categorical
+    that still contains those entries has a NaN gradient, so the divergence is
+    taken on the shared finite support. That support is exactly the feasible
+    action set. A mask mismatch is a different support and is rejected.
+    """
+    if live_logits.shape != reference_logits.shape:
+        raise RuntimeError(
+            f"KL supports differ: live {tuple(live_logits.shape)} vs reference {tuple(reference_logits.shape)}"
+        )
+    reference_logits = reference_logits.detach()
+    live_finite = torch.isfinite(live_logits)
+    reference_finite = torch.isfinite(reference_logits)
+    if not torch.equal(live_finite, reference_finite):
+        raise RuntimeError("KL feasible masks differ")
+    if int(live_finite.sum()) == 0:
+        return live_logits.sum() * 0.0
+    live = torch.distributions.Categorical(logits=live_logits[live_finite])
+    reference = torch.distributions.Categorical(logits=reference_logits[reference_finite])
+    return torch.distributions.kl_divergence(live, reference)
+
+
+def _frozen_distribution_kl(
     reference: HATPolicy,
     instance: Instance,
     routes: list[dict],
     unserved: set[int],
     route_mask: list[bool],
-    route_action: torch.Tensor,
+    live_route_logits: torch.Tensor,
     customer_mask: list[bool],
-    customer_action: torch.Tensor,
+    live_customer_logits: torch.Tensor,
     is_new: bool,
     selected_index: int | None,
     order: list[int],
@@ -1366,23 +1394,22 @@ def _frozen_action_log_prob(
     cache: dict,
     nodes,
 ):
-    """Log-probability of the live policy's action under a frozen model.
+    """KL of the live route and customer distributions against a frozen model.
 
-    The mask is the feasibility mask already computed for the live decision.
-    The reference weights do not receive gradients.
+    Both distributions use the feasibility mask of the live decision. The
+    reference forward runs without gradients.
     """
     with torch.no_grad():
-        nodes, route_vectors, _open_indices, context = reference.encode_state(
+        nodes, route_vectors, open_indices, context = reference.encode_state(
             instance, routes, unserved, nodes=nodes, history_cache=cache
         )
-        route_scores = reference.route_logits(route_vectors, _open_indices, context)
-        route_scores = route_scores.masked_fill(
+        ref_route_scores = reference.route_logits(route_vectors, open_indices, context)
+        ref_route_scores = ref_route_scores.masked_fill(
             ~torch.tensor(route_mask, dtype=torch.bool, device=reference.device),
             float("-inf"),
         )
-        route_lp = torch.distributions.Categorical(logits=route_scores).log_prob(route_action)
         selected_vector = None if is_new else route_vectors[selected_index]
-        customer_scores = reference.customer_logits(
+        ref_customer_scores = reference.customer_logits(
             instance,
             nodes,
             selected_vector,
@@ -1391,12 +1418,13 @@ def _frozen_action_log_prob(
             order,
             allow_close=not is_new,
         )
-        customer_scores = customer_scores.masked_fill(
+        ref_customer_scores = ref_customer_scores.masked_fill(
             ~torch.tensor(customer_mask, dtype=torch.bool, device=reference.device),
             float("-inf"),
         )
-        customer_lp = torch.distributions.Categorical(logits=customer_scores).log_prob(customer_action)
-    return nodes, (route_lp + customer_lp).detach()
+    return nodes, _masked_categorical_kl(live_route_logits, ref_route_scores) + _masked_categorical_kl(
+        live_customer_logits, ref_customer_scores
+    )
 
 
 def decode(
@@ -1449,7 +1477,7 @@ def decode(
         served = {c for route in routes for c in route["customers"]}
         unserved = set(instance.customers) - served
     log_probs: list[torch.Tensor] = []
-    ref_log_probs: list[torch.Tensor] = []
+    distribution_kls: list[torch.Tensor] = []
     entropy_terms: list[torch.Tensor] = []
     ref_cache: dict = {}
     ref_nodes = None
@@ -1647,15 +1675,15 @@ def decode(
         )
         log_probs.append(customer_dist.log_prob(customer_action))
         if reference_model is not None:
-            ref_nodes, ref_lp = _frozen_action_log_prob(
+            ref_nodes, decision_kl = _frozen_distribution_kl(
                 reference_model,
                 instance,
                 routes,
                 unserved,
                 route_mask,
-                route_action,
+                route_scores,
                 masks,
-                customer_action,
+                customer_scores,
                 is_new,
                 selected_index,
                 order,
@@ -1663,7 +1691,7 @@ def decode(
                 ref_cache,
                 ref_nodes,
             )
-            ref_log_probs.append(ref_lp)
+            distribution_kls.append(decision_kl)
         customer_entropy = customer_dist.entropy()
         entropy_terms.append(customer_entropy)
         entropy += float(customer_entropy.detach())
@@ -1758,7 +1786,7 @@ def decode(
         "oracle_solver_executions": oracle_stats["oracle_solver_executions"],
         "reason": reason,
         "log_prob": torch.stack(log_probs).sum() if log_probs else None,
-        "ref_log_prob": torch.stack(ref_log_probs).sum() if ref_log_probs else None,
+        "distribution_kl": torch.stack(distribution_kls).sum() if distribution_kls else None,
         "entropy": entropy / max(1, len(log_probs)),
         "entropy_tensor": torch.stack(entropy_terms).sum() if entropy_terms else None,
         "n_unserved": len(unserved),
