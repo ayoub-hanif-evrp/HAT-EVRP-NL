@@ -3,19 +3,34 @@
   "platform": "Windows-11-10.0.26200-SP0",
   "validation_checkpoints": 60,
   "official_sampled_present": true,
+  "official_samples": {
+    "rows": 12000,
+    "sha256": "05389d2aa990f8621c23439985babce9be96b220c16d6efad193d35f0f4827e9",
+    "path": "results/raw/bc_rl_full_v1/eval_stochastic/official_samples.csv"
+  },
   "figures": [
     "fig_architecture_n10_greedy.png",
+    "fig_charging_curves.png",
     "fig_greedy_generalization.png",
+    "fig_linear_plan_infeasible.png",
     "fig_nonlinear_feasibility.png",
     "fig_official_sampled.png",
+    "fig_rl_duration_components.png",
+    "fig_soc_schedule.png",
     "fig_validation_learning_curves.png",
     "fig_validation_protocols.png",
     "fig_validation_seed_effects.png"
   ],
   "tables": [
+    "fig_charging_curves.csv",
+    "fig_linear_plan_charges.csv",
+    "fig_linear_plan_infeasible.csv",
+    "fig_soc_schedule.csv",
+    "nonlinear_instance_audit.csv",
     "official_greedy_summary.csv",
     "official_sampled_summary.csv",
     "original_run_manifest.csv",
+    "route_decomposition_summary.csv",
     "validation_seed_pairs.csv",
     "validation_summary.csv"
   ]

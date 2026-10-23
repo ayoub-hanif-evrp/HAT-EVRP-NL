@@ -27,7 +27,8 @@ HIST_H4 = 57.50564156359235
 
 class TestN40RegressionRecovery(unittest.TestCase):
     def test_historical_csv_means(self) -> None:
-        rows = list(csv.DictReader(HIST.open(encoding="utf-8")))
+        with HIST.open(encoding="utf-8", newline="") as handle:
+            rows = list(csv.DictReader(handle))
         for method, ref in (("H2", HIST_H2), ("H4", HIST_H4)):
             objs = [
                 float(r["objective_h"])
@@ -39,7 +40,8 @@ class TestN40RegressionRecovery(unittest.TestCase):
 
     def test_repro_not_worse_than_historical(self) -> None:
         self.assertTrue(REPRO.exists(), "run recovery reproduce stage first")
-        rows = list(csv.DictReader(REPRO.open(encoding="utf-8")))
+        with REPRO.open(encoding="utf-8", newline="") as handle:
+            rows = list(csv.DictReader(handle))
         for method, ref in (("H2", HIST_H2), ("H4", HIST_H4)):
             objs = [
                 float(r["objective_h"])
@@ -51,7 +53,8 @@ class TestN40RegressionRecovery(unittest.TestCase):
 
     def test_hybrid_on_recovered_beats_historical(self) -> None:
         self.assertTrue(PIPE.exists(), "run recovery pipeline stage first")
-        rows = list(csv.DictReader(PIPE.open(encoding="utf-8")))
+        with PIPE.open(encoding="utf-8", newline="") as handle:
+            rows = list(csv.DictReader(handle))
         for method, ref in (("H2", HIST_H2), ("H4", HIST_H4)):
             objs = [
                 float(r["objective_h"])

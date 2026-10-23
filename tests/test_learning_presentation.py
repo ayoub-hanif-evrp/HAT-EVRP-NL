@@ -76,7 +76,8 @@ class RewardFormulaTests(unittest.TestCase):
 class TrainingLogTests(unittest.TestCase):
     def test_c3_logs_have_bc_and_rl_stages(self):
         path = ROOT / "results" / "raw" / "training_logs" / "training_H2_n10_seed42_c3.csv"
-        rows = list(csv.DictReader(path.open(encoding="utf-8")))
+        with path.open(encoding="utf-8", newline="") as handle:
+            rows = list(csv.DictReader(handle))
         stages = {r["stage"] for r in rows}
         self.assertIn("bc", stages)
         self.assertIn("rl", stages)
@@ -87,7 +88,8 @@ class TrainingLogTests(unittest.TestCase):
 
     def test_h4_rl_endpoint_worse_than_bc(self):
         path = ROOT / "results" / "raw" / "training_logs" / "training_H4_n10_seed42_c3.csv"
-        rows = list(csv.DictReader(path.open(encoding="utf-8")))
+        with path.open(encoding="utf-8", newline="") as handle:
+            rows = list(csv.DictReader(handle))
         bc_end = float([r for r in rows if r["stage"] == "bc"][-1]["validation_objective"])
         rl_end = float([r for r in rows if r["stage"] == "rl"][-1]["validation_objective"])
         self.assertGreater(rl_end, bc_end + 5.0)
@@ -96,7 +98,8 @@ class TrainingLogTests(unittest.TestCase):
         derived = ROOT / "results" / "raw" / "training_logs" / "derived" / "bc_vs_rl_per_seed_c3.csv"
         if not derived.exists():
             self.skipTest("derived not built yet")
-        rows = list(csv.DictReader(derived.open(encoding="utf-8")))
+        with derived.open(encoding="utf-8", newline="") as handle:
+            rows = list(csv.DictReader(handle))
         self.assertTrue(rows)
         for r in rows:
             self.assertEqual(r.get("sampled_reward_logged"), "0")
@@ -169,7 +172,8 @@ class DecompositionStillHolds(unittest.TestCase):
             / "regression_recovery"
             / "RECOVERY_n40_recovered_pipeline.csv"
         )
-        rows = list(csv.DictReader(path.open(encoding="utf-8")))
+        with path.open(encoding="utf-8", newline="") as handle:
+            rows = list(csv.DictReader(handle))
         for method, expected in (("H2", 56.8055), ("H4", 56.3700)):
             objs = [
                 float(r["objective_h"])

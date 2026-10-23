@@ -4,7 +4,7 @@
 
 REINFORCE does not improve greedy construction. REINFORCE does improve the mean of four sampled constructions, at a matched inference budget, on the official n=10 and n=20 instances for the Route Transformer and for Route Transformer + DeepSets. That sampled result was predeclared on synthetic validation and then confirmed on the Montoya instances. It is not a better single-route deployment than greedy decoding.
 
-Branch: `bc-rl-v1`. The previous pushed commit of the distribution-KL rerun is `6524326`. This report describes the evaluation audit and manuscript written after that commit. `main` was not modified. Historical result directories were not overwritten.
+The locked evaluation is commit `7671f6411a37666212656121d02a7c3af41ce1f7`, which was the tip of both `main` and `bc-rl-v1`. This report’s charging decomposition is the following commit, pushed to both branches. The distribution-KL rerun remains `6524326` and was not repeated. Historical result directories were not overwritten.
 
 ## What was tested
 
@@ -51,11 +51,11 @@ Best-of-four official intervals exclude zero at n=10 and include zero at n=20. A
 
 The REINFORCE checkpoint was selected by greedy validation, not by the sampled score.
 
-Linear charging plans on fixed routes are feasible under true Montoya physics on 16/20, 12/20, and 11/20 instances at n=10, 20, and 40. Exact nonlinear plans are feasible on 20/20. Source: `results/raw/nonlinear_charging/charging_study_summary.csv`.
+Linear charging plans on fixed routes are feasible under true Montoya physics on 16/20, 12/20, and 11/20 instances at n=10, 20, and 40. Exact nonlinear plans are feasible on 20/20. Those counts were recomputed from the instance files, not only from the summary. End-to-end true-physics feasibility at n=40 is 20/20, 11/20, and 9/20 for exact, secant, and early-rate planning. The two experiments use a Cycle-3 checkpoint. The final checkpoints were decoded again, without retraining, and the regenerated full durations match the locked official file. The sampled improvement is travel time. Charging time is a small reduction at n=10 and is not established at n=20. Details: `docs/FINAL_NONLINEAR_CHARGING_ANALYSIS.md`.
 
 ## What this does not show
 
-It does not show that reinforcement learning improves the route a user gets from one greedy decode. It does not show that four samples should replace greedy decoding. It does not show that DeepSets improves the Route Transformer. It does not show a state-of-the-art gap to Froger et al. (2021); the Route Transformer n=10 literature gap stays above 22%. The earlier sampled log-ratio penalty had no expected gradient. The later distribution penalty is a sampled-conditional KL, not the exact hierarchical KL, and it was not used to select these checkpoints. Shuffled sampling and that penalty reproduce the same validation split; they are not additional successes.
+It does not show that reinforcement learning improves the route a user gets from one greedy decode. It does not show that four samples should replace greedy decoding. It does not show that DeepSets improves the Route Transformer. It does not show a state-of-the-art gap to Froger et al. (2019); the Route Transformer n=10 literature gap stays above 22%. The comparison file is still named `literature_bks_froger2021.csv` and its source column says “Froger et al. 2021 Table 13” on every row. Checked n=10 and n=20 values match Tables 9 and 13 of the 2019 *Computers & Operations Research* article, not a 2021 paper, and they are not the later best-known solutions in Froger et al. (2022). The earlier sampled log-ratio penalty had no expected gradient. The later distribution penalty is a sampled-conditional KL, not the exact hierarchical KL, and it was not used to select these checkpoints. Shuffled sampling and that penalty reproduce the same validation split; they are not additional successes.
 
 ## Commands
 
@@ -75,9 +75,20 @@ Tables and figures:
 
 ```text
 python scripts/reporting/final_research_artifacts.py
+python scripts/reporting/audit_nonlinear_instances.py
+python scripts/reporting/charging_publication_figures.py
+python scripts/reporting/summarize_route_decomposition.py
 ```
 
-Tests, after the manuscript and evaluation code were in place: 102 tests, OK. Transcript: `results/raw/final_test_transcript.txt`.
+The route decomposition reads saved checkpoints and does not train:
+
+```text
+python -u scripts/experiments/eval_route_decomposition.py
+```
+
+Its output is `results/raw/bc_rl_route_decomposition_v1/`. Regenerated objectives matched the locked sample file on all 4,000 H2/H4 rows at n=10 and n=20.
+
+Tests, after the manuscript and evaluation code were in place: 108 tests, OK. Transcript: `results/raw/final_test_transcript.txt`.
 
 ```text
 python -m unittest discover -s tests
@@ -95,6 +106,9 @@ Environment for the tables in this report: Python 3.12.10, Windows 11, CPU. The 
 | Official greedy n=10, 20, 40, 80 | Present from the earlier construction-only evaluation |
 | Official four-sample n=10, n=20, and n=40 | Complete, all feasible |
 | Official four-sample n=80 | Not run |
+| Official sample integrity | 12,000 rows, sha256 `05389d2aa990f8621c23439985babce9be96b220c16d6efad193d35f0f4827e9` |
+| Final-checkpoint route decomposition | 4,000 rows, objectives matched, no retraining |
+| Five-seed linear intervention on final weights | Not run |
 | Manuscript | `paper_draft.md` |
 | Figures | `results/final/figures/` |
 

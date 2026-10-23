@@ -1,0 +1,2 @@
+instance,charging_model,route_index,linear_duration_h,true_duration_h,duration_limit_h,linear_charging_h,true_charging_h,true_reason
+tc0c10s2cf1,LINEAR-EARLY-RATE,1,9.971430783591703,10.116856291202552,10.0,0.48816618578000903,0.6335916933908603,route duration 10.116856291 exceeds 10.000000000

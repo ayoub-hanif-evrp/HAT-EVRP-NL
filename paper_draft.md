@@ -2,7 +2,7 @@
 
 **HAT-EVRP-NL**
 
-Branch `bc-rl-v1`. Raw tables: `results/tables/final/`. Figures: `results/final/figures/`. The fixed-route charging optimizer is `frvcpy` (Kullman et al., 2021). This paper does not claim to have invented it.
+The locked evaluation is commit `7671f6411a37666212656121d02a7c3af41ce1f7`. This manuscript’s charging decomposition is the following commit, on both `main` and `bc-rl-v1`. Raw tables: `results/tables/final/`. Figures: `results/final/figures/`. The fixed-route charging optimizer is `frvcpy` (Kullman et al., 2021). This paper does not claim to have invented it.
 
 ---
 
@@ -12,13 +12,15 @@ HAT-EVRP-NL is a neural constructor for the electric vehicle routing problem wit
 
 On the shared synthetic validation set, REINFORCE does not improve greedy construction. Every paired 95% interval for greedy duration includes zero. The same checkpoints do improve the sampling distribution that REINFORCE optimizes. For the original Route Transformer, the mean duration of four independent samples falls by 0.344 h, interval [−0.528, −0.160], on 5 of 5 seeds. The best of those four samples falls by 0.189 h, interval [−0.267, −0.112], also on 5 of 5 seeds. Every sampled trajectory in this comparison is feasible.
 
-That split survives the official Montoya instances when the inference protocol is frozen before looking at them. Greedy construction remains inconclusive: the Route Transformer changes by −0.091 h at n=10, interval [−0.336, +0.154]. The mean of four samples improves for the Route Transformer by 0.714 h at n=10 and 0.566 h at n=20, and both intervals lie below zero. The same mean-sample result holds for Route Transformer + DeepSets at those two sizes. At n=40 the Route Transformer mean-sample interval includes zero. Best-of-four is established at n=10 for both architectures and at n=40 for the Route Transformer; it is not established at n=20. Four samples cost about four times as many charging solves as one greedy construction, and the best sample is still not better than the greedy Route Transformer construction. The supported claim is narrower than “reinforcement learning improves the deployed route”: it improves expected sampled construction, not the single greedy route.
+That split survives the official Montoya instances when the inference protocol is frozen before looking at them. Greedy construction remains inconclusive: the Route Transformer changes by −0.091 h at n=10, interval [−0.336, +0.154]. The mean of four samples improves for the Route Transformer by 0.714 h at n=10 and 0.566 h at n=20, and both intervals lie below zero. The same mean-sample result holds for Route Transformer + DeepSets at those two sizes. At n=40 the Route Transformer mean-sample interval includes zero. Best-of-four is established at n=10 for both architectures and at n=40 for the Route Transformer; it is not established at n=20. Four samples use more charging-solver executions than one greedy construction, and the best sample is still not better than the greedy Route Transformer construction. The supported claim is narrower than “reinforcement learning improves the deployed route”: it improves expected sampled construction, not the single greedy route.
+
+The same routes are scored with the original station curves. On fixed customer sequences, exact nonlinear plans stay feasible on 20 of 20 official instances at n=10, 20, and 40. Linear early-rate and linear secant plans, checked on those same curves, stay feasible on 16, 12, and 11 of 20. A saved early-rate plan for `tc0c10s2cf1` finishes in 9.971 h under its own estimate and in 10.117 h under the true curve, above the 10 h limit. The difference is charging time, 0.488 h versus 0.634 h.
 
 ---
 
 ## 1. Introduction
 
-Montoya et al. (2017) define the electric vehicle routing problem with nonlinear charging. A route may detour to a station whose charging time is a piecewise-linear function of state of charge, and each route has a maximum duration. Froger et al. (2021) publish the best known solutions used here. Kullman et al. (2021) provide the fixed-route solver that turns a customer sequence into a feasible charging plan.
+Montoya et al. (2017) define the electric vehicle routing problem with nonlinear charging. A route may detour to a station whose charging time is a piecewise-linear function of state of charge, and each route has a maximum duration. Froger, Mendoza, Jabali, and Laporte (2019) give formulations and fixed-route charging algorithms for that problem, and the best-known values used here are objectives from that article. Kullman et al. (2021) provide the fixed-route solver that turns a customer sequence into a feasible charging plan.
 
 The neural policy does not replace that solver. It chooses which route to extend and which customer to append. The scientific question is whether a second training phase, REINFORCE, improves that constructor relative to behavior cloning when both are scored with the same exact charging optimizer.
 
@@ -40,7 +42,7 @@ Five seeds share one synthetic training set. The intervals measure initializatio
 
 Kool, van Hoof, and Welling (2019) train an attention model for routing with REINFORCE and a greedy-rollout baseline. Kwon et al. (2020) exploit several optimal trajectories per instance and compare inference budgets. This project does not implement POMO. It does compare one greedy decode with four independent samples from the same policy. Rennie et al. (2017) use the greedy test-time decode as a detached baseline for the policy gradient. That baseline is implemented here and was not the baseline of the runs reported below. Those runs use a leave-one-out baseline. A further training configuration that combines the greedy baseline with a lower learning rate was specified and then not launched, because the validation audit already met its stopping rule.
 
-Montoya et al. (2017) and Froger et al. (2021) define the physical problem and the reference solutions. Kullman et al. (2021) define the fixed-route charging solver. None of those results imply that REINFORCE must improve a behavior-cloned routing policy.
+Montoya et al. (2017) and Froger et al. (2019) define the physical problem and the reference solutions used for gaps. Froger et al. (2022) later report newer best-known solutions for the uncapacitated problem; those newer values are not the comparison file in this repository. Kullman et al. (2021) define the fixed-route charging solver. None of those results imply that REINFORCE must improve a behavior-cloned routing policy. This study does not claim state-of-the-art routing quality.
 
 ---
 
@@ -120,7 +122,7 @@ Official evaluation uses the 20 Montoya instances at each size. Greedy numbers a
 
 On the original checkpoints, greedy validation differences are +0.036 h (State Pointer), +0.040 h (Route Transformer), +0.009 h (Fleet DeepSets), and +0.070 h (Route Transformer + DeepSets). Seeds better than behavior cloning are 2, 3, 1, and 1 of 5. Every interval includes zero. Feasibility is 1.0.
 
-Official greedy construction agrees. At n=10 the Route Transformer moves from 22.379 h to 22.287 h, a paired difference of −0.091 h, interval [−0.336, +0.154], better on 3 of 5 seeds. Route Transformer + DeepSets moves from 22.065 h to 22.282 h, interval [−0.241, +0.676]. No greedy interval at n=10, 20, 40, or 80 excludes zero. Feasibility is 1.0 at every size. The n=10 literature gaps of the Route Transformer, against Froger et al. (2021) Table 13, are 23.4% after behavior cloning and 22.7% after REINFORCE. That is not a state-of-the-art claim.
+Official greedy construction agrees. At n=10 the Route Transformer moves from 22.379 h to 22.287 h, a paired difference of −0.091 h, interval [−0.336, +0.154], better on 3 of 5 seeds. Route Transformer + DeepSets moves from 22.065 h to 22.282 h, interval [−0.241, +0.676]. No greedy interval at n=10, 20, 40, or 80 excludes zero. Feasibility is 1.0 at every size. The n=10 literature gaps of the Route Transformer, against the 2019 Froger objectives, are 23.4% after behavior cloning and 22.7% after REINFORCE. That is not a state-of-the-art claim. The stored file labels every row “Froger et al. 2021 Table 13.” Checked values do not support that single label: 19.75 h for `tc0c10s2cf1` matches Table 9 of Froger et al. (2019), and 17.08 h for `tc0c20s3ct2` matches Table 13 of the same article.
 
 **RQ1.** Not established. Greedy construction does not reliably improve.
 
@@ -175,31 +177,78 @@ At official n=10, greedy behavior-cloning means are 22.253 h (State Pointer), 22
 
 ## 10. Nonlinear charging
 
+![Charging curves](results/final/figures/fig_charging_curves.png)
+
+**Figure 8.** Cumulative charging time on instance `tc2c20s4cf0`. Markers are the original breakpoints. The last segment, from 15.2 kWh to 16.0 kWh, is slower than the first segment on every technology. Dashed lines are the empty-to-full secant. Dotted lines hold the first-segment rate out to a full battery. These two lines are the linear planners in the sensitivity study. Breakpoints: `results/tables/final/fig_charging_curves.csv`.
+
+![Linear plan exceeds the limit](results/final/figures/fig_linear_plan_infeasible.png)
+
+**Figure 9.** Saved early-rate plan for route 1 of `tc0c10s2cf1`. The left axis is restricted to 9.90–10.20 h so the limit crossing is visible. The linear estimate is 9.971 h. The same charge amounts on the original curve take 10.117 h. Charging time is 0.488 h under the linear estimate and 0.634 h under the true curve. Travel and service do not change. Source: `results/raw/nonlinear_charging/schedules/tc0c10s2cf1_LINEAR-EARLY-RATE_infeasible_under_true.json`.
+
 ![Charging feasibility](results/final/figures/fig_nonlinear_feasibility.png)
 
-**Figure 8.** Fixed customer routes. Each bar is the fraction of 20 official instances whose plan remains feasible on the true station curves. Source: `results/raw/nonlinear_charging/charging_study_summary.csv`.
+**Figure 10.** Fraction of 20 official instances that remain feasible when the stored plan is checked on the original curves. The left panel holds the customer sequences fixed and changes only the charging planner. The right panel lets the charging model change the neural construction. The two panels are different experiments. Counts were recomputed from the instance rows in `results/tables/final/nonlinear_instance_audit.csv`.
 
-Exact nonlinear plans are feasible on 20 of 20 instances at n=10, 20, and 40. The linear early-rate plan is feasible under true physics on 16, 12, and 11 of 20. The linear secant plan matches those counts in this summary. A linear plan can therefore look acceptable to its own planner and still violate Montoya charging. The constructor reported in this paper never uses that surrogate as its objective.
+Fixed customer sequences, feasible under the original curves:
 
-**RQ3.** Yes. Exact station curves are required for the feasibility claim.
+| Customers | Exact nonlinear | Linear secant | Linear early rate |
+|---:|---:|---:|---:|
+| 10 | 20/20 | 16/20 | 16/20 |
+| 20 | 20/20 | 12/20 | 12/20 |
+| 40 | 20/20 | 11/20 | 11/20 |
+
+The planner’s own feasibility is higher for some linear rows. At n=10 the early-rate planner accepts 20/20 and the true check accepts 16/20, all four failures being duration violations and none a state-of-charge failure. The secant planner accepts 17/20, with 3 missing plans and 1 duration violation. At n=40 the early-rate planner accepts 20/20 and the true check accepts 11/20, with 9 duration violations. Reoptimizing a rejected linear plan with the exact curve is a separate method. Those repaired rows are feasible on 20/20 and are not counted as successes of the linear planner.
+
+End-to-end construction, where the charging model can change the Route Transformer’s customer sequences, uses an older Cycle-3 checkpoint, not the final behavior-cloning and REINFORCE weights. True-physics feasibility is 20/20 for the exact curve at every size. Early-rate plans remain feasible on 15/20, 17/20, and 9/20. Secant plans remain feasible on 19/20, 19/20, and 11/20. At n=40 the secant planner itself fails on 1 of 20 instances (`tc1c40s5ct1`, planner infeasible) and 8 further plans violate duration under the original curve. Feasible-only mean durations are not used to rank these methods, because the feasibility rates differ.
+
+![State of charge](results/final/figures/fig_soc_schedule.png)
+
+**Figure 11.** Battery energy on a feasible exact plan for `tc0c10s2cf1`. Orange points are arrival state of charge at fast stations. The first charge raises the battery from 3.28 kWh to 13.60 kWh in 0.235 h. The second raises it from 2.51 kWh to 13.60 kWh in 0.253 h. Both amounts come from the saved solver plan.
+
+**RQ3.** Yes for the recorded linear planners. Exact station curves change feasibility. This is not a claim that every conceivable linear approximation fails.
+
+## 11. Where the sampled improvement comes from
+
+The nonlinear study above uses the Cycle-3 Route Transformer. The final behavior-cloning and REINFORCE checkpoints were decoded again, without retraining, on official n=10 and n=20 for the Route Transformer and RT + DeepSets, seeds 42–46, with the locked greedy and four-sample seeds. Regenerated full durations match `official_samples.csv` within \(10^{-4}\) h. Every regenerated route is feasible, and travel + service + nonlinear charging matches the simulated full duration. Service time is 5.0 h at n=10 and 10.0 h at n=20 on every route, so the paired service difference is zero. REINFORCE changes customer sequences. The exact charging optimizer then changes stations and charge amounts for those sequences. The policy does not output a charge.
+
+![Duration components](results/final/figures/fig_rl_duration_components.png)
+
+**Figure 12.** Paired change in the mean of four samples, RL minus BC, on the final checkpoints. Intervals are the five training seeds. Service time is omitted because it does not change.
+
+| Model | n | Travel (h) | Charging (h) | Full (h) | Sequences changed |
+|---|---:|---:|---:|---:|---:|
+| Route Transformer | 10 | −0.681 [−0.893, −0.469], 5/5 | −0.033 [−0.066, −0.0001], 5/5 | −0.714 [−0.944, −0.484], 5/5 | 43% |
+| Route Transformer | 20 | −0.520 [−0.871, −0.170], 5/5 | −0.045 [−0.109, +0.018], 4/5 | −0.566 [−0.965, −0.166], 5/5 | 59% |
+| RT + DeepSets | 10 | −1.361 [−1.902, −0.819], 5/5 | −0.072 [−0.094, −0.050], 5/5 | −1.432 [−1.983, −0.882], 5/5 | 77% |
+| RT + DeepSets | 20 | −0.742 [−1.277, −0.208], 5/5 | +0.005 [−0.091, +0.100], 2/5 | −0.738 [−1.328, −0.148], 5/5 | 84% |
+
+The full-duration differences match the locked official sample table. Service is exactly 5 h at n=10 and 10 h at n=20 for every feasible solution, so its paired difference is 0. The sampled improvement is shorter travel. Nonlinear charging time falls by a few hundredths of an hour at n=10, with intervals just below zero, and is not established at n=20. At n=20 the RT + DeepSets charging difference is positive. Charging visits fall at n=10 (−0.07 and −0.21 visits) and are inconclusive at n=20. The gain is not a learned charging controller.
+
+Greedy construction does not show the same split. For RT + DeepSets at official n=10, greedy charging time rises by 0.141 h, interval [+0.013, +0.270], on 0 of 5 seeds, while the full-duration interval still includes zero. Source: `results/tables/final/route_decomposition_summary.csv`, from `results/raw/bc_rl_route_decomposition_v1/solutions.csv`.
+
+**RQ2, components.** The sampled improvement is a change in the routes. The exact optimizer adapts charging to those routes. The component table states whether charging time fell, rose, or traded off against travel.
 
 ---
 
-## 11. Limitations
+## 12. Limitations
 
-The five seeds share one synthetic training set. Intervals are not a confidence statement about a new training distribution. Picking the best of four samples and reporting it as one greedy decode would misstate the inference budget; this paper keeps them separate. The mean-sample improvement does not keep an interval below zero at n=40. The customer KL used in an earlier penalty is conditional on the selected route, and that penalty is not the result in Sections 7 and 8. n=80 was not evaluated under four-sample decoding. Classical ruin-and-repair and hybrid insertion can lower duration further. Their files remain in `results/raw/bc_rl_full_v1/eval` under protocols P1 and P2, and they are not used as evidence that REINFORCE improved the constructor.
+The five seeds share one synthetic training set. Intervals are not a confidence statement about a new training distribution. Several architectures, protocols, and sizes were inspected after the validation rule selected both greedy and sampled reporting. The central confirmatory cells are the Route Transformer mean of four samples at official n=10 and n=20. RT + DeepSets, best-of-four, the other architectures, and n=40 are read with that wider search in mind. The twenty instances and the four samples are not extra training seeds. Checkpoint selection used greedy validation, so a checkpoint that was better under sampling could have been discarded. Checkpoints were not reselected on the official test.
+
+Picking the best of four samples and reporting it as one greedy decode would misstate the inference budget; this paper keeps them separate. The mean-sample improvement does not keep an interval below zero at n=40. The customer KL used in an earlier penalty is conditional on the selected route, and that penalty is not the result in Sections 7 and 8. n=80 was not evaluated under four-sample decoding. The fixed-route and end-to-end charging comparisons use the Cycle-3 Route Transformer, not the final behavior-cloning and REINFORCE weights. No five-seed linear-planner intervention was run on those final weights. Classical ruin-and-repair and hybrid insertion can lower duration further. Their files remain in `results/raw/bc_rl_full_v1/eval` under protocols P1 and P2, and they are not used as evidence that REINFORCE improved the constructor.
 
 ---
 
-## 12. Conclusion
+## 13. Conclusion
 
-Behavior cloning learns a feasible neural constructor whose charging plans come from an exact fixed-route solver. REINFORCE, from those checkpoints, does not establish a better greedy route. It does establish a better sampling distribution at n=10 and n=20: under a matched budget of four trajectories, the mean sample is shorter on the official instances for both the Route Transformer and Route Transformer + DeepSets, with intervals below zero and no infeasible sample. That mean-sample interval includes zero at n=40. The best of four samples is established at n=10 for both architectures and at n=40 for the Route Transformer. A single greedy decode remains the better construction. Linear charging surrogates are often infeasible under the true station curves, so the exact solver is part of the result rather than a replaceable subroutine.
+Behavior cloning learns a feasible neural constructor whose charging plans come from an exact fixed-route solver. REINFORCE, from those checkpoints, does not establish a better greedy route. It does establish a better sampling distribution at n=10 and n=20: under a matched budget of four trajectories, the mean sample is shorter on the official instances for both the Route Transformer and Route Transformer + DeepSets, with intervals below zero and no infeasible sample. That mean-sample interval includes zero at n=40. The best of four samples is established at n=10 for both architectures and at n=40 for the Route Transformer. A single greedy decode remains the better construction. On the original station curves, the recorded linear planners lose feasibility that the exact planner keeps, including a saved route whose linear estimate sits under the duration limit and whose true charging time puts it over that limit. The network does not choose the charge. It chooses the route, and the exact optimizer adapts the charge.
 
 ---
 
 ## References
 
-Froger, A., Mendoza, J. E., Jabali, O., and Laporte, G. (2021). Improved formulations and algorithmic components for the electric vehicle routing problem with nonlinear charging functions. *Computers & Operations Research*. Best known solutions: Table 13.
+Froger, A., Mendoza, J. E., Jabali, O., and Laporte, G. (2019). Improved formulations and algorithmic components for the electric vehicle routing problem with nonlinear charging functions. *Computers & Operations Research*, 104, 256–294. doi:10.1016/j.cor.2018.12.013.
+
+Froger, A., Jabali, O., Mendoza, J. E., and Laporte, G. (2022). The electric vehicle routing problem with capacitated charging stations. *Transportation Science*, 56(2), 460–482. doi:10.1287/trsc.2021.1111.
 
 Kool, W., van Hoof, H., and Welling, M. (2019). Attention, learn to solve routing problems! *International Conference on Learning Representations*. arXiv:1803.08475.
 

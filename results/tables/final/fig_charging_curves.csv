@@ -1,0 +1,13 @@
+instance,station_type,energy_kwh,cumulative_h
+tc2c20s4cf0,slow,0.0,0.0
+tc2c20s4cf0,slow,13.6,1.26
+tc2c20s4cf0,slow,15.2,1.54
+tc2c20s4cf0,slow,16.0,2.04
+tc2c20s4cf0,normal,0.0,0.0
+tc2c20s4cf0,normal,13.6,0.62
+tc2c20s4cf0,normal,15.2,0.77
+tc2c20s4cf0,normal,16.0,1.01
+tc2c20s4cf0,fast,0.0,0.0
+tc2c20s4cf0,fast,13.6,0.31
+tc2c20s4cf0,fast,15.2,0.39
+tc2c20s4cf0,fast,16.0,0.51

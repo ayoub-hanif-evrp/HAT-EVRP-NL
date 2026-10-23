@@ -56,7 +56,8 @@ class NumericalIntegrityTests(unittest.TestCase):
     def test_n40_historical_fairls_means(self):
         path = ROOT / "results" / "raw" / "cycle3" / "compare_size40_from10_fairls_final_seed42_c3.csv"
         self.assertTrue(path.exists(), path)
-        rows = list(csv.DictReader(path.open(encoding="utf-8")))
+        with path.open(encoding="utf-8", newline="") as handle:
+            rows = list(csv.DictReader(handle))
         for method, expected in (("H2", 57.17274009092578), ("H4", 57.50564156359235)):
             objs = [
                 float(r["objective_h"])
@@ -75,7 +76,8 @@ class NumericalIntegrityTests(unittest.TestCase):
             / "RECOVERY_n40_recovered_pipeline.csv"
         )
         self.assertTrue(path.exists(), path)
-        rows = list(csv.DictReader(path.open(encoding="utf-8")))
+        with path.open(encoding="utf-8", newline="") as handle:
+            rows = list(csv.DictReader(handle))
         for method, expected in (("H2", 56.8055), ("H4", 56.3700)):
             objs = [
                 float(r["objective_h"])
@@ -97,7 +99,8 @@ class NumericalIntegrityTests(unittest.TestCase):
         )
         if not path.exists():
             self.skipTest("decomposition CSV not yet regenerated")
-        rows = list(csv.DictReader(path.open(encoding="utf-8")))
+        with path.open(encoding="utf-8", newline="") as handle:
+            rows = list(csv.DictReader(handle))
         self.assertGreater(len(rows), 0)
         checked = 0
         for r in rows:
@@ -119,7 +122,8 @@ class NumericalIntegrityTests(unittest.TestCase):
         table = ROOT / "results" / "tables" / "table03_main_models.md"
         if not table.exists():
             self.skipTest("table03 not generated")
-        rows = list(csv.DictReader(raw.open(encoding="utf-8")))
+        with raw.open(encoding="utf-8", newline="") as handle:
+            rows = list(csv.DictReader(handle))
         h2 = next(r for r in rows if r["method"] == "H2")
         mean = float(h2.get("mean_h") or h2["objective_h"])
         text = table.read_text(encoding="utf-8")
@@ -133,7 +137,8 @@ class NumericalIntegrityTests(unittest.TestCase):
         self.assertEqual(len(xml), 120)
         hash_csv = ROOT / "results" / "raw" / "references" / "dataset_xml_sha256.csv"
         if hash_csv.exists():
-            rows = list(csv.DictReader(hash_csv.open(encoding="utf-8")))
+            with hash_csv.open(encoding="utf-8", newline="") as handle:
+                rows = list(csv.DictReader(handle))
             self.assertEqual(len(rows), 120)
 
 

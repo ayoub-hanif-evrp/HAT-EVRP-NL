@@ -7,6 +7,7 @@ present, the locked stochastic official evaluation. Does not train or decode.
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import math
 import platform
@@ -405,31 +406,99 @@ def fig_generalization(official: list[dict]) -> None:
     plt.close(fig)
 
 
+def validate_official_samples(path: Path = SAMPLES) -> dict:
+    """Fail if the locked stochastic file is incomplete, duplicated, or non-numeric.
+
+    Expected coverage is the completed n=10, n=20, and n=40 evaluation:
+    four architectures, five seeds, both checkpoints, twenty instances, one
+    greedy trial, and four sample trials.
+    """
+    if not path.exists():
+        raise SystemExit(f"missing official sample file: {path}")
+    with path.open(encoding="utf-8", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    expected_sizes = (10, 20, 40)
+    expected_seeds = {42, 43, 44, 45, 46}
+    expected_trials = {"greedy": {"0"}, "sample": {"0", "1", "2", "3"}}
+    seen: dict[tuple, int] = {}
+    groups: dict[tuple, dict[str, dict[str, set[str]]]] = defaultdict(lambda: defaultdict(lambda: defaultdict(set)))
+    for index, row in enumerate(rows, start=2):
+        try:
+            objective = float(row["objective_h"])
+            runtime = float(row["runtime_s"])
+            calls = int(float(row["oracle_calls"]))
+            requests = int(float(row["oracle_requests"]))
+        except (KeyError, TypeError, ValueError) as exc:
+            raise SystemExit(f"official sample row {index} has a non-numeric field: {exc}") from exc
+        if not math.isfinite(objective) or not math.isfinite(runtime) or calls < 0 or requests < calls:
+            raise SystemExit(f"official sample row {index} has an invalid objective or oracle count")
+        if str(row["feasible"]) not in {"1", "True", "true"}:
+            raise SystemExit(f"official sample row {index} is not marked feasible")
+        protocol = row["protocol"]
+        if protocol not in expected_trials or row["trial"] not in expected_trials[protocol]:
+            raise SystemExit(f"official sample row {index} has protocol {protocol} trial {row['trial']}")
+        key = (row["model"], row["seed"], row["role"], row["size"], row["instance"], protocol, row["trial"])
+        if key in seen:
+            raise SystemExit(f"duplicate official sample key {key} at rows {seen[key]} and {index}")
+        seen[key] = index
+        groups[(row["model"], row["seed"], row["role"], int(row["size"]))][row["instance"]][protocol].add(row["trial"])
+    expected_groups = {
+        (model, str(seed), role, size)
+        for model in MODELS
+        for seed in expected_seeds
+        for role in ("bc", "rl")
+        for size in expected_sizes
+    }
+    if set(groups) != expected_groups:
+        missing = sorted(expected_groups - set(groups))
+        extra = sorted(set(groups) - expected_groups)
+        raise SystemExit(f"official sample groups missing={missing[:5]} extra={extra[:5]}")
+    for key, instances in groups.items():
+        if len(instances) != 20:
+            raise SystemExit(f"{key} has {len(instances)} instances, expected 20")
+        for instance, protocols in instances.items():
+            if protocols.get("greedy") != {"0"} or protocols.get("sample") != {"0", "1", "2", "3"}:
+                raise SystemExit(f"{key} instance {instance} has trials {dict(protocols)}")
+    bc_ids = {(model, seed, size, instance) for (model, seed, role, size), instances in groups.items() if role == "bc" for instance in instances}
+    rl_ids = {(model, seed, size, instance) for (model, seed, role, size), instances in groups.items() if role == "rl" for instance in instances}
+    if bc_ids != rl_ids:
+        raise SystemExit("BC and RL official sample instance identifiers do not match")
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    if len(rows) != 12_000:
+        raise SystemExit(f"official sample file has {len(rows)} rows, expected 12000")
+    return {"rows": len(rows), "sha256": digest, "path": str(path.relative_to(ROOT)).replace("\\", "/")}
+
+
 def fig_nonlinear() -> None:
     _style()
-    rows = [
-        row
-        for row in _rows(CHARGING)
-        if row["experiment"] == "fixed_route" and row["method"].startswith("plan_")
-    ]
     labels = {"LINEAR-EARLY-RATE": "Linear early rate", "LINEAR-SECANT": "Linear secant", "TRUE-NL": "Exact nonlinear"}
     colors = {"LINEAR-EARLY-RATE": "#E69F00", "LINEAR-SECANT": "#D55E00", "TRUE-NL": "#0072B2"}
     models = ["LINEAR-EARLY-RATE", "LINEAR-SECANT", "TRUE-NL"]
-    sizes = sorted({int(row["size"]) for row in rows})
-    fig, ax = plt.subplots(figsize=(6.4, 3.6))
-    width = 0.25
-    x = np.arange(len(sizes))
-    for offset, model in enumerate(models):
-        chosen = []
-        for size in sizes:
-            row = next(item for item in rows if int(item["size"]) == size and item["charging_model"] == model)
-            chosen.append(100.0 * int(row["feasible_under_true_physics"]) / int(row["n_instances"]))
-        ax.bar(x + (offset - 1) * width, chosen, width, color=colors[model], label=labels[model])
-    ax.set_xticks(x, [str(size) for size in sizes])
-    ax.set_xlabel("Customers")
-    ax.set_ylabel("Feasible under true charging (%)")
-    ax.set_ylim(0, 105)
-    ax.legend(frameon=False, loc="lower right")
+    fig, axes = plt.subplots(1, 2, figsize=(8.6, 3.6), sharey=True)
+    for ax, experiment, title in (
+        (axes[0], "fixed_route", "Fixed customer sequences"),
+        (axes[1], "end_to_end", "Charging model can change routes"),
+    ):
+        rows = [
+            row
+            for row in _rows(CHARGING)
+            if row["experiment"] == experiment and (experiment == "end_to_end" or row["method"].startswith("plan_"))
+        ]
+        sizes = sorted({int(row["size"]) for row in rows})
+        x = np.arange(len(sizes))
+        width = 0.25
+        for offset, model in enumerate(models):
+            chosen = []
+            for size in sizes:
+                row = next(item for item in rows if int(item["size"]) == size and item["charging_model"] == model)
+                chosen.append(100.0 * int(row["feasible_under_true_physics"]) / int(row["n_instances"]))
+            ax.bar(x + (offset - 1) * width, chosen, width, color=colors[model], label=labels[model])
+        ax.set_xticks(x, [str(size) for size in sizes])
+        ax.set_xlabel("Customers")
+        ax.set_title(title)
+        ax.set_ylim(0, 112)
+    axes[0].set_ylabel("Feasible under true charging (%)")
+    axes[1].legend(frameon=False, loc="lower left")
     fig.tight_layout()
     fig.savefig(OUT_FIG / "fig_nonlinear_feasibility.png")
     plt.close(fig)
@@ -485,6 +554,7 @@ def fig_rt_deepsets(official: list[dict], sampled: list[dict]) -> None:
 
 def main() -> None:
     OUT_FIG.mkdir(parents=True, exist_ok=True)
+    sample_audit = validate_official_samples()
     paired = validation_pairs()
     summary = validation_summary(paired)
     official = greedy_official_summary(p0_instance_rows())
@@ -506,6 +576,7 @@ def main() -> None:
         "platform": platform.platform(),
         "validation_checkpoints": 60,
         "official_sampled_present": bool(sampled),
+        "official_samples": sample_audit,
         "figures": sorted(path.name for path in OUT_FIG.glob("*.png")),
         "tables": sorted(path.name for path in OUT_TAB.glob("*.csv")),
     }

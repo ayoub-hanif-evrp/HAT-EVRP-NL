@@ -76,7 +76,8 @@ class PublicationFigureTests(unittest.TestCase):
         from collections import defaultdict
 
         path = ROOT / "results" / "raw" / "nonlinear_charging" / "fixed_route_charging_comparison.csv"
-        rows = list(csv.DictReader(path.open(encoding="utf-8")))
+        with path.open(encoding="utf-8", newline="") as handle:
+            rows = list(csv.DictReader(handle))
         by = defaultdict(lambda: {"true": 0, "n": 0})
         for r in rows:
             if not r["method"].startswith("plan_"):
@@ -92,7 +93,8 @@ class PublicationFigureTests(unittest.TestCase):
         import csv
 
         path = ROOT / "results" / "raw" / "regression_recovery" / "RECOVERY_n40_objective_decomposition.csv"
-        rows = list(csv.DictReader(path.open(encoding="utf-8")))
+        with path.open(encoding="utf-8", newline="") as handle:
+            rows = list(csv.DictReader(handle))
         for r in rows:
             if r.get("stage") != "hybrid_insert" or r.get("feasible") != "1":
                 continue
@@ -110,6 +112,10 @@ class PublicationFigureTests(unittest.TestCase):
             "fig_official_sampled.png",
             "fig_architecture_n10_greedy.png",
             "fig_nonlinear_feasibility.png",
+            "fig_charging_curves.png",
+            "fig_linear_plan_infeasible.png",
+            "fig_soc_schedule.png",
+            "fig_rl_duration_components.png",
         ):
             self.assertIn(name, paper, f"paper missing embed/reference for {name}")
 
@@ -121,13 +127,24 @@ class PublicationFigureTests(unittest.TestCase):
         self.assertIn("not a better deployment policy than greedy", paper)
         self.assertIn("not used as evidence that REINFORCE", paper)
 
+    def test_official_sample_file_has_12000_unique_rows(self):
+        import sys
+
+        sys.path.insert(0, str(ROOT / "scripts" / "reporting"))
+        from final_research_artifacts import validate_official_samples
+
+        audit = validate_official_samples()
+        self.assertEqual(audit["rows"], 12000)
+        self.assertEqual(len(audit["sha256"]), 64)
+
     def test_fig15_delta_matches_raw_fairls(self):
         cycle3 = ROOT / "results" / "raw" / "cycle3"
         for n in (10, 20, 40, 80):
             path = cycle3 / f"FINAL_n{n}_fairls.csv"
             if not path.exists():
                 continue
-            rows = {r["method"]: r for r in csv.DictReader(path.open(encoding="utf-8"))}
+            with path.open(encoding="utf-8", newline="") as handle:
+                rows = {r["method"]: r for r in csv.DictReader(handle)}
             if "H2" not in rows or "H4" not in rows:
                 continue
             delta = float(rows["H4"]["mean_h"]) - float(rows["H2"]["mean_h"])

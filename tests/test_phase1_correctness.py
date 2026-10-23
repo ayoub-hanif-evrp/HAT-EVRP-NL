@@ -48,7 +48,8 @@ class TrainingCsvSchemaTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "training.csv"
             write_training_csv(path, rows)
-            loaded = list(csv.DictReader(path.open(encoding="utf-8")))
+            with path.open(encoding="utf-8", newline="") as handle:
+                loaded = list(csv.DictReader(handle))
         self.assertEqual(len(loaded), 2)
         self.assertIn("grad_norm", loaded[0])
         self.assertEqual(loaded[0]["grad_norm"], "")
