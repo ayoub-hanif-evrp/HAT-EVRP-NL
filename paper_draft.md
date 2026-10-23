@@ -1,300 +1,212 @@
-# History-Aware Neural Electric Vehicle Routing with DeepSets Fleet Coordination and Exact Nonlinear Charging Optimization
+# Neural Electric Vehicle Routing with Nonlinear Charging: Behavior Cloning and Reinforcement Learning
 
-**HAT-EVRP-NL — research manuscript**  
-Results: `results/README.md` · Nonlinear: `results/NONLINEAR_CHARGING_STUDY.md` · Learning: `results/REWARD_AND_LEARNING_STUDY.md`  
-Figures: `results/figures/` (20 main) + 1 supplementary diagnostic · Catalog: `docs/FIGURE_CATALOG.md` · Tables: `results/tables/` · Raw: `results/raw/`
+**HAT-EVRP-NL**
+
+Branch `bc-rl-v1`. Raw tables: `results/tables/final/`. Figures: `results/final/figures/`. The fixed-route charging optimizer is `frvcpy` (Kullman et al., 2021). This paper does not claim to have invented it.
 
 ---
 
 ## Abstract
 
-The primary method is a neural constructor trained in two phases: behavior cloning, then REINFORCE. Charging is not learned. After the policy chooses a customer sequence, `frvcpy` returns the exact nonlinear charging plan, and an independent checker tests feasibility. Local search, ruin-and-repair, and hybrid insertion are not part of this training loop and are not part of the primary comparison. Those searches remain supplementary.
+HAT-EVRP-NL is a neural constructor for the electric vehicle routing problem with nonlinear charging. The policy learns route choice and customer order. Charging stations and charge amounts are not network outputs. After a customer sequence is chosen, `frvcpy` solves the fixed-route charging problem on the station-specific Montoya curves, and an independent checker tests state of charge, coverage, duration, and charging time. Training has two phases and no others: behavior cloning, then REINFORCE.
 
-The question the primary numbers answer is whether REINFORCE improves the behavior-cloning constructor. On the completed five-seed matrix it does not, in the sense required here. Official n=10 construction means after behavior cloning are 22.253 h (State Pointer), 22.379 h (Route Transformer), 22.060 h (Fleet DeepSets), and 22.065 h (RT + DeepSets). REINFORCE changes those means to 22.655, 22.287, 22.700, and 22.282 h. The Route Transformer paired change is −0.091 h, interval [−0.336, +0.154], which includes zero, and that checkpoint is not better under hybrid insertion. Every recorded RL rollout in that matrix is feasible, so the phase is not learning feasibility. Entropy falls during REINFORCE, and validation duration at the last update is worse than the behavior-cloning checkpoint.
+On the shared synthetic validation set, REINFORCE does not improve greedy construction. Every paired 95% interval for greedy duration includes zero. The same checkpoints do improve the sampling distribution that REINFORCE optimizes. For the original Route Transformer, the mean duration of four independent samples falls by 0.344 h, interval [−0.528, −0.160], on 5 of 5 seeds. The best of those four samples falls by 0.189 h, interval [−0.267, −0.112], also on 5 of 5 seeds. Every sampled trajectory in this comparison is feasible.
 
-A sampled log-ratio penalty has expected gradient zero and is not a test of anchoring. The corrected penalty is \(0.01\,\mathrm{KL}(\pi_\theta\Vert\pi_{\mathrm{BC}})\) on the masked route and customer distributions. Rerun from the same checkpoints, Route Transformer validation duration rises by 0.045 h, interval [−0.109, +0.199], better on 2/5 seeds. RT + DeepSets rises by 0.049 h, interval [−0.076, +0.174], better on 2/5 seeds. Official evaluation of that variant was not started. A separate charging study finds that linear charging surrogates frequently become infeasible under true Montoya physics. These results do not establish a reliable RL gain.
+That split survives the official Montoya instances when the inference protocol is frozen before looking at them. Greedy construction remains inconclusive: the Route Transformer changes by −0.091 h at n=10, interval [−0.336, +0.154]. The mean of four samples improves for the Route Transformer by 0.714 h at n=10 and 0.566 h at n=20, and both intervals lie below zero. The same mean-sample result holds for Route Transformer + DeepSets at those two sizes. At n=40 the Route Transformer mean-sample interval includes zero. Best-of-four is established at n=10 for both architectures and at n=40 for the Route Transformer; it is not established at n=20. Four samples cost about four times as many charging solves as one greedy construction, and the best sample is still not better than the greedy Route Transformer construction. The supported claim is narrower than “reinforcement learning improves the deployed route”: it improves expected sampled construction, not the single greedy route.
 
 ---
 
 ## 1. Introduction
 
-Battery-electric fleets introduce charging time that is *nonlinear* in remaining capacity. Montoya et al. (2017) formalized E-VRP-NL with station-specific piecewise-linear charging curves and a maximum route duration.
+Montoya et al. (2017) define the electric vehicle routing problem with nonlinear charging. A route may detour to a station whose charging time is a piecewise-linear function of state of charge, and each route has a maximum duration. Froger et al. (2021) publish the best known solutions used here. Kullman et al. (2021) provide the fixed-route solver that turns a customer sequence into a feasible charging plan.
 
-The Montoya E-VRP-NL benchmark is particularly appropriate for evaluating the proposed hybrid model because it explicitly represents charging-time nonlinearity through station-specific piecewise-linear curves. Consequently, the charging duration required for a given energy increment depends on the battery state of charge. We therefore examine not only total routing cost, but also the physical feasibility, charging time, and routing decisions obtained when linear charging approximations are used.
+The neural policy does not replace that solver. It chooses which route to extend and which customer to append. The scientific question is whether a second training phase, REINFORCE, improves that constructor relative to behavior cloning when both are scored with the same exact charging optimizer.
 
-**RQ1.** Does the Route Transformer improve official n=10 construction relative to the State Pointer?  
-**RQ2.** Does adding Fleet DeepSets improve upon the Route Transformer alone?  
-**RQ3.** Does nonlinear charging optimization matter versus linear charging assumptions?  
-**RQ4.** Does REINFORCE improve the behavior-cloning checkpoint on the predeclared comparison: Route Transformer, official n=10, construction only?
+Four questions are answered with paired five-seed comparisons. A negative duration difference means the REINFORCE checkpoint is faster.
 
-The other architecture, size, and protocol contrasts in the 48-cell table are exploratory. Five seeds that share one synthetic training set measure initialization and sampling noise, not a new draw of the training data.
+**RQ1.** Does REINFORCE lower greedy construction duration?
 
----
+**RQ2.** Does REINFORCE lower the mean, and the best, of four sampled constructions when behavior cloning receives the same four random seeds and the same charging solver?
 
-## 2. Related Work
+**RQ3.** Do linear charging surrogates remain feasible when the resulting plan is checked on the true station curves?
 
-Montoya et al. (2017) formulate the electric vehicle routing problem with nonlinear charging: routes may detour to stations whose charging time is a piecewise-linear function of state of charge, and each route is limited by a maximum duration. Froger et al. (2021) give the best known solutions used here, compared through the literature objective that removes service time. Kullman et al. (2021) provide `frvcpy`, the fixed-route labeling solver this project calls after a customer sequence has been chosen. The neural policy does not replace that solver.
+**RQ4.** Does adding Fleet DeepSets to the Route Transformer improve construction over the Route Transformer alone?
 
-On the learning side, Kool et al. (2019) train an attention-based construction policy with REINFORCE, and Kwon et al. (2020) reduce gradient variance with multiple rollouts from one instance. Those models choose the next node in a complete graph. The policy here is narrower: it chooses which route to extend and which customer to append, then asks `frvcpy` for the charging plan. Chung, Lee, and Tsang (2025) survey this family of neural combinatorial methods. The present experiments ask whether a route-context encoder, a fleet aggregator, and a short REINFORCE stage change official durations. They do not claim a new state of the art.
+Five seeds share one synthetic training set. The intervals measure initialization and sampling noise, not a new draw of the training data. Official instances are not used to choose checkpoints or the inference protocol.
 
 ---
 
-## 3. Problem Formulation
+## 2. Related work
 
-An instance has one depot \(0\), customers \(C\), and charging stations \(S\). Travel time and energy between nodes are fixed. Each customer \(i\) has a service time. Every vehicle starts and ends at the depot, carries a battery of capacity \(Q\), and must finish within a route limit \(T_{\max}\). Each customer is served by exactly one visit. Stations may be used more than once, including more than once on the same route, and the amount charged may be any feasible partial recharge.
+Kool, van Hoof, and Welling (2019) train an attention model for routing with REINFORCE and a greedy-rollout baseline. Kwon et al. (2020) exploit several optimal trajectories per instance and compare inference budgets. This project does not implement POMO. It does compare one greedy decode with four independent samples from the same policy. Rennie et al. (2017) use the greedy test-time decode as a detached baseline for the policy gradient. That baseline is implemented here and was not the baseline of the runs reported below. Those runs use a leave-one-out baseline. A further training configuration that combines the greedy baseline with a lower learning rate was specified and then not launched, because the validation audit already met its stopping rule.
 
-At a station of type \(s\), the time to charge from energy \(q_{\mathrm{in}}\) to \(q_{\mathrm{out}}\) is the difference of the station's piecewise-linear cumulative curve, \(F_s(q_{\mathrm{out}})-F_s(q_{\mathrm{in}})\). State of charge after a charge cannot exceed \(Q\), and it must stay high enough to reach the next station or the depot. A solution is feasible only if every route satisfies these physical checks. The objective used for learning and for the tables is
+Montoya et al. (2017) and Froger et al. (2021) define the physical problem and the reference solutions. Kullman et al. (2021) define the fixed-route charging solver. None of those results imply that REINFORCE must improve a behavior-cloned routing policy.
+
+---
+
+## 3. Problem and charging
+
+An instance has a depot, customers, and charging stations. A solution is a set of routes. Each route starts and ends at the depot, serves each of its customers once, and may insert stations. The full duration is
 
 \[
-Z_\mathrm{full}=T_\mathrm{travel}+T_\mathrm{service}+T_\mathrm{charge}.
+Z_{\mathrm{full}} = \text{travel} + \text{service} + \text{nonlinear charging}.
 \]
 
-The literature gap uses \(Z_\mathrm{lit}=Z_\mathrm{full}-T_\mathrm{service}\), which matches Froger et al. when every customer is served. `frvcpy` chooses the stations and charge amounts for a fixed customer sequence. The learned policy chooses only the customer sequence.
-
-A request is one call to that solver for a customer sequence. A cache hit returns a sequence that was already solved. An execution is a cache miss, so it is one new labeling solve. Official construction uses about \(n(n+1)/2\) executions (55, 210, 819, and 3,228 at n=10, 20, 40, and 80), which is the cost of testing candidate appends. Local search and ruin-and-repair add further executions on new sequences. The routing choices themselves remain combinatorial. The labeling solve is the expensive inner step, and it is not differentiated.
-
----
-
-## 4. Proposed HAT-EVRP-NL Method
-
-![Figure 1. HAT-EVRP-NL architecture](results/figures/fig01_hat_evrp_nl_architecture.png)
-
-**Figure 1.** Hybrid architecture. Blue blocks are learned: a node encoder, the Route Transformer (RT) over optimizer-enriched stops, dynamic state fusion, optional Fleet DeepSets, and a hierarchical pointer. Orange blocks are not differentiated: `frvcpy` builds the charging plan for the current customer sequence, and a Python checker tests physical feasibility. A causal attention mask stops a stop token from attending to later stops in that plan. The plan itself can contain stations and charge amounts chosen by the solver, so the encoded context is not a log of committed neural actions. Training is behavior cloning, then REINFORCE. Gradients pass through the routing log-probabilities only.
-
-Ablations (display names): State Pointer · Route Transformer (RT) · Fleet DeepSets · Route Transformer + DeepSets (HAT-EVRP-NL). Classical: Greedy Construction / Greedy + Local Search. Internal checkpoint keys H0–H4 are retained for reproducibility only (`presentation_names.py`).
-
-![Figure 2. Montoya layouts](results/figures/fig02_montoya_instance_layouts.png)
-
-**Figure 2.** Official Montoya spatial layouts for location families tc0, tc1, and tc2 (n=20 representatives). Markers: depot (square), customers (circles), charging stations by technology (triangles). Coordinates are dataset units from the XML files.
-
-![Figure 3. Feasible EV routes](results/figures/fig03_feasible_ev_routes.png)
-
-**Figure 3.** Validated hybrid solution for `tc2c40s5cf3` (Route Transformer (RT), hybrid_insert; full duration 40.14 h). Routes from saved JSON; open circles mark charge visits. Source: `results/raw/regression_recovery/solutions/`.
-
----
-
-## 5. Training Methodology
-
-The completed study uses two training phases and no others. Behavior cloning imitates feasible customer sequences from randomized greedy construction and local search. For a teacher trajectory \(\tau\), the recorded loss is the mean next-action cross-entropy
+The literature objective used for best-known-solution gaps removes service time. Charging time on a station curve \(C_s\) between incoming energy \(q_{\mathrm{in}}\) and outgoing energy \(q_{\mathrm{out}}\) is
 
 \[
-L_{\mathrm{BC}}=-\frac{1}{|\tau|}\sum_{t\in\tau}\log \pi_\theta(a_t\mid s_t).
+\text{charging time} = C_s(q_{\mathrm{out}}) - C_s(q_{\mathrm{in}}).
 \]
 
-The action \(a_t\) is hierarchical. The policy first picks an open route or the decision to open a new route, then picks a customer or the decision to close the route:
+\(C_s\) is the piecewise-linear cumulative curve of that station. A solution is accepted only if every customer is served once, every route respects the battery and the duration limit, and the charging times match the station curves. Linear early-rate and linear secant planners appear only in the sensitivity study. They are not the reward or the reported constructor.
+
+---
+
+## 4. Policy
+
+The constructor is a hierarchical pointer. It does not output a charge. At each decision it scores the open routes and the option to open a new route, then scores the unserved customers and, when a route is already open, the option to close it. Infeasible actions are masked. The Route Transformer (RT) encodes the stop sequence of the current route, including charging features taken from the current `frvcpy` plan. A causal mask limits attention along that sequence. It does not mean that every token was a committed neural action. Fleet DeepSets is an optional permutation-invariant fleet aggregator. The four trained configurations are State Pointer, Route Transformer, Fleet DeepSets, and Route Transformer + DeepSets. The last of these is the full HAT-EVRP-NL model. Internal checkpoint keys remain H1–H4.
+
+![Architecture](results/figures/fig01_hat_evrp_nl_architecture.png)
+
+**Figure 1.** The policy selects routes and customers. `frvcpy` inserts stations and charge amounts for the fixed customer sequence.
+
+---
+
+## 5. Training
+
+Behavior cloning imitates feasible customer sequences from randomized greedy construction and local search. For a teacher trajectory \(\tau\),
+
+\[
+L_{\mathrm{BC}} = -\frac{1}{|\tau|}\sum_{t\in\tau}\log\pi_\theta(a_t\mid s_t),
+\]
+
+where \(a_t\) is a route choice followed by a customer or close choice,
 
 \[
 \pi_\theta(a\mid s)=\pi_\theta(r\mid s)\,\pi_\theta(c\mid r,s).
 \]
 
-REINFORCE then samples \(K=4\) rollouts on a training instance. The normalized reward is \(R=-Z_\mathrm{full}/(n T_{\max})\) when the rollout is feasible. An infeasible rollout scores \(R=-1-0.05-\) (unserved fraction), plus a violation penalty only when that quantity is already finite. The baseline of rollout \(k\) is the mean reward of the other rollouts. With advantage \(A_k=R_k-b_k\),
+REINFORCE then draws \(K=4\) trajectories from the live policy on a training instance. The normalized reward of a feasible trajectory is
 
 \[
-L_{\mathrm{RL}}=-\frac{1}{K}\sum_{k=1}^{K} A_k \log \pi_\theta(\tau_k).
+R = -Z_{\mathrm{full}}/(n\,T_{\max}).
 \]
 
-The entropy coefficient in this matrix is zero, so entropy is logged and is not added to the loss. The older Cycle-3 reward, \(R=-Z_\mathrm{full}\) or \(R=-100\), was not used here. `frvcpy` stays outside the gradient.
+An infeasible trajectory scores below \(-1\). In the recorded runs the infeasible penalty does not fire: the audited samples are feasible. The advantage of a sample is its reward minus the mean reward of the other three samples. The baseline is a Python float, so it does not carry a gradient. The loss is the mean of \(-\,A\log\pi_\theta(\tau)\) over the four samples. Entropy regularization is zero. Gradients are clipped at norm 1. The learning rate is \(5\times 10^{-5}\). Checkpoint selection, during training, is greedy validation duration. It is not the sampled objective.
 
-The original 20 runs drew each minibatch with the cyclic index \((t-1+b)\bmod 500\). At 300 RL updates and batch size 2 that formula touches indices 0 through 300 only, so 199 of the 500 training instances never enter RL. Behavior cloning, with 1,000 updates, does cycle through the full set. A corrected sampler shuffles the 500 instances and finishes a pass before repeating. The corrected RL runs start from the saved behavior-cloning checkpoints, use the same 300 updates, reward, and leave-one-out baseline, and write to a separate directory. They do not replace the original runs.
-
-On the frozen comparison, shuffled RL does not lower synthetic validation duration relative to the original cyclic RL. For Route Transformer the paired difference is +0.035 h, interval [−0.046, +0.116], with the shuffled checkpoint lower on 1/5 seeds. For RT + DeepSets it is +0.044 h, interval [−0.033, +0.121], lower on 2/5 seeds. Both intervals include zero. Shuffled RL is better than its own behavior-cloning checkpoint on 1/5 Route Transformer seeds and on 0/5 RT + DeepSets seeds. Covering the unused training instances does not establish an RL improvement. The same logs show a second, more specific failure: entropy falls on every seed, and validation duration at update 300 is worse than behavior cloning on all 20 original runs. A follow-up that added \(0.01(\log\pi_\theta(a)-\log\pi_{\mathrm{BC}}(a))\) for the sampled action is not a KL test: the expected gradient of that term is zero. Its validation changes, +0.068 h and +0.125 h, stay in `results/raw/bc_rl_kl_v1` and are not used as evidence about anchoring. The corrected penalty is \(0.01\,\mathrm{KL}(\pi_\theta\Vert\pi_{\mathrm{BC}})\) on the masked route and customer distributions, written to `results/raw/bc_rl_kl_v2`. Route Transformer validation duration rises by 0.045 h, interval [−0.109, +0.199], better on 2/5 seeds. RT + DeepSets rises by 0.049 h, interval [−0.076, +0.174], better on 2/5 seeds. The predeclared rule for official neural-construction evaluation was not met, so that evaluation was not run. The diagnosis is in `docs/RL_DIAGNOSIS.md`.
-
-Details: `docs/TRAINING_AND_REWARD_METHODOLOGY.md`.
+A distribution penalty toward the frozen behavior-cloning policy was studied separately. The customer term in that penalty is conditional on the route the live policy already selected. It is not the expectation of the customer KL under the route distribution, so it is a sampled-conditional regularizer rather than the exact KL of the hierarchical policy. Those runs are not the locked comparison. The locked checkpoints are the original leave-one-out runs.
 
 ---
 
-## 6. Experimental Setup
+## 6. Experimental setup
 
-The five-seed BC→RL study and the earlier Cycle-3 comparison are separate experiments.
+The original matrix is four architectures and seeds 42–46. All twenty runs finish 1,000 behavior-cloning updates and 300 REINFORCE updates. They share 500 synthetic training instances and 100 validation instances, data seed 1000, generator v2, \(n=10\). Behavior-cloning and REINFORCE checkpoints are stored separately. Deployment may keep the behavior-cloning weights when greedy validation does not improve. The tables below still score the REINFORCE checkpoint.
 
-The BC→RL matrix trains State Pointer, Route Transformer, Fleet DeepSets, and RT + DeepSets on one shared synthetic n=10 set: 500 training instances, 100 validation instances, data seed 1000, model seeds 42–46. Each run uses 1,000 behavior-cloning updates, then 300 REINFORCE updates with 4 leave-one-out rollouts. Official Montoya evaluation scores `bc_best` and `rl_best` separately at n=10, 20, 40, and 80, with 20 instances at each size. P0 is construction only. P1 is one-shot basic local search (1 pass, budget 800). P2 is hybrid insertion: classical ruin for 6 iterations with budget 600, then neural insertion for 6 iterations. Checkpoints are selected on the synthetic validation set. The official instances are not used to choose hyperparameters or checkpoints.
+The validation audit, frozen before it was run, scores three protocols on those 100 instances: one greedy decode, the mean duration of four samples, and the best feasible sample among those four. Sample \(k\) of instance \(i\) uses torch seed \(910000 + 16i + k\), for every checkpoint. Infeasible decodes would count as \(n T_{\max}\). None did. A credible benefit required a lower duration on at least 4 of 5 seeds and a Student-t 95% interval of the paired differences entirely below zero. Greedy did not meet that rule for any saved experiment. The mean of four samples and the best of four did, for every architecture in the original matrix. The stopping rule then forbids another training configuration. The prepared greedy-baseline run at learning rate \(2\times 10^{-5}\) was not started.
 
-Cycle-3 fair local search used seeds 42–44 and the legacy reward. The nonlinear-charging study covers all 20 official instances at n=10, 20, and 40. Its recovered n=40 hybrid figure is a single-seed recovery, not a cell of the five-seed matrix. Metrics for the new study are feasibility, \(Z_\mathrm{full}\), \(Z_\mathrm{lit}\), frvcpy executions, requests, cache hits, and wall-clock time. Hybrid-insertion executions and runtime include construction, classical ruin, and neural repair.
-
-The equal-budget classical comparison uses the same official instances and does not retrain a network. For each size, the execution budget is the mean number of solver executions recorded by the neural protocols: about 55, 162, and 418 at n=10 for construction, one-shot local search, and hybrid insertion. Deterministic cheapest insertion runs first on a shared oracle and stops before a solve that would pass the cap. Greedy plus local search then restarts from a randomized candidate list and applies basic local search until the cap. Classical ruin-and-repair uses a new seed on each chunk until the same cap. Realized executions, requests, cache hits, and elapsed time are stored separately. A feasible-only mean is not compared with a fully feasible neural mean unless both sides cover the same instances. Wall-clock budgets use the neural mean runtime of the same protocol and are a separate arm from the execution cap.
+Official evaluation uses the 20 Montoya instances at each size. Greedy numbers are the existing construction-only protocol. Sampled numbers use the same four seeds. n=10 and n=20 were required. n=40 was completed with the same protocol after those two sizes. n=80 sampled construction was not run. Greedy n=80 remains the earlier construction-only evaluation. No local search, ruin-and-repair, or hybrid insertion enters these numbers. Those procedures remain in the supplementary evaluation files and are not evidence about reinforcement learning.
 
 ---
 
-## 7. Results — Nonlinear Charging (RQ3)
+## 7. Greedy construction
 
-Full study: `results/NONLINEAR_CHARGING_STUDY.md`.
+![Validation protocols](results/final/figures/fig_validation_protocols.png)
 
-![Figure 4. Nonlinear charging curves](results/figures/fig04_nonlinear_charging_curves.png)
+**Figure 2.** Synthetic validation. Each bar is the mean paired difference, RL minus BC, with the 95% interval. Negative means the REINFORCE checkpoint has the lower duration.
 
-**Figure 4.** Montoya piecewise-linear charging curves versus LINEAR-SECANT and LINEAR-EARLY-RATE for slow/normal/fast technologies. Late-SOC region charging slows relative to early-rate extrapolation. Units: hours vs kWh. XML breakpoints preserved.
+![Learning curves](results/final/figures/fig_validation_learning_curves.png)
 
-![Figure 5. Marginal charging time vs SOC](results/figures/fig05_charging_time_vs_soc.png)
+**Figure 3.** Mean greedy validation duration across five seeds. Both panels use the same vertical scale. Behavior cloning reduces duration. REINFORCE does not.
 
-**Figure 5.** Marginal charging time (minutes per kWh) from actual PWL segment slopes versus SOC fraction. Higher SOC requires more time for the same energy increment—the physical reason linear early-rate models are optimistic.
+On the original checkpoints, greedy validation differences are +0.036 h (State Pointer), +0.040 h (Route Transformer), +0.009 h (Fleet DeepSets), and +0.070 h (Route Transformer + DeepSets). Seeds better than behavior cloning are 2, 3, 1, and 1 of 5. Every interval includes zero. Feasibility is 1.0.
 
-![Figure 6. Fixed-route feasibility](results/figures/fig06_fixed_route_charging_feasibility.png)
+Official greedy construction agrees. At n=10 the Route Transformer moves from 22.379 h to 22.287 h, a paired difference of −0.091 h, interval [−0.336, +0.154], better on 3 of 5 seeds. Route Transformer + DeepSets moves from 22.065 h to 22.282 h, interval [−0.241, +0.676]. No greedy interval at n=10, 20, 40, or 80 excludes zero. Feasibility is 1.0 at every size. The n=10 literature gaps of the Route Transformer, against Froger et al. (2021) Table 13, are 23.4% after behavior cloning and 22.7% after REINFORCE. That is not a state-of-the-art claim.
 
-**Figure 6.** Fixed-route charging optimization on matched customer sequences (20 official instances per size; separate panels). Stacked outcomes: true-physics feasible (green), planner-OK but true-physics fail (orange), planner rejected (grey). Numbers = true-feasible counts. At n=40: TRUE-NL 20/20; SECANT 11/20; EARLY 11/20—with different failure mechanisms.
+**RQ1.** Not established. Greedy construction does not reliably improve.
 
-![Figure 7. End-to-end feasibility](results/figures/fig07_end_to_end_charging_feasibility.png)
+![Generalization](results/final/figures/fig_greedy_generalization.png)
 
-**Figure 7.** End-to-end neural routing with frozen Route Transformer (RT) weights (20 official instances per size). Left three panels: true-physics feasibility under each planning curve (TRUE-NL / Secant / Early). Right panel: fraction of instances whose customer sequences change relative to TRUE-NL. Unlike Figure 6, routing decisions may change when the planner uses a misspecified charging law. At n=40: TRUE-NL 20/20, SECANT 11/20, EARLY 9/20.
-
-![Figure 8. SOC charging schedule](results/figures/fig08_soc_charging_schedule.png)
-
-**Figure 8.** Same fixed customer sequence on `tc0c10s2cf1` (route with charges): TRUE-NL plan (left) versus LINEAR-EARLY-RATE plan replayed on true curves (right). Shaded intervals = charging; dashed line = \(T_{\max}\). The linear plan underestimates charging duration and violates the route-duration limit. Companion table: `results/tables/table_fig08_schedule_case.md`.
-
-![Figure 9. Charging-time estimation error](results/figures/fig09_linear_charging_estimation_error.png)
-
-**Figure 9.** Planner-predicted charging hours minus true nonlinear charging hours for fixed-route plans with both quantities recorded. Negative values = underestimation. Sample sizes shown per panel (selected by recorded hours—not an unconditional sample of all 20).
-
-![Figure 10. Station usage](results/figures/fig10_station_usage_and_energy.png)
-
-**Figure 10.** Recovered n=40 hybrid_insert (20 instances): (A) charger visits by technology, (B) mean energy charged, (C) mean nonlinear charging duration—**separate panels, no twin-axis**. Describes what `frvcpy` chooses under TRUE-NL for Route Transformer (RT) vs RT + DeepSets.
-
-![Figure 11. Objective decomposition](results/figures/fig11_objective_decomposition.png)
-
-**Figure 11.** Mean travel + service + nonlinear charging for recovered n=40 hybrid_insert (20 instances). Route Transformer (RT): 33.745 + 20.000 + 3.060 = 56.806 h; RT + DeepSets: 33.219 + 20.000 + 3.151 = 56.370 h. Legend outside axes. The mean edge is mainly travel, not charging—both use the same `frvcpy` optimizer (not evidence that DeepSets improves the charging solver).
-
-**Answer to RQ3.** Nonlinear charging matters: linear surrogates frequently yield planner failures or true-physics infeasibility, with rates growing in \(n\).
+**Figure 4.** Official greedy duration at n=10, 20, 40, and 80. Markers are the measured sizes.
 
 ---
 
-## 8. Results — Neural Routing Quality (RQ1, RQ2)
+## 8. Sampled construction
 
-![Figure 12. Architecture ablation](results/figures/fig12_neural_architecture_ablation.png)
+The same checkpoints, the same instances, and the same four seeds give a different answer. On synthetic validation the original Route Transformer mean sample falls from 25.168 h to 24.824 h (−0.344 h, interval [−0.528, −0.160], 5/5 seeds). Its best of four falls from 22.559 h to 22.370 h (−0.189 h, interval [−0.267, −0.112], 5/5). Route Transformer + DeepSets falls by 0.958 h on the mean and 0.616 h on the best of four, both on 5 of 5 seeds, and both intervals exclude zero. Shuffled-order and distribution-penalty reruns show the same pattern. They were not used to choose the protocol.
 
-**Figure 12.** Official n=10 construction (protocol P0; 20 instances × seeds 42–46) from the completed BC→RL matrix. Each point is one seed mean; the diamond is the mean of those five seeds. Behavior-cloning means: State Pointer 22.253 h, Route Transformer (RT) 22.379 h, Fleet DeepSets 22.060 h, RT + DeepSets 22.065 h. REINFORCE means: 22.655, 22.287, 22.700, and 22.282 h. Seed ranges overlap, so a lower mean is not a stable ranking.
+![Seed effects](results/final/figures/fig_validation_seed_effects.png)
 
-![Figure 13. Paired effects](results/figures/fig13_history_deepsets_paired_effect.png)
+**Figure 5.** One point is one seed. The diamond is the five-seed mean. Original checkpoints only.
 
-**Figure 13.** Paired change on the same official n=10 construction instances: each point is one seed’s (RL mean − BC mean), and the diamond is the mean of the five seeds. Negative means the REINFORCE checkpoint has the lower full duration. Route Transformer is the only model whose mean change is negative (−0.092 h, better on 3/5 seeds). State Pointer, Fleet DeepSets, and RT + DeepSets are better on 1/5 seeds.
+Official instances confirm the mean-sample result for the two primary architectures.
 
-![Figure 14. Literature BKS gaps](results/figures/fig14_literature_bks_gap.png)
+| Model | Size | BC mean of 4 (h) | RL mean of 4 (h) | Difference (h) | Seeds better | 95% interval |
+|---|---:|---:|---:|---:|---:|---|
+| Route Transformer | 10 | 26.232 | 25.518 | −0.714 | 5/5 | [−0.944, −0.484] |
+| Route Transformer | 20 | 42.524 | 41.958 | −0.566 | 5/5 | [−0.965, −0.166] |
+| RT + DeepSets | 10 | 26.798 | 25.366 | −1.432 | 5/5 | [−1.983, −0.882] |
+| RT + DeepSets | 20 | 42.574 | 41.836 | −0.738 | 5/5 | [−1.328, −0.148] |
 
-**Figure 14.** Mean gap of \(Z_\mathrm{lit}\) to Froger et al. (2021) Table 13 on official n=10 (20 instances, five seeds). Circles are behavior-cloning checkpoints and squares are REINFORCE checkpoints. Construction gaps are about 21–25%, one-shot local search about 14–17%, and hybrid insertion about 5–8%. The three panels use different search procedures, so they are separate measurements. These gaps do not support a state-of-the-art claim.
+Best-of-four is established at n=10: Route Transformer −0.556 h, interval [−0.794, −0.318], 5/5 seeds; RT + DeepSets −0.849 h, interval [−1.266, −0.432], 5/5. At n=20 both best-of-four intervals include zero. At n=40 the Route Transformer mean of four samples is −1.251 h on 5 of 5 seeds, but the interval [−2.677, +0.176] includes zero, so that transfer is not established. Its best of four at n=40 is −1.356 h, interval [−2.363, −0.348], 5/5. RT + DeepSets at n=40 has intervals that include zero for both the mean and the best of four. Every official sample in these cells is feasible.
 
-![Figure 15. Generalization](results/figures/fig15_generalization_scalability.png)
+The four samples are not a substitute for greedy decoding. At official n=10 the Route Transformer greedy behavior-cloning duration is 22.379 h. Its best of four samples is 23.085 h before REINFORCE and 22.529 h after. The REINFORCE best-of-four still does not beat the single greedy behavior-cloning route, and it uses 3,971 charging-solver executions across the 20 instances against 1,100 for greedy. The sampled gain is real at a matched sample budget. It is not a better deployment policy than greedy construction.
 
-**Figure 15.** Construction-only transfer of the n=10 policy to official n=10, 20, 40, and 80 (20 instances at each size, five seeds). Solid lines are behavior cloning and dashed lines are REINFORCE. Panel B is (RT + DeepSets) − RT: the BC difference stays within about 0.6 h, while the RL difference at n=80 is +3.82 h (91.318 vs 87.501 h). Panel C is feasibility; every model and checkpoint is feasible on all evaluated instances, so the markers sit on 100%. The n=80 point is transfer of a policy trained at n=10.
+![Official samples](results/final/figures/fig_official_sampled.png)
 
-![Figure 16. Search stages](results/figures/fig16_search_improvement_stages.png)
+**Figure 6.** Official paired differences for four-sample inference. Intervals that cross zero are not counted as established.
 
-**Figure 16.** Official n=10 categorical comparison of construction, one-shot local search, and hybrid insertion (20 instances, mean of five seeds). The horizontal axis is limited to the observed range, about 19.8–22.7 h. The three protocols are alternatives with unequal search budgets, so a lower hybrid-insert mean is not an equal-budget ranking.
+**RQ2.** Yes for the mean of four samples, on the Route Transformer and on RT + DeepSets, at official n=10 and n=20. That mean-sample interval includes zero at n=40 for both architectures. Best-of-four is established at n=10 for both, and at n=40 for the Route Transformer only. Greedy decoding remains the stronger single construction.
 
-![Figure 17. Quality vs compute](results/figures/fig17_quality_vs_compute.png)
-
-**Figure 17.** Official n=10 mean full duration against mean `frvcpy` solver executions (20 instances, five seeds). Marker shape is the protocol and color is the architecture; a black edge marks the REINFORCE checkpoint. Construction is about 55 executions, one-shot local search about 162, and hybrid insertion about 418. The hybrid count includes construction, classical ruin, and neural repair. **Unequal protocol budgets, so horizontal position is not a controlled efficiency ranking.**
-
-The matched-budget comparison gives each classical method the mean execution count of that neural protocol. Full rows are in `results/tables/classical_matched_v1_summary.csv`. Realized execution counts match these budgets at every size. Requests and cache hits are larger than executions, especially for ruin-and-repair, and are not the budget.
-
-| Size | Budget (executions) | Greedy + LS feasible | Greedy + LS hours | Ruin-and-repair hours | RT behavior cloning |
-|---|---|---|---|---|---|
-| 10 | 55 | 12/20 | 20.153 on those 12 | same construction | 22.379 on all 20; 20.135 on the same 12 |
-| 10 | 162 | 20/20 | 21.551 | 22.938 | 20.997 |
-| 10 | 418 | 20/20 | 21.068 | 21.433 | 19.974 |
-| 20 | 210 | 17/20 | 35.430 on those 17 | same construction | 33.521 on all 20; 32.690 on the same 17 |
-| 20 | 660 | 20/20 | 35.358 | 36.655 | 32.628 |
-| 20 | 890 | 20/20 | 35.318 | 36.636 | 31.828 |
-| 40 | 819 | 0/20 | no feasible mean | same construction | 60.897 on all 20 |
-| 40 | 1,539 | 20/20 | 62.862 | 62.482 | 59.744 |
-| 40 | 1,932 | 20/20 | 62.862 | 62.482 | 59.663 |
-| 80 | 3,228 | 0/20 | no feasible mean | same construction | 88.944 on all 20 |
-| 80 | 3,998 | 20/20 | 92.842 | 92.941 | 88.365 |
-| 80 | 5,200 | 20/20 | 92.842 | 92.941 | 88.176 |
-
-At the construction budget, deterministic greedy often leaves customers unserved: 12/20 at n=10, 17/20 at n=20, 0/20 at n=40 (819 executions), and 0/20 at n=80 (3,228 executions). On the n=10 instances both methods finish, the durations are close (20.153 h versus 20.135 h). Once the budget is large enough for classical search to finish every instance, Route Transformer behavior cloning remains lower: about 0.55 h at 162 executions and about 1.09 h at 418 executions for n=10, about 2.7 h and 3.5 h at the n=20 search budgets, about 3.1 h at both n=40 search budgets, and about 4.5 h at both n=80 search budgets. Extra executions beyond the one-shot budget do not change the classical means at n=40 or n=80. Classical ruin-and-repair does not beat greedy plus local search at these caps. This is an execution-matched comparison. It does not by itself make the method a state of the art solver.
-
-The wall-clock arm gives classical search the mean neural runtime of the same protocol. At n=10 that time allows far more than 55–418 solver executions, because the neural runtime includes the policy. Greedy plus local search is feasible on 19/20 instances at the 0.045 s construction budget (20.902 h on those 19) and on 20/20 at the longer n=10 budgets. Ruin-and-repair finishes all 20. Its means are 21.749 h, 20.054 h, and 19.527 h at the construction, one-shot, and hybrid time budgets, against Route Transformer behavior-cloning means of 22.379 h, 20.997 h, and 19.974 h. At n=20, 40, and 80 the same time budgets still leave Route Transformer lower: about 33.5 h versus 36.2 h at n=20 construction, about 60.9 h versus 62.5 h at n=40, and about 88.9 h versus 92.8 h at n=80. Rows for both arms are in `results/tables/classical_matched_v1_summary.csv`.
+Checkpoint selection did not look at these sampled numbers. The REINFORCE file is the best greedy-validation checkpoint.
 
 ---
 
-## 9. Results — Learning and Reward (RQ4)
+## 9. Route Transformer and DeepSets
 
-![Figure 18. BC learning curves](results/figures/fig18_behavior_cloning_learning_curves.png)
+![Architectures](results/final/figures/fig_architecture_n10_greedy.png)
 
-**Figure 18.** Behavior-cloning validation full duration on the shared synthetic set (100 instances, evaluation every 25 steps through 1000 updates). Each panel is one architecture; faint lines are seeds 42–46 and the star is the best logged point of that seed. The curves drop early and then fluctuate.
+**Figure 7.** Official n=10 greedy duration. Behavior cloning and REINFORCE are separate bars.
 
-![Figure 19. Controlled BC vs RL](results/figures/fig19_bc_vs_rl_checkpoint_quality.png)
+At official n=10, greedy behavior-cloning means are 22.253 h (State Pointer), 22.379 h (Route Transformer), 22.060 h (Fleet DeepSets), and 22.065 h (RT + DeepSets). The Route Transformer is not better than the State Pointer. Adding DeepSets does not produce a paired improvement that this study treats as established: the n=80 greedy REINFORCE mean for RT + DeepSets is 91.318 h against 88.311 h for its own behavior-cloning checkpoint, and that interval includes zero. The sampled-mean gain in Section 8 appears in both the Route Transformer and RT + DeepSets, so it is not an effect that requires DeepSets.
 
-**Figure 19.** Official n=10 construction means for the behavior-cloning checkpoint and the REINFORCE checkpoint (20/20 feasible). The vertical axis is reversed, so a lower duration is higher on the plot. One line is one seed. REINFORCE is lower on 1/5 State Pointer seeds, 3/5 Route Transformer seeds, 1/5 Fleet DeepSets seeds, and 1/5 RT + DeepSets seeds. This construction comparison does not establish an improvement under one-shot local search or hybrid insertion.
-
-Paired differences for every model, size, and protocol are in `results/tables/bc_rl_full_v1_paired.csv`. Each seed contributes its mean over 20 instances. The interval is a Student \(t\) 95% interval on those five differences (RL − BC, in hours). Negative means the REINFORCE checkpoint has the lower duration. All 9,600 official rows are feasible.
-
-| Size | Protocol | State Pointer | RT | Fleet DeepSets | RT + DeepSets |
-|---|---|---|---|---|---|
-| 10 | P0 | +0.402 [−0.413, +1.216] (1/5) | −0.091 [−0.336, +0.154] (3/5) | +0.641 [−0.540, +1.822] (1/5) | +0.217 [−0.241, +0.676] (1/5) |
-| 10 | P1 | +0.303 [−0.204, +0.810] (1/5) | −0.059 [−0.249, +0.132] (3/5) | +0.618 [−0.282, +1.518] (1/5) | +0.301 [−0.069, +0.671] (1/5) |
-| 10 | P2 | −0.096 [−0.243, +0.051] (4/5) | +0.038 [−0.019, +0.095] (1/5) | +0.192 [+0.022, +0.362] (0/5) | +0.075 [−0.129, +0.279] (2/5) |
-| 20 | P0 | +0.183 [−0.290, +0.656] (1/5) | +0.065 [−0.563, +0.693] (2/5) | −0.088 [−0.524, +0.347] (3/5) | +0.385 [−0.363, +1.132] (1/5) |
-| 20 | P1 | +0.244 [−0.254, +0.743] (1/5) | +0.186 [−0.374, +0.745] (2/5) | +0.100 [−0.218, +0.417] (2/5) | +0.387 [−0.237, +1.011] (1/5) |
-| 20 | P2 | +0.394 [−0.451, +1.238] (1/5) | +0.125 [−0.484, +0.734] (2/5) | +0.143 [−0.556, +0.843] (3/5) | +0.671 [−0.172, +1.514] (1/5) |
-| 40 | P0 | −0.272 [−1.432, +0.888] (3/5) | −1.076 [−3.495, +1.342] (2/5) | +0.296 [−1.353, +1.944] (2/5) | −0.039 [−0.760, +0.681] (2/5) |
-| 40 | P1 | −0.339 [−1.609, +0.932] (2/5) | −1.169 [−3.700, +1.361] (2/5) | +0.033 [−1.549, +1.615] (2/5) | −0.031 [−0.755, +0.694] (2/5) |
-| 40 | P2 | −0.193 [−1.310, +0.923] (3/5) | −1.231 [−3.909, +1.446] (3/5) | +0.458 [−0.901, +1.817] (2/5) | +0.049 [−0.277, +0.375] (2/5) |
-| 80 | P0 | +0.463 [−0.332, +1.259] (2/5) | −1.443 [−4.506, +1.619] (2/5) | −0.171 [−1.559, +1.218] (2/5) | +3.007 [−3.510, +9.524] (1/5) |
-| 80 | P1 | +0.385 [−0.449, +1.219] (3/5) | −1.505 [−4.640, +1.630] (2/5) | −0.189 [−1.623, +1.245] (2/5) | +2.986 [−3.571, +9.543] (1/5) |
-| 80 | P2 | +0.264 [−0.438, +0.967] (2/5) | −1.417 [−4.388, +1.554] (2/5) | −0.258 [−1.243, +0.727] (3/5) | +1.943 [−2.760, +6.646] (2/5) |
-
-Forty-seven of the 48 intervals include zero. The exception is Fleet DeepSets under n=10 hybrid insertion, where REINFORCE is worse on all five seeds. The Route Transformer construction dip at n=10 does not carry over to hybrid insertion. Wider negative point estimates at n=40 and n=80 still have intervals that include zero.
-
-![Figure 20. Reward dynamics](results/figures/fig20_reinforce_reward_dynamics.png)
-
-**Figure 20.** Normalized REINFORCE reward from the completed runs. Feasible returns are \(-Z_\mathrm{full}/(n T_\max)\). Faint lines are the five seeds and the bold line is their mean rolling median (window 5). The traces stay noisy through 300 updates. Read them together with the checkpoint outcomes in Figure 19 and with validation-based selection: validation preferred the REINFORCE checkpoint on 2/5, 3/5, 1/5, and 1/5 runs for State Pointer, Route Transformer, Fleet DeepSets, and RT + DeepSets.
-
-Supplementary diagnostic: `results/supplementary/figures/fig21_rl_training_stability.png` (gradient norm, entropy, policy-gradient loss, and infeasible-rollout fraction; mean across five seeds).
-
-Validation preferred the REINFORCE checkpoint on 7 of 20 runs. When it did not, the deployed checkpoint stayed at the behavior-cloning weights.
+**RQ4.** Not established.
 
 ---
 
-## 10. Ablations and Limitations
+## 10. Nonlinear charging
 
-On official n=10 construction, architecture means differ by a few tenths of an hour and the seed ranges overlap. A lower Route Transformer mean after REINFORCE is a five-seed point estimate whose paired interval includes zero, about 0.4% of the behavior-cloning duration, and it reverses under hybrid insertion. Linear charging assumptions harm true-physics feasibility; `frvcpy` hybrid remains far more feasible than direct learned charging (4/20 vs 20/20 on the earlier n=10 charging comparison). Protocols P0, P1, and P2 use unequal search budgets; the table above is the execution-matched reading. The n=80 curves transfer an n=10 policy onto 20 instances. All five seeds share one synthetic training set, so the intervals do not measure a change of training data. P0, P1, and P2 on one size reuse the same instances and checkpoints.
+![Charging feasibility](results/final/figures/fig_nonlinear_feasibility.png)
 
----
+**Figure 8.** Fixed customer routes. Each bar is the fraction of 20 official instances whose plan remains feasible on the true station curves. Source: `results/raw/nonlinear_charging/charging_study_summary.csv`.
 
-## 11. Conclusion
+Exact nonlinear plans are feasible on 20 of 20 instances at n=10, 20, and 40. The linear early-rate plan is feasible under true physics on 16, 12, and 11 of 20. The linear secant plan matches those counts in this summary. A linear plan can therefore look acceptable to its own planner and still violate Montoya charging. The constructor reported in this paper never uses that surrogate as its objective.
 
-| RQ | Answer |
-|---|---|
-| RQ1 | On official n=10 construction, Route Transformer (22.379 h) does not beat Fleet DeepSets (22.060 h) after behavior cloning. |
-| RQ2 | RT + DeepSets (22.065 h) is close to Fleet DeepSets at n=10 and is worse than Route Transformer at n=80 under the REINFORCE checkpoint (91.318 vs 87.501 h). |
-| RQ3 | Yes—linear surrogates often fail true Montoya physics. |
-| RQ4 | Not established. The predeclared Route Transformer n=10 construction change is −0.091 h, interval [−0.336, +0.154], and hybrid insertion reverses the sign. A corrected 0.01 distribution-KL penalty also fails its validation rule (+0.045 h and +0.049 h, each better on 2/5 seeds). The other 46 cells are exploratory; one interval excluding zero is not a confirmed discovery under 48 comparisons. |
+**RQ3.** Yes. Exact station curves are required for the feasibility claim.
 
 ---
 
-## Manuscript figure index (20 main + 1 supplementary diagnostic)
+## 11. Limitations
 
-| Fig | File |
-|---|---|
-| 1 | `results/figures/fig01_hat_evrp_nl_architecture.png` |
-| 2 | `results/figures/fig02_montoya_instance_layouts.png` |
-| 3 | `results/figures/fig03_feasible_ev_routes.png` |
-| 4 | `results/figures/fig04_nonlinear_charging_curves.png` |
-| 5 | `results/figures/fig05_charging_time_vs_soc.png` |
-| 6 | `results/figures/fig06_fixed_route_charging_feasibility.png` |
-| 7 | `results/figures/fig07_end_to_end_charging_feasibility.png` |
-| 8 | `results/figures/fig08_soc_charging_schedule.png` |
-| 9 | `results/figures/fig09_linear_charging_estimation_error.png` |
-| 10 | `results/figures/fig10_station_usage_and_energy.png` |
-| 11 | `results/figures/fig11_objective_decomposition.png` |
-| 12 | `results/figures/fig12_neural_architecture_ablation.png` |
-| 13 | `results/figures/fig13_history_deepsets_paired_effect.png` |
-| 14 | `results/figures/fig14_literature_bks_gap.png` |
-| 15 | `results/figures/fig15_generalization_scalability.png` |
-| 16 | `results/figures/fig16_search_improvement_stages.png` |
-| 17 | `results/figures/fig17_quality_vs_compute.png` |
-| 18 | `results/figures/fig18_behavior_cloning_learning_curves.png` |
-| 19 | `results/figures/fig19_bc_vs_rl_checkpoint_quality.png` |
-| 20 | `results/figures/fig20_reinforce_reward_dynamics.png` |
-| Supp. | `results/supplementary/figures/fig21_rl_training_stability.png` |
-
-Catalog: `docs/FIGURE_CATALOG.md`. Supplementary: `results/supplementary/figures/`.
+The five seeds share one synthetic training set. Intervals are not a confidence statement about a new training distribution. Picking the best of four samples and reporting it as one greedy decode would misstate the inference budget; this paper keeps them separate. The mean-sample improvement does not keep an interval below zero at n=40. The customer KL used in an earlier penalty is conditional on the selected route, and that penalty is not the result in Sections 7 and 8. n=80 was not evaluated under four-sample decoding. Classical ruin-and-repair and hybrid insertion can lower duration further. Their files remain in `results/raw/bc_rl_full_v1/eval` under protocols P1 and P2, and they are not used as evidence that REINFORCE improved the constructor.
 
 ---
 
-## References (selected)
+## 12. Conclusion
 
-1. Montoya et al. (2017). https://doi.org/10.1016/j.trb.2017.02.004  
-2. Froger et al. (2022). https://doi.org/10.1287/trsc.2021.1111  
-3. Kool et al. (2019). https://arxiv.org/abs/1803.08475  
-4. Kwon et al. (2020). https://arxiv.org/abs/2010.16011  
-5. Kullman et al. (2021). https://doi.org/10.1287/ijoc.2020.1035  
-6. Chung, Lee, and Tsang (2025). Neural combinatorial optimization with reinforcement learning in industrial engineering: a survey. https://doi.org/10.1007/s10462-024-11045-1  
+Behavior cloning learns a feasible neural constructor whose charging plans come from an exact fixed-route solver. REINFORCE, from those checkpoints, does not establish a better greedy route. It does establish a better sampling distribution at n=10 and n=20: under a matched budget of four trajectories, the mean sample is shorter on the official instances for both the Route Transformer and Route Transformer + DeepSets, with intervals below zero and no infeasible sample. That mean-sample interval includes zero at n=40. The best of four samples is established at n=10 for both architectures and at n=40 for the Route Transformer. A single greedy decode remains the better construction. Linear charging surrogates are often infeasible under the true station curves, so the exact solver is part of the result rather than a replaceable subroutine.
+
+---
+
+## References
+
+Froger, A., Mendoza, J. E., Jabali, O., and Laporte, G. (2021). Improved formulations and algorithmic components for the electric vehicle routing problem with nonlinear charging functions. *Computers & Operations Research*. Best known solutions: Table 13.
+
+Kool, W., van Hoof, H., and Welling, M. (2019). Attention, learn to solve routing problems! *International Conference on Learning Representations*. arXiv:1803.08475.
+
+Kullman, N. D., Froger, A., Mendoza, J. E., and Goodson, J. C. (2021). frvcpy: An open-source solver for the fixed route vehicle charging problem. *INFORMS Journal on Computing*, 33(4). doi:10.1287/ijoc.2020.1035.
+
+Kwon, Y.-D., Choo, J., Kim, B., Yoon, I., Gwon, Y., and Min, S. (2020). POMO: Policy optimization with multiple optima for reinforcement learning. *Advances in Neural Information Processing Systems*. arXiv:2010.16011.
+
+Montoya, A., Guéret, C., Mendoza, J. E., and Villegas, J. G. (2017). The electric vehicle routing problem with nonlinear charging function. *Transportation Research Part B*, 103, 87–110. doi:10.1016/j.trb.2017.02.004.
+
+Rennie, S. J., Marcheret, E., Mroueh, Y., Ross, J., and Goel, V. (2017). Self-critical sequence training for image captioning. *IEEE Conference on Computer Vision and Pattern Recognition*. arXiv:1612.00563.

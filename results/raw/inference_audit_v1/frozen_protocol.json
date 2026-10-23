@@ -1,0 +1,12 @@
+{
+  "validation": "synthetic n=10, data_seed 1000, val_seed_start 11200000, 100 instances",
+  "k": 4,
+  "sample_seed": "910000 + instance_index * 16 + trial",
+  "same_seeds_for_bc_and_rl": true,
+  "objective": "Z_full = travel + service + nonlinear charging",
+  "infeasible_hours": "n * T_max",
+  "best_of_k": "minimum feasible sample, else the infeasible cap",
+  "sampled_mean": "mean of the K penalized durations",
+  "search": "none",
+  "credible_benefit": "At least 4 of 5 seeds have RL duration lower than BC, and the paired 95% interval of RL-BC is entirely below zero."
+}

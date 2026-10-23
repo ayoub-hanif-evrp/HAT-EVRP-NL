@@ -1,0 +1,22 @@
+{
+  "python": "3.12.10",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "validation_checkpoints": 60,
+  "official_sampled_present": true,
+  "figures": [
+    "fig_architecture_n10_greedy.png",
+    "fig_greedy_generalization.png",
+    "fig_nonlinear_feasibility.png",
+    "fig_official_sampled.png",
+    "fig_validation_learning_curves.png",
+    "fig_validation_protocols.png",
+    "fig_validation_seed_effects.png"
+  ],
+  "tables": [
+    "official_greedy_summary.csv",
+    "official_sampled_summary.csv",
+    "original_run_manifest.csv",
+    "validation_seed_pairs.csv",
+    "validation_summary.csv"
+  ]
+}

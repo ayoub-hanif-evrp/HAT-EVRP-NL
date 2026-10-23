@@ -513,8 +513,10 @@ def train_primary(args) -> dict:
         batch_reward_std = []
         batch_adv_abs = []
         batch_kl = []
+        batch_greedy_reward = []
         n_infeasible = 0
         oracle_calls = 0
+        greedy_oracle_calls = 0
         entropies = []
         for b, (instance, _routes) in enumerate(_batch_pairs(rl_step, rl_sampler)):
             sampled_rows = []
@@ -568,7 +570,10 @@ def train_primary(args) -> dict:
                     beta=beta,
                 )
                 baselines = [greedy_reward] * len(rewards)
-                oracle_calls += int(greedy.get("oracle_calls") or 0)
+                batch_greedy_reward.append(greedy_reward)
+                greedy_calls = int(greedy.get("oracle_calls") or 0)
+                greedy_oracle_calls += greedy_calls
+                oracle_calls += greedy_calls
             else:
                 raise ValueError(baseline_name)
             advantages = scale_advantages(
@@ -647,6 +652,12 @@ def train_primary(args) -> dict:
                 "reward_std": (sum(batch_reward_std) / len(batch_reward_std)) if batch_reward_std else "",
                 "advantage_abs": (sum(batch_adv_abs) / len(batch_adv_abs)) if batch_adv_abs else "",
                 "bc_kl": (sum(batch_kl) / len(batch_kl)) if batch_kl else "",
+                "greedy_reward": (
+                    sum(batch_greedy_reward) / len(batch_greedy_reward)
+                    if batch_greedy_reward
+                    else ""
+                ),
+                "greedy_oracle_calls": greedy_oracle_calls,
                 "reward_mode": reward_mode,
                 "baseline": baseline_name,
                 "learning_rate": rl_lr,
@@ -758,6 +769,7 @@ def train_primary(args) -> dict:
         "entropy_regularizer_differentiable": entropy_coef > 0,
         "bc_kl": kl_coef,
         "bc_kl_gradient": "distribution" if kl_coef > 0 else "none",
+        "bc_kl_scope": "sampled_conditional" if kl_coef > 0 else "none",
         "bc_score": list(bc_ref["score"]),
         "rl_start_score": list(rl_start["score"]),
         "rl_best_score": list(rl_best_score),

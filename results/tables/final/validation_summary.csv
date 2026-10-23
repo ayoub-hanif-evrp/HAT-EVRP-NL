@@ -1,0 +1,25 @@
+split,experiment,model,model_key,protocol,n_seeds,bc_h,rl_h,delta_h,relative_pct,seeds_better,seed_sd_h,ci_low_h,ci_high_h,bc_feasible,rl_feasible
+synthetic_validation,kl_v2,Route Transformer (RT),H2,best_of_4_h,5,22.5592,22.2358,-0.3234,-1.434,5,0.1197,-0.4721,-0.1748,1.0,1.0
+synthetic_validation,kl_v2,Route Transformer (RT),H2,greedy_h,5,21.4753,21.5203,0.045,0.21,2,0.1241,-0.1091,0.1992,1.0,1.0
+synthetic_validation,kl_v2,Route Transformer (RT),H2,sampled_mean_h,5,25.1677,24.6286,-0.5391,-2.142,5,0.2055,-0.7942,-0.2839,1.0,1.0
+synthetic_validation,kl_v2,Route Transformer + DeepSets (HAT-EVRP-NL),H4,best_of_4_h,5,22.8636,22.3795,-0.4841,-2.117,5,0.2283,-0.7676,-0.2006,1.0,1.0
+synthetic_validation,kl_v2,Route Transformer + DeepSets (HAT-EVRP-NL),H4,greedy_h,5,21.7146,21.7636,0.049,0.226,2,0.1003,-0.0756,0.1736,1.0,1.0
+synthetic_validation,kl_v2,Route Transformer + DeepSets (HAT-EVRP-NL),H4,sampled_mean_h,5,25.5444,24.7641,-0.7803,-3.055,5,0.3507,-1.2158,-0.3448,1.0,1.0
+synthetic_validation,original,State Pointer,H1,best_of_4_h,5,23.0763,22.8376,-0.2387,-1.034,5,0.1593,-0.4365,-0.0409,1.0,1.0
+synthetic_validation,original,State Pointer,H1,greedy_h,5,21.6397,21.6758,0.0361,0.167,2,0.2039,-0.217,0.2893,1.0,1.0
+synthetic_validation,original,State Pointer,H1,sampled_mean_h,5,25.8923,25.494,-0.3983,-1.538,5,0.145,-0.5783,-0.2183,1.0,1.0
+synthetic_validation,original,Route Transformer (RT),H2,best_of_4_h,5,22.5592,22.3698,-0.1895,-0.84,5,0.0626,-0.2672,-0.1117,1.0,1.0
+synthetic_validation,original,Route Transformer (RT),H2,greedy_h,5,21.4753,21.5157,0.0404,0.188,3,0.1202,-0.1088,0.1896,1.0,1.0
+synthetic_validation,original,Route Transformer (RT),H2,sampled_mean_h,5,25.1677,24.824,-0.3438,-1.366,5,0.1483,-0.5279,-0.1596,1.0,1.0
+synthetic_validation,original,Fleet DeepSets,H3,best_of_4_h,5,23.1598,22.6472,-0.5125,-2.213,5,0.3843,-0.9897,-0.0354,1.0,1.0
+synthetic_validation,original,Fleet DeepSets,H3,greedy_h,5,21.6822,21.691,0.0088,0.041,1,0.1637,-0.1945,0.2121,1.0,1.0
+synthetic_validation,original,Fleet DeepSets,H3,sampled_mean_h,5,26.0023,25.1129,-0.8894,-3.421,5,0.7027,-1.762,-0.0169,1.0,1.0
+synthetic_validation,original,Route Transformer + DeepSets (HAT-EVRP-NL),H4,best_of_4_h,5,22.8636,22.2472,-0.6164,-2.696,5,0.2464,-0.9223,-0.3104,1.0,1.0
+synthetic_validation,original,Route Transformer + DeepSets (HAT-EVRP-NL),H4,greedy_h,5,21.7146,21.785,0.0705,0.324,1,0.0955,-0.0481,0.1891,1.0,1.0
+synthetic_validation,original,Route Transformer + DeepSets (HAT-EVRP-NL),H4,sampled_mean_h,5,25.5444,24.5869,-0.9575,-3.748,5,0.3399,-1.3795,-0.5355,1.0,1.0
+synthetic_validation,shuffled,Route Transformer (RT),H2,best_of_4_h,5,22.5592,22.2915,-0.2678,-1.187,5,0.1695,-0.4782,-0.0574,1.0,1.0
+synthetic_validation,shuffled,Route Transformer (RT),H2,greedy_h,5,21.4753,21.5508,0.0755,0.352,1,0.1248,-0.0794,0.2305,1.0,1.0
+synthetic_validation,shuffled,Route Transformer (RT),H2,sampled_mean_h,5,25.1677,24.7721,-0.3956,-1.572,5,0.1144,-0.5377,-0.2536,1.0,1.0
+synthetic_validation,shuffled,Route Transformer + DeepSets (HAT-EVRP-NL),H4,best_of_4_h,5,22.8636,22.2821,-0.5815,-2.543,5,0.2208,-0.8556,-0.3074,1.0,1.0
+synthetic_validation,shuffled,Route Transformer + DeepSets (HAT-EVRP-NL),H4,greedy_h,5,21.7146,21.8288,0.1142,0.526,0,0.0832,0.0109,0.2175,1.0,1.0
+synthetic_validation,shuffled,Route Transformer + DeepSets (HAT-EVRP-NL),H4,sampled_mean_h,5,25.5444,24.6523,-0.8921,-3.492,5,0.3582,-1.3369,-0.4473,1.0,1.0

@@ -1,0 +1,144 @@
+{'role': 'bc_best', 'protocol': 'neural-construction', 'instance': 'toy', 'feasible': 1}
+{'role': 'rl_best', 'protocol': 'neural-construction', 'instance': 'toy', 'feasible': 1}
+python : ......................................................C:\Users\AYOUB\OneDrive - 
+EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\tests\test_learning_presentation.py:172: ResourceWarning: unclosed file 
+<_io.TextIOWrapper name='C:\\Users\\AYOUB\\OneDrive - 
+EMSI\\Bureau\\PHD_WORK\\HAT-EVRP-NL\\results\\raw\\regression_recovery\\RECOVERY_n40_recovered_pipeline.csv' mode='r' 
+encoding='utf-8'>
+Au caract?re C:\Users\AYOUB\AppData\Local\Temp\ps-script-e7853aff-5cb4-4f0f-a5d3-fed04ac3d55e.ps1:103 : 1
++ python -m unittest discover -s tests 2>&1 | python -c "import sys; da ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (..................coding='utf-8'>:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  rows = list(csv.DictReader(path.open(encoding="utf-8")))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+........C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\tests\test_learning_presentation.py:79: 
+ResourceWarning: unclosed file <_io.TextIOWrapper name='C:\\Users\\AYOUB\\OneDrive - 
+EMSI\\Bureau\\PHD_WORK\\HAT-EVRP-NL\\results\\raw\\training_logs\\training_H2_n10_seed42_c3.csv' mode='r' 
+encoding='utf-8'>
+  rows = list(csv.DictReader(path.open(encoding="utf-8")))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+.C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\tests\test_learning_presentation.py:99: ResourceWarning: 
+unclosed file <_io.TextIOWrapper name='C:\\Users\\AYOUB\\OneDrive - 
+EMSI\\Bureau\\PHD_WORK\\HAT-EVRP-NL\\results\\raw\\training_logs\\derived\\bc_vs_rl_per_seed_c3.csv' mode='r' 
+encoding='utf-8'>
+  rows = list(csv.DictReader(derived.open(encoding="utf-8")))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+.C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\tests\test_learning_presentation.py:90: ResourceWarning: 
+unclosed file <_io.TextIOWrapper name='C:\\Users\\AYOUB\\OneDrive - 
+EMSI\\Bureau\\PHD_WORK\\HAT-EVRP-NL\\results\\raw\\training_logs\\training_H4_n10_seed42_c3.csv' mode='r' 
+encoding='utf-8'>
+  rows = list(csv.DictReader(path.open(encoding="utf-8")))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+.C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\tests\test_n40_regression_recovery.py:30: ResourceWarning: 
+unclosed file <_io.TextIOWrapper name='C:\\Users\\AYOUB\\OneDrive - 
+EMSI\\Bureau\\PHD_WORK\\HAT-EVRP-NL\\results\\raw\\cycle3\\compare_size40_from10_fairls_final_seed42_c3.csv' mode='r' 
+encoding='utf-8'>
+  rows = list(csv.DictReader(HIST.open(encoding="utf-8")))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+.C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\tests\test_n40_regression_recovery.py:54: ResourceWarning: 
+unclosed file <_io.TextIOWrapper name='C:\\Users\\AYOUB\\OneDrive - 
+EMSI\\Bureau\\PHD_WORK\\HAT-EVRP-NL\\results\\raw\\regression_recovery\\RECOVERY_n40_recovered_pipeline.csv' mode='r' 
+encoding='utf-8'>
+  rows = list(csv.DictReader(PIPE.open(encoding="utf-8")))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+.C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\tests\test_n40_regression_recovery.py:42: ResourceWarning: 
+unclosed file <_io.TextIOWrapper name='C:\\Users\\AYOUB\\OneDrive - 
+EMSI\\Bureau\\PHD_WORK\\HAT-EVRP-NL\\results\\raw\\regression_recovery\\RECOVERY_n40_repro_fairls.csv' mode='r' 
+encoding='utf-8'>
+  rows = list(csv.DictReader(REPRO.open(encoding="utf-8")))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+.....C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\tests\test_phase1_correctness.py:51: ResourceWarning: 
+unclosed file <_io.TextIOWrapper name='C:\\Users\\AYOUB\\AppData\\Local\\Temp\\tmp59t4pyvg\\training.csv' mode='r' 
+encoding='utf-8'>
+  loaded = list(csv.DictReader(path.open(encoding="utf-8")))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+.....C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\tests\test_publication_figures.py:95: ResourceWarning: 
+unclosed file <_io.TextIOWrapper name='C:\\Users\\AYOUB\\OneDrive - 
+EMSI\\Bureau\\PHD_WORK\\HAT-EVRP-NL\\results\\raw\\regression_recovery\\RECOVERY_n40_objective_decomposition.csv' 
+mode='r' encoding='utf-8'>
+  rows = list(csv.DictReader(path.open(encoding="utf-8")))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+.C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\tests\test_publication_figures.py:79: ResourceWarning: 
+unclosed file <_io.TextIOWrapper name='C:\\Users\\AYOUB\\OneDrive - 
+EMSI\\Bureau\\PHD_WORK\\HAT-EVRP-NL\\results\\raw\\nonlinear_charging\\fixed_route_charging_comparison.csv' mode='r' 
+encoding='utf-8'>
+  rows = list(csv.DictReader(path.open(encoding="utf-8")))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+.C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\tests\test_publication_figures.py:130: ResourceWarning: 
+unclosed file <_io.TextIOWrapper name='C:\\Users\\AYOUB\\OneDrive - 
+EMSI\\Bureau\\PHD_WORK\\HAT-EVRP-NL\\results\\raw\\cycle3\\FINAL_n10_fairls.csv' mode='r' encoding='utf-8'>
+  rows = {r["method"]: r for r in csv.DictReader(path.open(encoding="utf-8"))}
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\tests\test_publication_figures.py:130: ResourceWarning: 
+unclosed file <_io.TextIOWrapper name='C:\\Users\\AYOUB\\OneDrive - 
+EMSI\\Bureau\\PHD_WORK\\HAT-EVRP-NL\\results\\raw\\cycle3\\FINAL_n20_fairls.csv' mode='r' encoding='utf-8'>
+  rows = {r["method"]: r for r in csv.DictReader(path.open(encoding="utf-8"))}
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\tests\test_publication_figures.py:130: ResourceWarning: 
+unclosed file <_io.TextIOWrapper name='C:\\Users\\AYOUB\\OneDrive - 
+EMSI\\Bureau\\PHD_WORK\\HAT-EVRP-NL\\results\\raw\\cycle3\\FINAL_n40_fairls.csv' mode='r' encoding='utf-8'>
+  rows = {r["method"]: r for r in csv.DictReader(path.open(encoding="utf-8"))}
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\tests\test_publication_figures.py:130: ResourceWarning: 
+unclosed file <_io.TextIOWrapper name='C:\\Users\\AYOUB\\OneDrive - 
+EMSI\\Bureau\\PHD_WORK\\HAT-EVRP-NL\\results\\raw\\cycle3\\FINAL_n80_fairls.csv' mode='r' encoding='utf-8'>
+  rows = {r["method"]: r for r in csv.DictReader(path.open(encoding="utf-8"))}
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+wrote C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\figures\fig01_hat_evrp_nl_architecture.png
+wrote C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\figures\fig02_montoya_instance_layouts.png
+wrote C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\figures\fig03_feasible_ev_routes.png
+wrote C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\figures\fig04_nonlinear_charging_curves.png
+wrote C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\figures\fig05_charging_time_vs_soc.png
+wrote C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\figures\fig06_fixed_route_charging_feasibility.png
+wrote C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\figures\fig07_end_to_end_charging_feasibility.png
+wrote C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\figures\fig08_soc_charging_schedule.png
+wrote C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\figures\fig09_linear_charging_estimation_error.png
+wrote C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\figures\fig10_station_usage_and_energy.png
+wrote C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\figures\fig11_objective_decomposition.png
+wrote C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\figures\fig12_neural_architecture_ablation.png
+wrote C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\figures\fig13_history_deepsets_paired_effect.png
+wrote C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\figures\fig14_literature_bks_gap.png
+wrote C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\figures\fig15_generalization_scalability.png
+wrote C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\figures\fig16_search_improvement_stages.png
+wrote C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\figures\fig17_quality_vs_compute.png
+wrote C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\figures\fig18_behavior_cloning_learning_curves.png
+wrote C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\figures\fig19_bc_vs_rl_checkpoint_quality.png
+wrote C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\figures\fig20_reinforce_reward_dynamics.png
+wrote C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\supplementary\figures\fig21_rl_training_stability.png
+main figures OK (20); supplementary OK (1)
+wrote C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\supplementary\figures\figure_contact_sheet.png
+..............C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\tests\test_reporting_pipeline.py:136: 
+ResourceWarning: unclosed file <_io.TextIOWrapper name='C:\\Users\\AYOUB\\OneDrive - 
+EMSI\\Bureau\\PHD_WORK\\HAT-EVRP-NL\\results\\raw\\references\\dataset_xml_sha256.csv' mode='r' encoding='utf-8'>
+  rows = list(csv.DictReader(hash_csv.open(encoding="utf-8")))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+..C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\tests\test_reporting_pipeline.py:59: ResourceWarning: 
+unclosed file <_io.TextIOWrapper name='C:\\Users\\AYOUB\\OneDrive - 
+EMSI\\Bureau\\PHD_WORK\\HAT-EVRP-NL\\results\\raw\\cycle3\\compare_size40_from10_fairls_final_seed42_c3.csv' mode='r' 
+encoding='utf-8'>
+  rows = list(csv.DictReader(path.open(encoding="utf-8")))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+.C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\tests\test_reporting_pipeline.py:78: ResourceWarning: 
+unclosed file <_io.TextIOWrapper name='C:\\Users\\AYOUB\\OneDrive - 
+EMSI\\Bureau\\PHD_WORK\\HAT-EVRP-NL\\results\\raw\\regression_recovery\\RECOVERY_n40_recovered_pipeline.csv' mode='r' 
+encoding='utf-8'>
+  rows = list(csv.DictReader(path.open(encoding="utf-8")))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+.C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\tests\test_reporting_pipeline.py:100: ResourceWarning: 
+unclosed file <_io.TextIOWrapper name='C:\\Users\\AYOUB\\OneDrive - 
+EMSI\\Bureau\\PHD_WORK\\HAT-EVRP-NL\\results\\raw\\regression_recovery\\RECOVERY_n40_objective_decomposition.csv' 
+mode='r' encoding='utf-8'>
+  rows = list(csv.DictReader(path.open(encoding="utf-8")))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+.C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\tests\test_reporting_pipeline.py:122: ResourceWarning: 
+unclosed file <_io.TextIOWrapper name='C:\\Users\\AYOUB\\OneDrive - 
+EMSI\\Bureau\\PHD_WORK\\HAT-EVRP-NL\\results\\raw\\cycle3\\FINAL_n10_fairls.csv' mode='r' encoding='utf-8'>
+  rows = list(csv.DictReader(raw.open(encoding="utf-8")))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+....
+----------------------------------------------------------------------
+Ran 102 tests in 35.063s
+
+OK

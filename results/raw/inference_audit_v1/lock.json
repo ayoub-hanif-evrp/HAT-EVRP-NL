@@ -1,0 +1,11 @@
+{
+  "recorded_after_validation_audit": true,
+  "retraining": "not run",
+  "reason": "The predeclared rule was met for sampled-mean and best-of-four construction on every saved model. Greedy construction did not meet it. The directive forbids another training run once a stochastic benefit is reproducible on the validation set.",
+  "locked_checkpoints": "results/raw/bc_rl_full_v1",
+  "primary_protocol": "greedy neural construction, one rollout, no postprocessing",
+  "secondary_protocol": "K=4 sampled constructions, same seeds for BC and RL; report the mean and the best feasible sample separately",
+  "official_greedy": "already stored as protocol P0 in results/raw/bc_rl_full_v1/eval",
+  "official_sampled_sizes_required": [10, 20],
+  "official_sampled_sizes_optional": [40, 80]
+}

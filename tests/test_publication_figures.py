@@ -100,24 +100,26 @@ class PublicationFigureTests(unittest.TestCase):
             self.assertAlmostEqual(tot, float(r["full_h"]), places=5, msg=r["instance"])
 
     def test_paper_embeds_main_figures(self):
-        import re
-
-        from reporting_paths import MAIN_FIGURES
-
         paper = (ROOT / "paper_draft.md").read_text(encoding="utf-8")
-        for name in MAIN_FIGURES:
+        for name in (
+            "fig01_hat_evrp_nl_architecture.png",
+            "fig_validation_protocols.png",
+            "fig_validation_learning_curves.png",
+            "fig_greedy_generalization.png",
+            "fig_validation_seed_effects.png",
+            "fig_official_sampled.png",
+            "fig_architecture_n10_greedy.png",
+            "fig_nonlinear_feasibility.png",
+        ):
             self.assertIn(name, paper, f"paper missing embed/reference for {name}")
-        # caption markers
-        self.assertGreaterEqual(len(re.findall(r"\*\*Figure \d+\.", paper)), 16)
 
     def test_paper_captions_hold_interpretive_limits(self):
         paper = (ROOT / "paper_draft.md").read_text(encoding="utf-8")
-        # Limitations that must live in captions, not figure footers.
         self.assertIn("n=80", paper)
-        self.assertRegex(paper, r"Figure 15\..*20 instances", re.S)
-        self.assertRegex(paper, r"Figure 16\..*categorical", re.S | re.I)
-        self.assertRegex(paper, r"Figure 17\..*[Uu]nequal", re.S)
-        self.assertRegex(paper, r"Figure 7\..*frozen Route Transformer", re.S)
+        self.assertIn("does not reliably improve", paper)
+        self.assertIn("[−0.944, −0.484]", paper)
+        self.assertIn("not a better deployment policy than greedy", paper)
+        self.assertIn("not used as evidence that REINFORCE", paper)
 
     def test_fig15_delta_matches_raw_fairls(self):
         cycle3 = ROOT / "results" / "raw" / "cycle3"

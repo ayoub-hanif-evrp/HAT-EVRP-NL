@@ -1,4 +1,6 @@
-# Why REINFORCE has not improved behavior cloning
+# Why REINFORCE has not improved greedy behavior cloning
+
+The locked conclusion is in `docs/FINAL_BC_RL_RESEARCH_REPORT.md`. Greedy construction does not establish an RL gain. The mean of four samples does. The notes below are the earlier entropy and penalty diagnostics, not a second conclusion.
 
 Primary question: does REINFORCE improve the routing decisions learned by behavior cloning when the solution is scored by exact nonlinear charging, with no local search and no ruin-and-repair?
 

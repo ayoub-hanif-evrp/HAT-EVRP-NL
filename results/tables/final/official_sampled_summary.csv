@@ -1,0 +1,25 @@
+split,model,model_key,size,protocol,bc_h,rl_h,delta_h,relative_pct,seeds_better,seed_sd_h,ci_low_h,ci_high_h,bc_runtime_s,rl_runtime_s,bc_oracle_calls,rl_oracle_calls,feasible_rate
+official_sampled,State Pointer,H1,10,sampled_mean_h,27.3327,26.8241,-0.5086,-1.861,4,0.5721,-1.2189,0.2017,3.545,3.861,3825.6,3895.2,1.0
+official_sampled,State Pointer,H1,10,best_of_4_h,23.8215,23.377,-0.4446,-1.866,5,0.5729,-1.156,0.2668,3.545,3.861,3825.6,3895.2,1.0
+official_sampled,State Pointer,H1,20,sampled_mean_h,44.5056,43.9564,-0.5492,-1.234,5,0.3909,-1.0346,-0.0638,12.456,12.298,15233.2,15477.6,1.0
+official_sampled,State Pointer,H1,20,best_of_4_h,40.2234,40.1321,-0.0913,-0.227,3,0.4132,-0.6044,0.4218,12.456,12.298,15233.2,15477.6,1.0
+official_sampled,State Pointer,H1,40,sampled_mean_h,86.1714,85.029,-1.1424,-1.326,5,0.4505,-1.7017,-0.583,58.732,58.663,61331.6,61940.0,1.0
+official_sampled,State Pointer,H1,40,best_of_4_h,80.294,79.4407,-0.8534,-1.063,3,1.166,-2.3012,0.5945,58.732,58.663,61331.6,61940.0,1.0
+official_sampled,Route Transformer (RT),H2,10,sampled_mean_h,26.2321,25.5182,-0.7138,-2.721,5,0.1854,-0.944,-0.4837,4.897,4.895,3874.8,3971.4,1.0
+official_sampled,Route Transformer (RT),H2,10,best_of_4_h,23.0854,22.5292,-0.5562,-2.409,5,0.1916,-0.7941,-0.3182,4.897,4.895,3874.8,3971.4,1.0
+official_sampled,Route Transformer (RT),H2,20,sampled_mean_h,42.5237,41.958,-0.5658,-1.331,5,0.3218,-0.9653,-0.1663,14.763,14.732,15409.4,15646.6,1.0
+official_sampled,Route Transformer (RT),H2,20,best_of_4_h,38.6754,37.9838,-0.6916,-1.788,4,0.6506,-1.4995,0.1163,14.763,14.732,15409.4,15646.6,1.0
+official_sampled,Route Transformer (RT),H2,40,sampled_mean_h,81.6545,80.4039,-1.2507,-1.532,5,1.149,-2.6774,0.176,61.477,61.343,61788.8,62635.0,1.0
+official_sampled,Route Transformer (RT),H2,40,best_of_4_h,76.2574,74.9017,-1.3558,-1.778,5,0.8112,-2.3631,-0.3485,61.477,61.343,61788.8,62635.0,1.0
+official_sampled,Fleet DeepSets,H3,10,sampled_mean_h,27.4022,26.0888,-1.3134,-4.793,5,0.7075,-2.1919,-0.4349,3.838,3.856,3810.4,4075.4,1.0
+official_sampled,Fleet DeepSets,H3,10,best_of_4_h,23.9747,22.9781,-0.9966,-4.157,5,0.3786,-1.4667,-0.5265,3.838,3.856,3810.4,4075.4,1.0
+official_sampled,Fleet DeepSets,H3,20,sampled_mean_h,44.9017,43.4663,-1.4354,-3.197,4,1.3251,-3.0808,0.2099,12.685,12.978,15318.4,15976.4,1.0
+official_sampled,Fleet DeepSets,H3,20,best_of_4_h,40.7282,39.4685,-1.2596,-3.093,3,1.4841,-3.1023,0.5831,12.685,12.978,15318.4,15976.4,1.0
+official_sampled,Fleet DeepSets,H3,40,sampled_mean_h,86.486,84.6123,-1.8738,-2.167,5,1.5214,-3.7628,0.0153,54.618,56.746,61692.0,63623.4,1.0
+official_sampled,Fleet DeepSets,H3,40,best_of_4_h,81.1853,79.168,-2.0173,-2.485,5,1.2991,-3.6303,-0.4043,54.618,56.746,61692.0,63623.4,1.0
+official_sampled,Route Transformer + DeepSets (HAT-EVRP-NL),H4,10,sampled_mean_h,26.7981,25.3657,-1.4324,-5.345,5,0.4431,-1.9826,-0.8822,4.988,5.12,3854.2,4141.8,1.0
+official_sampled,Route Transformer + DeepSets (HAT-EVRP-NL),H4,10,best_of_4_h,23.5312,22.6819,-0.8492,-3.609,5,0.3358,-1.2661,-0.4323,4.988,5.12,3854.2,4141.8,1.0
+official_sampled,Route Transformer + DeepSets (HAT-EVRP-NL),H4,20,sampled_mean_h,42.574,41.8361,-0.7379,-1.733,5,0.4753,-1.328,-0.1478,15.237,15.522,15705.6,16296.2,1.0
+official_sampled,Route Transformer + DeepSets (HAT-EVRP-NL),H4,20,best_of_4_h,38.4751,37.9164,-0.5587,-1.452,4,0.7232,-1.4566,0.3392,15.237,15.522,15705.6,16296.2,1.0
+official_sampled,Route Transformer + DeepSets (HAT-EVRP-NL),H4,40,sampled_mean_h,82.4388,81.4007,-1.038,-1.259,4,1.1525,-2.4691,0.393,61.493,63.464,63582.6,64545.6,1.0
+official_sampled,Route Transformer + DeepSets (HAT-EVRP-NL),H4,40,best_of_4_h,76.4192,76.1665,-0.2527,-0.331,4,1.2237,-1.7721,1.2667,61.493,63.464,63582.6,64545.6,1.0

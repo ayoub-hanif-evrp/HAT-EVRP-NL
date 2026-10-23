@@ -1,0 +1,270 @@
+{
+  "rule": "At least 4 of 5 seeds have RL duration lower than BC, and the paired 95% interval of RL-BC is entirely below zero.",
+  "cells": [
+    {
+      "experiment": "kl_v2",
+      "model": "H2",
+      "protocol": "best_of_4_h",
+      "n_seeds": 5,
+      "mean_delta_h": -0.3234,
+      "ci_low_h": -0.4721,
+      "ci_high_h": -0.1748,
+      "seeds_better": 5,
+      "credible_benefit": true
+    },
+    {
+      "experiment": "kl_v2",
+      "model": "H2",
+      "protocol": "greedy_h",
+      "n_seeds": 5,
+      "mean_delta_h": 0.045,
+      "ci_low_h": -0.1091,
+      "ci_high_h": 0.1991,
+      "seeds_better": 2,
+      "credible_benefit": false
+    },
+    {
+      "experiment": "kl_v2",
+      "model": "H2",
+      "protocol": "sampled_mean_h",
+      "n_seeds": 5,
+      "mean_delta_h": -0.5391,
+      "ci_low_h": -0.7942,
+      "ci_high_h": -0.2839,
+      "seeds_better": 5,
+      "credible_benefit": true
+    },
+    {
+      "experiment": "kl_v2",
+      "model": "H4",
+      "protocol": "best_of_4_h",
+      "n_seeds": 5,
+      "mean_delta_h": -0.4841,
+      "ci_low_h": -0.7676,
+      "ci_high_h": -0.2006,
+      "seeds_better": 5,
+      "credible_benefit": true
+    },
+    {
+      "experiment": "kl_v2",
+      "model": "H4",
+      "protocol": "greedy_h",
+      "n_seeds": 5,
+      "mean_delta_h": 0.049,
+      "ci_low_h": -0.0755,
+      "ci_high_h": 0.1736,
+      "seeds_better": 2,
+      "credible_benefit": false
+    },
+    {
+      "experiment": "kl_v2",
+      "model": "H4",
+      "protocol": "sampled_mean_h",
+      "n_seeds": 5,
+      "mean_delta_h": -0.7803,
+      "ci_low_h": -1.2157,
+      "ci_high_h": -0.3448,
+      "seeds_better": 5,
+      "credible_benefit": true
+    },
+    {
+      "experiment": "original",
+      "model": "H1",
+      "protocol": "best_of_4_h",
+      "n_seeds": 5,
+      "mean_delta_h": -0.2387,
+      "ci_low_h": -0.4365,
+      "ci_high_h": -0.0409,
+      "seeds_better": 5,
+      "credible_benefit": true
+    },
+    {
+      "experiment": "original",
+      "model": "H1",
+      "protocol": "greedy_h",
+      "n_seeds": 5,
+      "mean_delta_h": 0.0361,
+      "ci_low_h": -0.217,
+      "ci_high_h": 0.2892,
+      "seeds_better": 2,
+      "credible_benefit": false
+    },
+    {
+      "experiment": "original",
+      "model": "H1",
+      "protocol": "sampled_mean_h",
+      "n_seeds": 5,
+      "mean_delta_h": -0.3983,
+      "ci_low_h": -0.5784,
+      "ci_high_h": -0.2182,
+      "seeds_better": 5,
+      "credible_benefit": true
+    },
+    {
+      "experiment": "original",
+      "model": "H2",
+      "protocol": "best_of_4_h",
+      "n_seeds": 5,
+      "mean_delta_h": -0.1894,
+      "ci_low_h": -0.2672,
+      "ci_high_h": -0.1117,
+      "seeds_better": 5,
+      "credible_benefit": true
+    },
+    {
+      "experiment": "original",
+      "model": "H2",
+      "protocol": "greedy_h",
+      "n_seeds": 5,
+      "mean_delta_h": 0.0404,
+      "ci_low_h": -0.1088,
+      "ci_high_h": 0.1896,
+      "seeds_better": 3,
+      "credible_benefit": false
+    },
+    {
+      "experiment": "original",
+      "model": "H2",
+      "protocol": "sampled_mean_h",
+      "n_seeds": 5,
+      "mean_delta_h": -0.3438,
+      "ci_low_h": -0.5279,
+      "ci_high_h": -0.1597,
+      "seeds_better": 5,
+      "credible_benefit": true
+    },
+    {
+      "experiment": "original",
+      "model": "H3",
+      "protocol": "best_of_4_h",
+      "n_seeds": 5,
+      "mean_delta_h": -0.5125,
+      "ci_low_h": -0.9896,
+      "ci_high_h": -0.0354,
+      "seeds_better": 5,
+      "credible_benefit": true
+    },
+    {
+      "experiment": "original",
+      "model": "H3",
+      "protocol": "greedy_h",
+      "n_seeds": 5,
+      "mean_delta_h": 0.0088,
+      "ci_low_h": -0.1945,
+      "ci_high_h": 0.2121,
+      "seeds_better": 1,
+      "credible_benefit": false
+    },
+    {
+      "experiment": "original",
+      "model": "H3",
+      "protocol": "sampled_mean_h",
+      "n_seeds": 5,
+      "mean_delta_h": -0.8894,
+      "ci_low_h": -1.762,
+      "ci_high_h": -0.0169,
+      "seeds_better": 5,
+      "credible_benefit": true
+    },
+    {
+      "experiment": "original",
+      "model": "H4",
+      "protocol": "best_of_4_h",
+      "n_seeds": 5,
+      "mean_delta_h": -0.6164,
+      "ci_low_h": -0.9223,
+      "ci_high_h": -0.3104,
+      "seeds_better": 5,
+      "credible_benefit": true
+    },
+    {
+      "experiment": "original",
+      "model": "H4",
+      "protocol": "greedy_h",
+      "n_seeds": 5,
+      "mean_delta_h": 0.0705,
+      "ci_low_h": -0.0481,
+      "ci_high_h": 0.189,
+      "seeds_better": 1,
+      "credible_benefit": false
+    },
+    {
+      "experiment": "original",
+      "model": "H4",
+      "protocol": "sampled_mean_h",
+      "n_seeds": 5,
+      "mean_delta_h": -0.9575,
+      "ci_low_h": -1.3795,
+      "ci_high_h": -0.5355,
+      "seeds_better": 5,
+      "credible_benefit": true
+    },
+    {
+      "experiment": "shuffled",
+      "model": "H2",
+      "protocol": "best_of_4_h",
+      "n_seeds": 5,
+      "mean_delta_h": -0.2678,
+      "ci_low_h": -0.4782,
+      "ci_high_h": -0.0574,
+      "seeds_better": 5,
+      "credible_benefit": true
+    },
+    {
+      "experiment": "shuffled",
+      "model": "H2",
+      "protocol": "greedy_h",
+      "n_seeds": 5,
+      "mean_delta_h": 0.0755,
+      "ci_low_h": -0.0794,
+      "ci_high_h": 0.2305,
+      "seeds_better": 1,
+      "credible_benefit": false
+    },
+    {
+      "experiment": "shuffled",
+      "model": "H2",
+      "protocol": "sampled_mean_h",
+      "n_seeds": 5,
+      "mean_delta_h": -0.3956,
+      "ci_low_h": -0.5377,
+      "ci_high_h": -0.2535,
+      "seeds_better": 5,
+      "credible_benefit": true
+    },
+    {
+      "experiment": "shuffled",
+      "model": "H4",
+      "protocol": "best_of_4_h",
+      "n_seeds": 5,
+      "mean_delta_h": -0.5815,
+      "ci_low_h": -0.8557,
+      "ci_high_h": -0.3074,
+      "seeds_better": 5,
+      "credible_benefit": true
+    },
+    {
+      "experiment": "shuffled",
+      "model": "H4",
+      "protocol": "greedy_h",
+      "n_seeds": 5,
+      "mean_delta_h": 0.1142,
+      "ci_low_h": 0.0109,
+      "ci_high_h": 0.2175,
+      "seeds_better": 0,
+      "credible_benefit": false
+    },
+    {
+      "experiment": "shuffled",
+      "model": "H4",
+      "protocol": "sampled_mean_h",
+      "n_seeds": 5,
+      "mean_delta_h": -0.8921,
+      "ci_low_h": -1.3369,
+      "ci_high_h": -0.4473,
+      "seeds_better": 5,
+      "credible_benefit": true
+    }
+  ],
+  "any_credible_benefit": true
+}

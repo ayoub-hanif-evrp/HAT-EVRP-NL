@@ -1350,6 +1350,11 @@ def diagnose_deepsets(model: HATPolicy, instance: Instance) -> dict:
     }
 
 
+# Route KL plus the customer KL given the route the live policy already selected.
+# Not the expectation of the customer KL under the route distribution.
+BC_KL_SCOPE = "sampled_conditional"
+
+
 def _masked_categorical_kl(live_logits: torch.Tensor, reference_logits: torch.Tensor) -> torch.Tensor:
     """KL(live || reference) on one masked categorical decision.
 
@@ -1394,10 +1399,14 @@ def _frozen_distribution_kl(
     cache: dict,
     nodes,
 ):
-    """KL of the live route and customer distributions against a frozen model.
+    """Sampled-conditional KL against a frozen behavior-cloning model.
 
-    Both distributions use the feasibility mask of the live decision. The
-    reference forward runs without gradients.
+    The route term is the KL between the two masked route distributions.
+    The customer term is the KL between the two masked customer distributions
+    given the route the live policy selected at this decision. It is not the
+    expectation of that customer KL under the route distribution, so this is
+    not the exact KL of the full hierarchical policy. The reference forward
+    runs without gradients, and both distributions use the live feasibility mask.
     """
     with torch.no_grad():
         nodes, route_vectors, open_indices, context = reference.encode_state(

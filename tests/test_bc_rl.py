@@ -298,6 +298,90 @@ class NeuralConstructionTests(unittest.TestCase):
             solver_ls.ruin_and_repair = original_ruin
         self.assertIn("feasible", result)
 
+    def test_kl_scope_is_sampled_conditional(self):
+        from train import BC_KL_SCOPE, _frozen_distribution_kl
+
+        self.assertEqual(BC_KL_SCOPE, "sampled_conditional")
+        self.assertIn("not the exact KL", _frozen_distribution_kl.__doc__)
+
+    def test_neural_construction_runner_does_not_request_search(self):
+        import scripts.experiments.eval_bc_rl_official as evaluation
+
+        class Instance:
+            name = "toy"
+            customers = (1,)
+
+        seen = {}
+
+        def fake_decode(_model, _instance, sample=False, **kwargs):
+            seen["sample"] = sample
+            seen["kwargs"] = kwargs
+            if kwargs.get("local_passes") or kwargs.get("ruin_iterations") or kwargs.get("repair_insertion"):
+                raise AssertionError("construction evaluation requested search")
+            return {
+                "feasible": True,
+                "objective": 1.0,
+                "objective_lit": 0.5,
+                "runtime": 0.01,
+                "oracle_calls": 3,
+                "oracle_requests": 3,
+                "oracle_cache_hits": 0,
+                "reason": "",
+            }
+
+        original = (evaluation.load_policy, evaluation.instances_of_size, evaluation.parse_instance, evaluation.decode)
+        evaluation.load_policy = lambda _path: object()
+        evaluation.instances_of_size = lambda _data_dir, size: [Path("toy.xml")] if size == 10 else []
+        evaluation.parse_instance = lambda _path: Instance()
+        evaluation.decode = fake_decode
+        try:
+            out = Path("results/raw/inference_audit_v1/_runner_probe.csv")
+            evaluation.evaluate_neural_construction(Path("missing-run"), Path("dataset"), out, sizes=(10,))
+        finally:
+            evaluation.load_policy, evaluation.instances_of_size, evaluation.parse_instance, evaluation.decode = original
+            if out.exists():
+                out.unlink()
+        self.assertFalse(seen["sample"])
+        self.assertEqual(seen["kwargs"], {})
+
+    def test_greedy_baseline_advantage_is_detached(self):
+        from bc_rl import reinforce_loss, reward_value
+        from data import generate_synthetic
+        from model import HATPolicy, PolicyConfig
+        from train import decode
+
+        torch.manual_seed(0)
+        instance = generate_synthetic(4, 1, generator_version="v2")
+        model = HATPolicy(PolicyConfig(history=True, deepsets=False, d_model=32, layers=1, heads=4))
+        sampled = decode(model, instance, sample=True, seed=1)
+        model.eval()
+        with torch.no_grad():
+            greedy = decode(model, instance, sample=False, seed=1)
+        model.train()
+        greedy_reward = reward_value(
+            greedy,
+            n_customers=len(instance.customers),
+            max_route_hours=instance.max_route_hours,
+        )
+        sampled_reward = reward_value(
+            sampled,
+            n_customers=len(instance.customers),
+            max_route_hours=instance.max_route_hours,
+        )
+        self.assertIsInstance(greedy_reward, float)
+        loss = reinforce_loss(
+            [sampled["log_prob"]],
+            [sampled_reward - greedy_reward],
+            [sampled.get("entropy_tensor")],
+        )
+        loss.backward()
+        self.assertTrue(
+            any(
+                parameter.grad is not None and torch.isfinite(parameter.grad).all() and float(parameter.grad.abs().sum()) > 0
+                for parameter in model.parameters()
+            )
+        )
+
     def test_distribution_kl_is_zero_for_identical_policies(self):
         import copy
 

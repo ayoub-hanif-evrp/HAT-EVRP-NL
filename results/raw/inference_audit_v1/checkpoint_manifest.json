@@ -1,0 +1,482 @@
+[
+  {
+    "experiment": "original",
+    "model": "H1",
+    "seed": 42,
+    "role": "bc",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H1_seed42\\bc_best.pt",
+    "sha256": "0bc66e560360b5e305277576affe0211a86ba384ff82e538d3ef7a49fbe76355"
+  },
+  {
+    "experiment": "original",
+    "model": "H1",
+    "seed": 43,
+    "role": "bc",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H1_seed43\\bc_best.pt",
+    "sha256": "9c4f8deb9692957d3bfc4f8762284231b0cc76636098728b440083c23ecfd5c8"
+  },
+  {
+    "experiment": "original",
+    "model": "H1",
+    "seed": 44,
+    "role": "bc",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H1_seed44\\bc_best.pt",
+    "sha256": "9702d092df2a93c95949fa40df38a28a6cb2120af86c6cdca4dd4dbb46c0c857"
+  },
+  {
+    "experiment": "original",
+    "model": "H1",
+    "seed": 45,
+    "role": "bc",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H1_seed45\\bc_best.pt",
+    "sha256": "d7c94141d68f6cc735fa529e7ff6bf768072708ffd8f2646365e510591bd73ee"
+  },
+  {
+    "experiment": "original",
+    "model": "H1",
+    "seed": 46,
+    "role": "bc",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H1_seed46\\bc_best.pt",
+    "sha256": "218ca8ca2a42222bdeb4bcd22be2d34a05ca97e1d66a39d6941968dfe70299a8"
+  },
+  {
+    "experiment": "original",
+    "model": "H2",
+    "seed": 42,
+    "role": "bc",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H2_seed42\\bc_best.pt",
+    "sha256": "b87dadfe54aac91411e83330478038a190826244ee69e0bfb32a24ccd01cd1ff"
+  },
+  {
+    "experiment": "original",
+    "model": "H2",
+    "seed": 43,
+    "role": "bc",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H2_seed43\\bc_best.pt",
+    "sha256": "635cc64d9c658c05720895fcc69b245fb9e03f46f99d5dcc03553f6af40edfe8"
+  },
+  {
+    "experiment": "original",
+    "model": "H2",
+    "seed": 44,
+    "role": "bc",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H2_seed44\\bc_best.pt",
+    "sha256": "ba5f0445c20139c6191d33e317bc5e6a1eba723268a960d4fbf819f1e800b1f1"
+  },
+  {
+    "experiment": "original",
+    "model": "H2",
+    "seed": 45,
+    "role": "bc",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H2_seed45\\bc_best.pt",
+    "sha256": "9f97ee2af0326c3b1929de44929788a16e6a10d707cde88fda68f06dd60a7ae5"
+  },
+  {
+    "experiment": "original",
+    "model": "H2",
+    "seed": 46,
+    "role": "bc",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H2_seed46\\bc_best.pt",
+    "sha256": "b700acd85917b19a03df3d676f9e6396c694b521c76f33bf1b48ce9033709c49"
+  },
+  {
+    "experiment": "original",
+    "model": "H3",
+    "seed": 42,
+    "role": "bc",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H3_seed42\\bc_best.pt",
+    "sha256": "cab2380a5290fef2ffd90b211223e3af4f1ae8385b753430ad6daf9af57f8074"
+  },
+  {
+    "experiment": "original",
+    "model": "H3",
+    "seed": 43,
+    "role": "bc",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H3_seed43\\bc_best.pt",
+    "sha256": "6653b60c76bcb023b30552dbf08310533bcb9d1bfb805066b76d931424118660"
+  },
+  {
+    "experiment": "original",
+    "model": "H3",
+    "seed": 44,
+    "role": "bc",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H3_seed44\\bc_best.pt",
+    "sha256": "c64bb834ce72ba690719027627dd0b7d7fb5ed0abe9d73419f5f4e2cea1983c2"
+  },
+  {
+    "experiment": "original",
+    "model": "H3",
+    "seed": 45,
+    "role": "bc",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H3_seed45\\bc_best.pt",
+    "sha256": "bc17aed11b0f57a93e459ea6597256553267c35d867f1968d09da3ec11406e21"
+  },
+  {
+    "experiment": "original",
+    "model": "H3",
+    "seed": 46,
+    "role": "bc",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H3_seed46\\bc_best.pt",
+    "sha256": "d982d4e6030a4934bd04c40e910b6a24ec8b62c8b1e69fb2177bf54a2c270078"
+  },
+  {
+    "experiment": "original",
+    "model": "H4",
+    "seed": 42,
+    "role": "bc",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H4_seed42\\bc_best.pt",
+    "sha256": "c4398490925b407dc3143364086eb148e39b8b1173b25e44b669ccc75cf7d14b"
+  },
+  {
+    "experiment": "original",
+    "model": "H4",
+    "seed": 43,
+    "role": "bc",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H4_seed43\\bc_best.pt",
+    "sha256": "cf35f0d0d7c11abf9a44443184abb5d38d3cadc26fa3aca28dc1c945be205c1f"
+  },
+  {
+    "experiment": "original",
+    "model": "H4",
+    "seed": 44,
+    "role": "bc",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H4_seed44\\bc_best.pt",
+    "sha256": "995077b20d03244e473928d55fafd2a5b249960447db30f2a5461dd9bf297823"
+  },
+  {
+    "experiment": "original",
+    "model": "H4",
+    "seed": 45,
+    "role": "bc",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H4_seed45\\bc_best.pt",
+    "sha256": "cb9675c14afcbf1d6343f2617cd2e4d9ed87b6b3c4f97fa001ddb9436f789f32"
+  },
+  {
+    "experiment": "original",
+    "model": "H4",
+    "seed": 46,
+    "role": "bc",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H4_seed46\\bc_best.pt",
+    "sha256": "2bb8f68c0fe3636754d3649da0a8e42e4011306d0f26371bf6b36741bf824c3a"
+  },
+  {
+    "experiment": "original",
+    "model": "H1",
+    "seed": 42,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H1_seed42\\rl_best.pt",
+    "sha256": "16f0f2939c61376f3aac3ca0fce103af8ae5ff948e9f458a6c576282d79f6cff"
+  },
+  {
+    "experiment": "original",
+    "model": "H1",
+    "seed": 43,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H1_seed43\\rl_best.pt",
+    "sha256": "910da2ee34df9bf3e381ade34dfbdc33b894e23ea8aeafceb15c79d23107a561"
+  },
+  {
+    "experiment": "original",
+    "model": "H1",
+    "seed": 44,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H1_seed44\\rl_best.pt",
+    "sha256": "cd7ca4d09178c9db2ca9d535d538117dd362c11189ef519592e6ebefa9c5dcfa"
+  },
+  {
+    "experiment": "original",
+    "model": "H1",
+    "seed": 45,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H1_seed45\\rl_best.pt",
+    "sha256": "930ecda873ce74ff48730fa45e3d351ba7bb4f1c39aa622c2125f5d3af951372"
+  },
+  {
+    "experiment": "original",
+    "model": "H1",
+    "seed": 46,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H1_seed46\\rl_best.pt",
+    "sha256": "89171ddd8382aaa05bd029c29b74c3efbe5301640613111630e3e2fd82cb979c"
+  },
+  {
+    "experiment": "original",
+    "model": "H2",
+    "seed": 42,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H2_seed42\\rl_best.pt",
+    "sha256": "938ee0568b941db02d856bde44bf61214e65beb036a48b1ff59a282ad8c36fb0"
+  },
+  {
+    "experiment": "original",
+    "model": "H2",
+    "seed": 43,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H2_seed43\\rl_best.pt",
+    "sha256": "3bc23459fcb5e5dba85f550bffd1f888d83c021ee11123b15d2adc6e75755a03"
+  },
+  {
+    "experiment": "original",
+    "model": "H2",
+    "seed": 44,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H2_seed44\\rl_best.pt",
+    "sha256": "af08e5dafe5aa659b872e69d5fe95270dea7efe2d72114571d083949b927c639"
+  },
+  {
+    "experiment": "original",
+    "model": "H2",
+    "seed": 45,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H2_seed45\\rl_best.pt",
+    "sha256": "c4e1411d6453949cf2bac739979f7e9456606aebb0b4ed302babdd391a5b9408"
+  },
+  {
+    "experiment": "original",
+    "model": "H2",
+    "seed": 46,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H2_seed46\\rl_best.pt",
+    "sha256": "7a33a94972c43fd650781c26ef76b60b533dc4dfcd0590020b297c57e5ddeb4e"
+  },
+  {
+    "experiment": "original",
+    "model": "H3",
+    "seed": 42,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H3_seed42\\rl_best.pt",
+    "sha256": "f49037e05af004efcc5683f6f1dc52a0e7aa31f110dd311626b29444893b00e5"
+  },
+  {
+    "experiment": "original",
+    "model": "H3",
+    "seed": 43,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H3_seed43\\rl_best.pt",
+    "sha256": "694b40110348017c824724dc62be4c35edcc80c179128f31ab967ee4014dccac"
+  },
+  {
+    "experiment": "original",
+    "model": "H3",
+    "seed": 44,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H3_seed44\\rl_best.pt",
+    "sha256": "95466b93030ee4d3910fab2bc1faa20ce3c644242594a9379ddae6759432a0d7"
+  },
+  {
+    "experiment": "original",
+    "model": "H3",
+    "seed": 45,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H3_seed45\\rl_best.pt",
+    "sha256": "89947664799d2c5928830e92e026923eee9933f60cf3ae9486717974e195eb75"
+  },
+  {
+    "experiment": "original",
+    "model": "H3",
+    "seed": 46,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H3_seed46\\rl_best.pt",
+    "sha256": "40651557bcdc36625d071126f98312c8dd70f5adb66ad5f4557b664ba7edc76e"
+  },
+  {
+    "experiment": "original",
+    "model": "H4",
+    "seed": 42,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H4_seed42\\rl_best.pt",
+    "sha256": "8d93795539197b78d27be4550cb19022dca7673a56941b6040535517fb020132"
+  },
+  {
+    "experiment": "original",
+    "model": "H4",
+    "seed": 43,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H4_seed43\\rl_best.pt",
+    "sha256": "363c3d2f52ae9e41d78a49264e3cc47ace122e5594165000534771a1e17e1538"
+  },
+  {
+    "experiment": "original",
+    "model": "H4",
+    "seed": 44,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H4_seed44\\rl_best.pt",
+    "sha256": "fba4d82f243dbcfefa7d40f2ac22dc5045016df609c04d4b1b24e5566d98e02d"
+  },
+  {
+    "experiment": "original",
+    "model": "H4",
+    "seed": 45,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H4_seed45\\rl_best.pt",
+    "sha256": "5673e35bd84414dbc8ec17d6959145b993609860ae1d3fd24a71b8099145175a"
+  },
+  {
+    "experiment": "original",
+    "model": "H4",
+    "seed": 46,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_full_v1\\runs\\H4_seed46\\rl_best.pt",
+    "sha256": "46a8424102f8430c1b48c3fa56f5d6cb3c0aea9b8c768f17175b9a3ab55ce172"
+  },
+  {
+    "experiment": "shuffled",
+    "model": "H2",
+    "seed": 42,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_shuffle_v1\\runs\\H2_seed42\\rl_best.pt",
+    "sha256": "686b64d54debae6c512e74477d2d95d635b2185b663e41eae2d7ff54f397993a"
+  },
+  {
+    "experiment": "shuffled",
+    "model": "H2",
+    "seed": 43,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_shuffle_v1\\runs\\H2_seed43\\rl_best.pt",
+    "sha256": "0f91e80945f831c849c7be314b3aca838e5e702a695fb2980d023dd79a060375"
+  },
+  {
+    "experiment": "shuffled",
+    "model": "H2",
+    "seed": 44,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_shuffle_v1\\runs\\H2_seed44\\rl_best.pt",
+    "sha256": "f16952912ae9dea2e017aad530bcbf070954a92b878dc5fe2aa238b2981b480f"
+  },
+  {
+    "experiment": "shuffled",
+    "model": "H2",
+    "seed": 45,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_shuffle_v1\\runs\\H2_seed45\\rl_best.pt",
+    "sha256": "ea3862a73140a30d8a4e15c97a849fc45023f34a1c7e1090e80b1ec4f0dcbcca"
+  },
+  {
+    "experiment": "shuffled",
+    "model": "H2",
+    "seed": 46,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_shuffle_v1\\runs\\H2_seed46\\rl_best.pt",
+    "sha256": "ce949ad11d2be22a85f569682e1ca2c2dc59a5596b8c184b532f8b8ed2ff8e8d"
+  },
+  {
+    "experiment": "shuffled",
+    "model": "H4",
+    "seed": 42,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_shuffle_v1\\runs\\H4_seed42\\rl_best.pt",
+    "sha256": "4c20cc3fcb8c2c5ca97eb6a99e65b99b244eeab9b5b14bdb81c059316079fe08"
+  },
+  {
+    "experiment": "shuffled",
+    "model": "H4",
+    "seed": 43,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_shuffle_v1\\runs\\H4_seed43\\rl_best.pt",
+    "sha256": "d662f4d8842a1d3d4e380547d52c0e67299d50e8ecb7f0527f14dbe6feee90e9"
+  },
+  {
+    "experiment": "shuffled",
+    "model": "H4",
+    "seed": 44,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_shuffle_v1\\runs\\H4_seed44\\rl_best.pt",
+    "sha256": "08626ad15c752e89b7b35bdff64f0363fd4e6db57d189ef14bfb54036f8aa62a"
+  },
+  {
+    "experiment": "shuffled",
+    "model": "H4",
+    "seed": 45,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_shuffle_v1\\runs\\H4_seed45\\rl_best.pt",
+    "sha256": "525682db3bab7661b6a3f71dc26ef24854aaf6e5a1dedeaea95c02eb2de6ef27"
+  },
+  {
+    "experiment": "shuffled",
+    "model": "H4",
+    "seed": 46,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_shuffle_v1\\runs\\H4_seed46\\rl_best.pt",
+    "sha256": "37bc3a762ebd80568538a01838177c2dc9a398dc0c25750252af1d0229f872a7"
+  },
+  {
+    "experiment": "kl_v2",
+    "model": "H2",
+    "seed": 42,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_kl_v2\\runs\\H2_seed42\\rl_best.pt",
+    "sha256": "01ece2f03b95e1b2341dd18cf33d0228331b66ba86a8edb65b0d36f05576f65b"
+  },
+  {
+    "experiment": "kl_v2",
+    "model": "H2",
+    "seed": 43,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_kl_v2\\runs\\H2_seed43\\rl_best.pt",
+    "sha256": "ba10b580e6299643e006eb36b9ef183281238b794d4b062c4f9b9e94d2f1f8a1"
+  },
+  {
+    "experiment": "kl_v2",
+    "model": "H2",
+    "seed": 44,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_kl_v2\\runs\\H2_seed44\\rl_best.pt",
+    "sha256": "1164d792273a08d1cbe2062e5c8ba47e901755a7657b51db734d4447c6f5255f"
+  },
+  {
+    "experiment": "kl_v2",
+    "model": "H2",
+    "seed": 45,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_kl_v2\\runs\\H2_seed45\\rl_best.pt",
+    "sha256": "25e8662efc3b2d164358b0759537341beb600c775249f2ef68471787ffd979e5"
+  },
+  {
+    "experiment": "kl_v2",
+    "model": "H2",
+    "seed": 46,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_kl_v2\\runs\\H2_seed46\\rl_best.pt",
+    "sha256": "44cf8fbeab2cb1cff3f5f45bd8a099e3b3c21aea25258c8ea9351b4ce2b8815b"
+  },
+  {
+    "experiment": "kl_v2",
+    "model": "H4",
+    "seed": 42,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_kl_v2\\runs\\H4_seed42\\rl_best.pt",
+    "sha256": "c0b672f459bdcde65d57844279a673c7f7a45928139d5b7b96efcb9f00041ef5"
+  },
+  {
+    "experiment": "kl_v2",
+    "model": "H4",
+    "seed": 43,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_kl_v2\\runs\\H4_seed43\\rl_best.pt",
+    "sha256": "48d4621cf71c2102bc324f5a4d556ab436ae6e93aac150eb3be8c4e399c444d2"
+  },
+  {
+    "experiment": "kl_v2",
+    "model": "H4",
+    "seed": 44,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_kl_v2\\runs\\H4_seed44\\rl_best.pt",
+    "sha256": "ee5db5571ebf3e41fa673bdff16837bd992c5e2d09a71a88105add2abefb0f53"
+  },
+  {
+    "experiment": "kl_v2",
+    "model": "H4",
+    "seed": 45,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_kl_v2\\runs\\H4_seed45\\rl_best.pt",
+    "sha256": "a1f0f47f982aaf7c83381c119e39acad904e4ec9b55d252f63ef3d0515f43cea"
+  },
+  {
+    "experiment": "kl_v2",
+    "model": "H4",
+    "seed": 46,
+    "role": "rl",
+    "checkpoint": "results\\raw\\bc_rl_kl_v2\\runs\\H4_seed46\\rl_best.pt",
+    "sha256": "a7035c822992741e670f6bc304ba0a0f76a5e59c5e066ffda214596a7bee3711"
+  }
+]
