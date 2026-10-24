@@ -1,0 +1,46 @@
+{
+  "name": "guided_decoder_diagnostic_v1",
+  "parent_commit": "5fa3e382f6cb408fd35edf10714be693cb1bad0c",
+  "checkpoints": {
+    "bc": "results/raw/bc_rl_full_v1/runs/H2_seed{seed}/bc_best.pt",
+    "rl": "results/raw/bc_rl_full_v1/runs/H2_seed{seed}/rl_best.pt"
+  },
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "architecture": "H2",
+  "n_samples": 8,
+  "sample_seed0": 970000,
+  "temperature": 1.0,
+  "cost_lambda_control": 0.0,
+  "cost_lambda_positive": 4.0,
+  "cost_lambda_note": "One predeclared positive coefficient. No coefficient search.",
+  "decoder": "Limited-discrepancy neural construction. At one decision on the greedy trace, replace the greedy action by the next legal action in policy rank, then finish with greedy decoding. Rank alternatives by policy probability. Keep the completed feasible plan with the lowest exact nonlinear duration. No local search, ruin-and-repair, insertion, or destroy operators.",
+  "budgets": {
+    "narrow": {
+      "max_deviations": 4,
+      "alternatives": [
+        "customer_rank2"
+      ],
+      "max_solver_executions": 400
+    },
+    "wide": {
+      "max_deviations": 8,
+      "alternatives": [
+        "customer_rank2",
+        "route_rank2"
+      ],
+      "max_solver_executions": 1200
+    }
+  },
+  "practical_threshold_relative": 0.01,
+  "threshold_source": "Predeclared before this development evaluation. Not revised after confirmation.",
+  "continue_to_training_only_if": "On physically coverable development instances, the best wide-budget guided route, taking the better of the BC and RL decoders on each instance, has paired seed-mean duration at least 1% below BC greedy, on at least 4 of 5 seeds, with a two-sided Student-t 95% interval entirely below zero. Otherwise stop and do not train.",
+  "penalized_cap": "n_customers * max_route_hours",
+  "local_search": false,
+  "training_in_this_script": false
+}

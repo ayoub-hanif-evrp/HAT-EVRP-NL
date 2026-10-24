@@ -495,5 +495,41 @@ class BestOfKScoreFunctionTests(unittest.TestCase):
         self.assertTrue(torch.equal(full[station_rows, 6:9], hidden[station_rows, 6:9]))
 
 
+class GuidedDecodeTests(unittest.TestCase):
+    def test_forced_legal_action_is_taken_and_search_stays_off(self):
+        from data import generate_synthetic
+        from model import HATPolicy, PolicyConfig
+        from train import decode
+
+        torch.manual_seed(0)
+        instance = generate_synthetic(6, 21, generator_version="v2")
+        policy = HATPolicy(PolicyConfig(history=True, deepsets=False, d_model=32, layers=1, heads=4))
+        policy.eval()
+        trace = []
+        with torch.no_grad():
+            greedy = decode(policy, instance, sample=False, seed=0, trace=trace)
+        self.assertEqual(greedy["local_improvements"], 0)
+        self.assertIsNone(greedy["ruin_diagnostics"])
+        self.assertTrue(trace)
+        step = trace[0]
+        self.assertGreaterEqual(len(step["customer_ranked"]), 1)
+        if len(step["customer_ranked"]) < 2:
+            self.skipTest("this random policy has only one legal customer action")
+        alternative = step["customer_ranked"][1]
+        forced_trace = []
+        with torch.no_grad():
+            forced = decode(
+                policy,
+                instance,
+                sample=False,
+                seed=0,
+                trace=forced_trace,
+                forced_actions=[{"route": step["route_chosen"], "customer": alternative}],
+            )
+        self.assertEqual(forced_trace[0]["customer_chosen"], alternative)
+        self.assertEqual(forced["local_improvements"], 0)
+        self.assertNotEqual(forced_trace[0]["customer_chosen"], step["customer_chosen"])
+
+
 if __name__ == "__main__":
     unittest.main()

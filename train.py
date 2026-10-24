@@ -1469,6 +1469,8 @@ def decode(
     oracle: FixedRouteOracle | None = None,
     reference_model: HATPolicy | None = None,
     temperature: float = 1.0,
+    trace: list | None = None,
+    forced_actions: list[dict] | None = None,
 ) -> dict:
     """Greedy/sampled hierarchical decode with optional oracle-aware scoring.
 
@@ -1489,6 +1491,11 @@ def decode(
     ``temperature`` rescales the feasible masked route and customer logits
     before a stochastic draw. Greedy decoding ignores it, so argmax routes
     stay the same. The default 1.0 leaves the sampling distribution unchanged.
+
+    ``trace`` records the policy ranking at each greedy or forced decision.
+    ``forced_actions`` replaces the greedy route or customer index when that
+    index is still legal. Sampling ignores forced actions. Neither option
+    adds local search.
     """
     from solver import local_search
 
@@ -1607,7 +1614,24 @@ def decode(
             )
         route_draw = _sampling_logits(route_scores, sample, temperature)
         route_dist = torch.distributions.Categorical(logits=route_draw)
-        route_action = route_dist.sample() if sample else torch.argmax(route_scores)
+        force = None
+        if forced_actions is not None and decision < len(forced_actions):
+            force = forced_actions[decision]
+        forced_route = None if force is None else force.get("route")
+        if (
+            not sample
+            and forced_route is not None
+            and 0 <= int(forced_route) < len(route_mask)
+            and bool(route_mask[int(forced_route)])
+        ):
+            route_action = torch.tensor(int(forced_route), device=route_scores.device)
+        else:
+            route_action = route_dist.sample() if sample else torch.argmax(route_scores)
+        route_ranked = sorted(
+            [index for index, allowed in enumerate(route_mask) if allowed],
+            key=lambda index: float(route_scores[index].detach()),
+            reverse=True,
+        )
         log_probs.append(route_dist.log_prob(route_action))
         route_entropy = route_dist.entropy()
         entropy_terms.append(route_entropy)
@@ -1699,8 +1723,22 @@ def decode(
             forced_first_pending = False
         customer_draw = _sampling_logits(customer_scores, sample, temperature)
         customer_dist = torch.distributions.Categorical(logits=customer_draw)
-        customer_action = (
-            customer_dist.sample() if sample else torch.argmax(customer_scores)
+        forced_customer = None if force is None else force.get("customer")
+        if (
+            not sample
+            and forced_customer is not None
+            and 0 <= int(forced_customer) < len(masks)
+            and bool(masks[int(forced_customer)])
+        ):
+            customer_action = torch.tensor(int(forced_customer), device=customer_scores.device)
+        else:
+            customer_action = (
+                customer_dist.sample() if sample else torch.argmax(customer_scores)
+            )
+        customer_ranked = sorted(
+            [index for index, allowed in enumerate(masks) if allowed],
+            key=lambda index: float(customer_scores[index].detach()),
+            reverse=True,
         )
         log_probs.append(customer_dist.log_prob(customer_action))
         if reference_model is not None:
@@ -1725,6 +1763,23 @@ def decode(
         entropy_terms.append(customer_entropy)
         entropy += float(customer_entropy.detach())
         action = int(customer_action)
+        if trace is not None:
+            trace.append(
+                {
+                    "decision": decision,
+                    "route_ranked": route_ranked,
+                    "route_chosen": int(route_action),
+                    "route_entropy": float(route_entropy.detach()),
+                    "route_log_prob": float(log_probs[-2].detach()),
+                    "customer_ranked": customer_ranked,
+                    "customer_chosen": action,
+                    "customer_entropy": float(customer_entropy.detach()),
+                    "customer_log_prob": float(log_probs[-1].detach()),
+                    "is_new": bool(is_new),
+                    "n_unserved_before": len(unserved),
+                    "closed_route": (not is_new) and action == len(order),
+                }
+            )
         if not is_new and action == len(order):
             routes[selected_index]["closed"] = True
             continue

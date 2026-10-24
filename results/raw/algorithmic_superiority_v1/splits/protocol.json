@@ -1,0 +1,87 @@
+{
+  "name": "algorithmic_superiority_splits_v1",
+  "parent_commit": "5fa3e382f6cb408fd35edf10714be693cb1bad0c",
+  "size": 10,
+  "teacher_filter": false,
+  "coverability": "an instance is physically coverable when every customer has a feasible dedicated route under FixedRouteOracle",
+  "quality_subset": "physically coverable instances, defined before any policy decode",
+  "all_instances_reported": true,
+  "historical_not_reused": [
+    "seeds at and after 11200000 in the teacher cache",
+    "unfiltered seeds 31000000-36000000",
+    "slow holdout 21300000-21300019",
+    "official Montoya instances"
+  ],
+  "splits": [
+    {
+      "name": "dev_v2",
+      "role": "development",
+      "generator": "v2",
+      "seed_start": 41100000,
+      "n": 40,
+      "evaluated_in_diagnostic": true
+    },
+    {
+      "name": "confirm_v2",
+      "role": "confirmation_locked",
+      "generator": "v2",
+      "seed_start": 42000000,
+      "n": 40,
+      "evaluated_in_diagnostic": false
+    },
+    {
+      "name": "shift_v2c",
+      "role": "distribution_shift",
+      "generator": "v2c",
+      "seed_start": 43000000,
+      "n": 24,
+      "evaluated_in_diagnostic": false
+    },
+    {
+      "name": "shift_slow",
+      "role": "distribution_shift",
+      "generator": "v2",
+      "seed_start": 44000000,
+      "n": 24,
+      "evaluated_in_diagnostic": false,
+      "config": {
+        "geometry": "clustered",
+        "station_placement": "pmedian_region",
+        "density": 0.2,
+        "tech_pool": [
+          "slow"
+        ],
+        "cluster_sigma": 6.0,
+        "n_clusters": 3,
+        "station_count": 2,
+        "depot_bias": "center",
+        "layout_family": "compact",
+        "region_span": 120.0
+      }
+    },
+    {
+      "name": "shift_geo",
+      "role": "distribution_shift",
+      "generator": "v2",
+      "seed_start": 45000000,
+      "n": 24,
+      "evaluated_in_diagnostic": false,
+      "config": {
+        "geometry": "clustered",
+        "station_placement": "pmedian_region",
+        "density": 0.3,
+        "tech_pool": [
+          "fast",
+          "normal",
+          "slow"
+        ],
+        "cluster_sigma": 8.0,
+        "n_clusters": 4,
+        "station_count": 3,
+        "depot_bias": "offset",
+        "layout_family": "elongated",
+        "region_span": 140.0
+      }
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "name": "self_imitation_reinforce_v1",
+  "parent_commit": "5fa3e382f6cb408fd35edf10714be693cb1bad0c",
+  "start_from": "results/raw/bc_rl_full_v1/runs/H2_seed{seed}/bc_best.pt",
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "modes": [
+    "imitation",
+    "rl_imitation"
+  ],
+  "train_seed_start": 46100000,
+  "n_train": 40,
+  "generator": "v2",
+  "size": 10,
+  "teacher_filter": false,
+  "steps": 80,
+  "batch_size": 2,
+  "on_policy_samples": 2,
+  "sample_seed0": 980000,
+  "lr": 2e-05,
+  "lr_note": "Fixed before this run. Same learning rate used previously when REINFORCE started from these behavior-cloning checkpoints. Not tuned here.",
+  "imitation_coef": 0.1,
+  "elite_tolerance_h": 0.0001,
+  "elite_reference": "greedy objective of the initial behavior-cloning checkpoint, frozen before updates",
+  "decoder_budget": {
+    "name": "narrow",
+    "max_deviations": 4,
+    "alternatives": [
+      "customer_rank2"
+    ],
+    "max_solver_executions": 400
+  },
+  "reward": "normalized",
+  "baseline": "leave_one_out on the on-policy samples",
+  "entropy_coef": 0.0,
+  "grad_clip": 1.0,
+  "eval_every": 20,
+  "selection": "lowest penalized greedy duration on dev_v2, all generated instances",
+  "returned_route": "one greedy decode, cost_lambda 0, no local search",
+  "practical_threshold_relative": 0.01,
+  "rl_claim_rule": "On physically coverable dev_v2 instances, rl_imitation greedy duration is at least 1% below the imitation-only greedy duration, on at least 4 of 5 seeds, with a two-sided Student-t 95% interval entirely below zero. Beating the original behavior-cloning checkpoint is not sufficient.",
+  "description": "imitation trains only the detached elite-action cross-entropy. rl_imitation adds leave-one-out REINFORCE on two on-policy samples. Both modes run the same narrow guided search and the same number of samples."
+}

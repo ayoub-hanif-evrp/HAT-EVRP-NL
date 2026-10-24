@@ -1,0 +1,12 @@
+{
+  "seed": 46,
+  "mode": "rl_imitation",
+  "best_step": 40,
+  "best_penalized_h": 44.12918354546416,
+  "final_penalized_h": 44.12918354546416,
+  "final_coverable_h": 22.936804890295395,
+  "final_feasible_rate": 0.725,
+  "elites": 77,
+  "solver_executions": 24437,
+  "elapsed_s": 68.9635958999861
+}
