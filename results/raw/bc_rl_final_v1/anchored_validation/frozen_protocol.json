@@ -1,0 +1,28 @@
+{
+  "name": "greedy_baseline_anchored_teacher_validation",
+  "budget_s": 7200,
+  "models": [
+    "H2",
+    "H4"
+  ],
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "roles": [
+    "bc",
+    "rl"
+  ],
+  "size": 10,
+  "n_instances": 100,
+  "instance_source": "results/raw/bc_rl_full_v1/teacher_cache_n10_train500_val100.pkl validation split",
+  "temperature": 1.0,
+  "n_samples": 3,
+  "sample_seed0": 940000,
+  "checkpoints": "results/raw/bc_rl_final_v1/runs/{model}_seed{seed}/{bc_best,rl_best}.pt",
+  "reselection": false,
+  "note": "Same teacher-feasible validation instances as training. RL weights are the greedy-rollout checkpoints."
+}

@@ -1,0 +1,33 @@
+{
+  "official_instances": 60,
+  "synthetic_instances": 40,
+  "distinct_feature_vectors_by_type_on_official": {
+    "fast": [
+      "0.178777,0.357555,0.536332,1.000000"
+    ],
+    "slow": [
+      "0.181661,0.363322,0.544983,1.000000"
+    ],
+    "normal": [
+      "0.180547,0.361095,0.541642,1.000000"
+    ]
+  },
+  "breakpoints_wh": [
+    0,
+    13600,
+    15200,
+    16000
+  ],
+  "sampled_fractions": [
+    0.25,
+    0.5,
+    0.75,
+    1.0
+  ],
+  "fractions_on_first_segment": [
+    0.25,
+    0.5,
+    0.75
+  ],
+  "note": "0.75Q is still on the first linear piece because the first kink is at 0.85Q. F(Q) includes the slow tail, so F(0.75Q)/F(Q) is below 0.75. If each technology has one feature vector, the station-type one-hot already identifies it."
+}

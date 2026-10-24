@@ -445,5 +445,18 @@ def math_isfinite(value: float) -> bool:
     return value == value and abs(value) != float("inf")
 
 
+class SamplingTemperatureTests(unittest.TestCase):
+    def test_temperature_scales_only_stochastic_finite_logits(self):
+        from train import _sampling_logits
+
+        logits = torch.tensor([1.0, float("-inf"), 2.0])
+        scaled = _sampling_logits(logits, True, 0.8)
+        self.assertTrue(torch.isneginf(scaled[1]))
+        self.assertAlmostEqual(float(scaled[0]), 1.25)
+        self.assertAlmostEqual(float(scaled[2]), 2.5)
+        self.assertTrue(torch.equal(_sampling_logits(logits, False, 0.8), logits))
+        self.assertTrue(torch.equal(_sampling_logits(logits, True, 1.0), logits))
+
+
 if __name__ == "__main__":
     unittest.main()

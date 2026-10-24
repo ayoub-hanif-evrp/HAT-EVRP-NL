@@ -1,3 +1,8 @@
+...............................................................................................................
+----------------------------------------------------------------------
+Ran 111 tests in 15.499s
+
+OK
 {'role': 'bc_best', 'protocol': 'neural-construction', 'instance': 'toy', 'feasible': 1}
 {'role': 'rl_best', 'protocol': 'neural-construction', 'instance': 'toy', 'feasible': 1}
 wrote C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\figures\fig01_hat_evrp_nl_architecture.png
@@ -23,8 +28,3 @@ wrote C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\figures
 wrote C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\supplementary\figures\fig21_rl_training_stability.png
 main figures OK (20); supplementary OK (1)
 wrote C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\supplementary\figures\figure_contact_sheet.png
-..............................................................................................................
-----------------------------------------------------------------------
-Ran 110 tests in 22.037s
-
-OK

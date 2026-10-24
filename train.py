@@ -1436,6 +1436,19 @@ def _frozen_distribution_kl(
     )
 
 
+def _sampling_logits(logits: torch.Tensor, sample: bool, temperature: float) -> torch.Tensor:
+    """Scale finite masked logits by temperature. Greedy and temperature 1 are unchanged.
+
+    Infeasible actions are already ``-inf``. Dividing those entries keeps them
+    excluded. A positive temperature below 1 makes the stochastic policy sharper.
+    """
+    if not sample or temperature == 1.0:
+        return logits
+    if not math.isfinite(temperature) or temperature <= 0.0:
+        raise ValueError(f"temperature must be positive and finite, got {temperature}")
+    return logits / float(temperature)
+
+
 def decode(
     model: HATPolicy,
     instance: Instance,
@@ -1455,6 +1468,7 @@ def decode(
     repair_insertion: bool = False,
     oracle: FixedRouteOracle | None = None,
     reference_model: HATPolicy | None = None,
+    temperature: float = 1.0,
 ) -> dict:
     """Greedy/sampled hierarchical decode with optional oracle-aware scoring.
 
@@ -1471,6 +1485,10 @@ def decode(
     but the position inside an existing route is the best frvcpy-feasible
     insertion (preserving survivors' relative order). Ordinary construction
     (``repair_insertion=False``) remains append-only.
+
+    ``temperature`` rescales the feasible masked route and customer logits
+    before a stochastic draw. Greedy decoding ignores it, so argmax routes
+    stay the same. The default 1.0 leaves the sampling distribution unchanged.
     """
     from solver import local_search
 
@@ -1587,7 +1605,8 @@ def decode(
                 ~torch.tensor(route_mask, dtype=torch.bool, device=model.device),
                 float("-inf"),
             )
-        route_dist = torch.distributions.Categorical(logits=route_scores)
+        route_draw = _sampling_logits(route_scores, sample, temperature)
+        route_dist = torch.distributions.Categorical(logits=route_draw)
         route_action = route_dist.sample() if sample else torch.argmax(route_scores)
         log_probs.append(route_dist.log_prob(route_action))
         route_entropy = route_dist.entropy()
@@ -1678,7 +1697,8 @@ def decode(
                 float("-inf"),
             )
             forced_first_pending = False
-        customer_dist = torch.distributions.Categorical(logits=customer_scores)
+        customer_draw = _sampling_logits(customer_scores, sample, temperature)
+        customer_dist = torch.distributions.Categorical(logits=customer_draw)
         customer_action = (
             customer_dist.sample() if sample else torch.argmax(customer_scores)
         )

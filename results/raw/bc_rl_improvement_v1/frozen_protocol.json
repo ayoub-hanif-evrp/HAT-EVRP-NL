@@ -1,0 +1,38 @@
+{
+  "name": "h2_greedy_plus_3_validation",
+  "budget_s": 14400,
+  "model": "H2",
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "roles": [
+    "bc",
+    "rl"
+  ],
+  "size": 10,
+  "n_instances": 100,
+  "val_seed_start": 11200000,
+  "data_seed": 1000,
+  "generator_version": "v2",
+  "temperatures": [
+    1.0,
+    0.8
+  ],
+  "n_samples": 3,
+  "sample_seed0": 940000,
+  "checkpoints": "results/raw/bc_rl_full_v1/runs/H2_seed{seed}/{bc_best,rl_best}.pt",
+  "reselection": false,
+  "temperature_scope": "sampled route and customer logits after the feasibility mask; greedy argmax is not scaled",
+  "returned_route": "shortest feasible among 1 greedy and 3 samples; ties keep the earlier candidate, greedy first",
+  "cost": "sum of the four decode runtimes and frvcpy executions",
+  "decision_rule": "A temperature is promising if at least 4 of 5 seeds have a negative RL-minus-BC anchored duration and the paired Student-t 95% interval lies entirely below zero. Both temperatures are reported. This validation set was already used to choose the earlier reporting protocol.",
+  "not_used": [
+    "official Montoya instances",
+    "checkpoint reselection",
+    "retraining"
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "name": "bc_rl_final_v1",
+  "hypothesis": "REINFORCE with a detached greedy-rollout baseline and learning rate 2e-5 lowers synthetic validation duration relative to the saved BC checkpoint, for Route Transformer and RT + DeepSets, seeds 42-46.",
+  "models": [
+    "H2",
+    "H4"
+  ],
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "rl_steps": 300,
+  "rl_lr": 2e-05,
+  "baseline": "greedy",
+  "bc_kl": 0.0,
+  "entropy_coef": 0.0,
+  "instance_order": "shuffled",
+  "reward": "normalized",
+  "rollouts": 4,
+  "batch_size": 2,
+  "grad_clip": 1.0,
+  "does_not_isolate": "greedy baseline and learning rate are changed together",
+  "official_eval": "separate locked step, run once even if validation does not improve"
+}

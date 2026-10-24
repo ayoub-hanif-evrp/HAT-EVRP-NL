@@ -1,0 +1,11 @@
+model,seed,bc_validation_h,final_rl_validation_h,final_rl_improved,completed_rl_updates,baseline,rl_lr,source_bc
+H2,42,21.4257,21.4089,True,300,greedy,2e-05,C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\raw\bc_rl_full_v1\runs\H2_seed42\bc_best.pt
+H2,43,21.5822,21.4869,True,300,greedy,2e-05,C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\raw\bc_rl_full_v1\runs\H2_seed43\bc_best.pt
+H2,44,21.5193,21.6443,False,300,greedy,2e-05,C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\raw\bc_rl_full_v1\runs\H2_seed44\bc_best.pt
+H2,45,21.3321,21.224,True,300,greedy,2e-05,C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\raw\bc_rl_full_v1\runs\H2_seed45\bc_best.pt
+H2,46,21.5171,21.3297,True,300,greedy,2e-05,C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\raw\bc_rl_full_v1\runs\H2_seed46\bc_best.pt
+H4,42,21.7212,21.702,True,300,greedy,2e-05,C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\raw\bc_rl_full_v1\runs\H4_seed42\bc_best.pt
+H4,43,21.7441,21.6938,True,300,greedy,2e-05,C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\raw\bc_rl_full_v1\runs\H4_seed43\bc_best.pt
+H4,44,21.8326,21.8225,True,300,greedy,2e-05,C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\raw\bc_rl_full_v1\runs\H4_seed44\bc_best.pt
+H4,45,21.6801,21.7329,False,300,greedy,2e-05,C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\raw\bc_rl_full_v1\runs\H4_seed45\bc_best.pt
+H4,46,21.5948,21.7466,False,300,greedy,2e-05,C:\Users\AYOUB\OneDrive - EMSI\Bureau\PHD_WORK\HAT-EVRP-NL\results\raw\bc_rl_full_v1\runs\H4_seed46\bc_best.pt
