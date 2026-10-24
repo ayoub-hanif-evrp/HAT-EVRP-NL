@@ -1,6 +1,16 @@
 # Final reproducibility audit
 
-The locked evaluation is commit `7671f6411a37666212656121d02a7c3af41ce1f7`. This audit is the charging-decomposition commit on top of it, on both `main` and `bc-rl-v1`. Commands below are relative to the repository root. They do not use a personal machine path.
+The locked evaluation is commit `7671f6411a37666212656121d02a7c3af41ce1f7`. The charging decomposition and the reviewer statistics are the commits after it. Commands below are relative to the repository root. They do not use a personal machine path.
+
+Library versions for the reviewer statistics are in `results/tables/final/reproducibility_manifest.json`. The statistics and the slow-charger summary do not retrain:
+
+```text
+python scripts/reporting/peer_review_statistics.py
+python -u scripts/experiments/eval_shift_holdout.py
+python scripts/reporting/summarize_shift_holdout.py
+```
+
+The holdout protocol is `results/raw/shift_holdout_v1/frozen_protocol.json`. It was written before the first decode. The budget was 480 s. The run finished in 39 s. Checkpoints were not reselected.
 
 Python dependencies are the packages already imported by the training and reporting scripts: PyTorch, NumPy, Matplotlib, and `frvcpy`. The machine used for the new evaluation was Python 3.12.10 on Windows 11, CPU.
 

@@ -1,0 +1,3 @@
+model,size,protocol,draws,mean_h,p2_5_h,p97_5_h,fraction_negative,clusters,status
+H2,10,sampled_mean,4000,-0.7143394885295836,-0.9775238449213322,-0.43923947595507085,1.0,5,exploratory
+H2,20,sampled_mean,4000,-0.5644595897047553,-0.998208239949438,-0.16274799182415609,0.998,5,exploratory

@@ -1,0 +1,40 @@
+{
+  "name": "slow_only_clustered_pmedian",
+  "budget_s": 480,
+  "model": "H2",
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "size": 10,
+  "n_instances": 20,
+  "instance_seed0": 21300000,
+  "sample_seed0": 930000,
+  "generator_version": "v2",
+  "config": {
+    "geometry": "clustered",
+    "station_placement": "pmedian_region",
+    "tech_pool": [
+      "slow"
+    ],
+    "station_count": 2,
+    "depot_bias": "center",
+    "density": 0.2,
+    "cluster_sigma": 6.0,
+    "layout_family": "compact",
+    "region_span": 120.0,
+    "n_clusters": 3
+  },
+  "k_samples": 4,
+  "checkpoints": "results/raw/bc_rl_full_v1/runs/H2_seed{seed}/{bc_best,rl_best}.pt",
+  "reselection": false,
+  "disjoint_from": {
+    "training_data_seed": 1000,
+    "train_instance_seed_start": 11100000,
+    "validation_seed_start": 11200000,
+    "official_sample_seed0": 910000
+  }
+}

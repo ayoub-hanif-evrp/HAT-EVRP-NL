@@ -1,0 +1,33 @@
+{
+  "filename": "results/literature_bks_froger2021.csv",
+  "historical_source_column": "Froger et al. 2021 Table 13",
+  "historical_label_status": "incorrect as a uniform citation; values and filename retained",
+  "objective": "Z_lit = travel + nonlinear charging, with customer service excluded from the objective and included in the route-duration limit",
+  "verified_source": {
+    "authors": "Froger, Mendoza, Jabali, and Laporte",
+    "year": 2019,
+    "venue": "Computers & Operations Research",
+    "volume": 104,
+    "pages": "256-294",
+    "doi": "10.1016/j.cor.2018.12.013",
+    "checked_rows": {
+      "tc0c10s2cf1": {"value_h": 19.75, "table": 9},
+      "tc0c10s2ct1": {"value_h": 12.30, "table": 9},
+      "tc0c10s3ct1": {"value_h": 10.80, "table": 9},
+      "tc0c20s3ct2": {"value_h": 17.08, "table": 13},
+      "tc0c20s4cf2": {"value_h": 27.47, "table": 13}
+    }
+  },
+  "not_this_file": [
+    {
+      "year": 2022,
+      "doi": "10.1287/trsc.2021.1111",
+      "note": "Later uncapacitated E-VRP-NL solutions and a capacitated variant."
+    },
+    {
+      "year": 2025,
+      "doi": "10.1016/j.trc.2024.104932",
+      "note": "Heterogeneous-fleet paper reporting further E-VRP-NL solutions. Not entered as gaps."
+    }
+  ]
+}

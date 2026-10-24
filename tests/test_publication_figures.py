@@ -112,6 +112,7 @@ class PublicationFigureTests(unittest.TestCase):
             "fig_official_sampled.png",
             "fig_architecture_n10_greedy.png",
             "fig_nonlinear_feasibility.png",
+            "fig_quality_vs_compute.png",
             "fig_charging_curves.png",
             "fig_linear_plan_infeasible.png",
             "fig_soc_schedule.png",
@@ -126,6 +127,25 @@ class PublicationFigureTests(unittest.TestCase):
         self.assertIn("[−0.944, −0.484]", paper)
         self.assertIn("not a better deployment policy than greedy", paper)
         self.assertIn("not used as evidence that REINFORCE", paper)
+        self.assertIn("0.0625", paper)
+        self.assertIn("Holm", paper)
+
+    def test_central_sign_test_is_not_five_percent(self):
+        import csv
+
+        path = ROOT / "results" / "tables" / "final" / "statistical_sensitivity.csv"
+        with path.open(encoding="utf-8", newline="") as handle:
+            rows = [
+                row
+                for row in csv.DictReader(handle)
+                if row["status"] == "central" and row["protocol"] == "sampled_mean"
+            ]
+        self.assertEqual(len(rows), 2)
+        for row in rows:
+            self.assertAlmostEqual(float(row["sign_p_raw"]), 0.0625, places=4)
+            self.assertAlmostEqual(float(row["wilcoxon_p_raw"]), 0.0625, places=4)
+            self.assertAlmostEqual(float(row["sign_p_holm"]), 0.125, places=4)
+            self.assertLess(float(row["t_p_holm"]), 0.05)
 
     def test_official_sample_file_has_12000_unique_rows(self):
         import sys

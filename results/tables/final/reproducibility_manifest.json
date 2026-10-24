@@ -1,0 +1,52 @@
+{
+  "commit_parent_locked_eval": "7671f6411a37666212656121d02a7c3af41ce1f7",
+  "python": "3.12.10",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "torch": "2.14.0+cpu",
+  "numpy": "2.5.3",
+  "matplotlib": "3.11.2",
+  "scipy": "1.18.1",
+  "frvcpy": "0.1.1",
+  "hardware": "CPU, no CUDA used for the reported evaluations",
+  "training_seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "data_seed": 1000,
+  "train_instance_seed_start": 11100000,
+  "validation_seed_start": 11200000,
+  "sample_seed0": 910000,
+  "checkpoint_selection": "greedy validation during training; not reselected on official or holdout results",
+  "hashes": {
+    "results/raw/bc_rl_full_v1/eval_stochastic/official_samples.csv": "05389d2aa990f8621c23439985babce9be96b220c16d6efad193d35f0f4827e9",
+    "results/raw/bc_rl_route_decomposition_v1/solutions.csv": "2549c56d10df86ef794f00ee2a7abecb59e880a61b41bda437923e49b2cf48a3",
+    "results/raw/shift_holdout_v1/evaluations.csv": "8bf321defc72488452f0b50608eafa2d78e7a88b01803605ccf7fc1927099572",
+    "results/raw/shift_holdout_v1/frozen_protocol.json": "bc9843c0e3570965b4b68e5944dd1edef46b196e12b876bb073ef33677ab52fa",
+    "results/literature_bks_froger2021.csv": "99f5ce871e705c8c39bdae44f279c6e73e66ae018903a094dfce5043d90d7ec1"
+  },
+  "h2_checkpoint_sha256": {
+    "results/raw/bc_rl_full_v1/runs/H2_seed42/bc_best.pt": "b87dadfe54aac91411e83330478038a190826244ee69e0bfb32a24ccd01cd1ff",
+    "results/raw/bc_rl_full_v1/runs/H2_seed42/rl_best.pt": "938ee0568b941db02d856bde44bf61214e65beb036a48b1ff59a282ad8c36fb0",
+    "results/raw/bc_rl_full_v1/runs/H2_seed43/bc_best.pt": "635cc64d9c658c05720895fcc69b245fb9e03f46f99d5dcc03553f6af40edfe8",
+    "results/raw/bc_rl_full_v1/runs/H2_seed43/rl_best.pt": "3bc23459fcb5e5dba85f550bffd1f888d83c021ee11123b15d2adc6e75755a03",
+    "results/raw/bc_rl_full_v1/runs/H2_seed44/bc_best.pt": "ba5f0445c20139c6191d33e317bc5e6a1eba723268a960d4fbf819f1e800b1f1",
+    "results/raw/bc_rl_full_v1/runs/H2_seed44/rl_best.pt": "af08e5dafe5aa659b872e69d5fe95270dea7efe2d72114571d083949b927c639",
+    "results/raw/bc_rl_full_v1/runs/H2_seed45/bc_best.pt": "9f97ee2af0326c3b1929de44929788a16e6a10d707cde88fda68f06dd60a7ae5",
+    "results/raw/bc_rl_full_v1/runs/H2_seed45/rl_best.pt": "c4e1411d6453949cf2bac739979f7e9456606aebb0b4ed302babdd391a5b9408",
+    "results/raw/bc_rl_full_v1/runs/H2_seed46/bc_best.pt": "b700acd85917b19a03df3d676f9e6396c694b521c76f33bf1b48ce9033709c49",
+    "results/raw/bc_rl_full_v1/runs/H2_seed46/rl_best.pt": "7a33a94972c43fd650781c26ef76b60b533dc4dfcd0590020b297c57e5ddeb4e"
+  },
+  "commands": [
+    "python scripts/reporting/final_research_artifacts.py",
+    "python scripts/reporting/peer_review_statistics.py",
+    "python scripts/reporting/summarize_shift_holdout.py",
+    "python scripts/reporting/charging_publication_figures.py",
+    "python -m unittest discover -s tests"
+  ],
+  "tests": "results/raw/final_test_transcript.txt",
+  "stored_parameters_each_architecture": 796227,
+  "parameter_note": "History and DeepSets modules are constructed for every architecture. The flags change the forward pass, not the stored parameter count."
+}

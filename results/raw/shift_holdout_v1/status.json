@@ -1,0 +1,9 @@
+{
+  "completed": true,
+  "elapsed_s": 39.382,
+  "budget_s": 480,
+  "station_technologies": [
+    "slow"
+  ],
+  "n_instances": 20
+}
