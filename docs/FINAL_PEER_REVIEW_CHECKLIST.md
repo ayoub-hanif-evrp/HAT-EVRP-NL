@@ -12,10 +12,10 @@ Reviewed locked evaluation: `7671f6411a37666212656121d02a7c3af41ce1f7`. Charging
 | Negative holdout retained | `results/tables/final/shift_holdout_summary.csv` | PASS |
 | Three charging layers and the 9.971 h to 10.117 h case | `paper_draft.md` Sections 3 and 10 | PASS |
 | No claim to have invented `frvcpy` or discovered nonlinear charging | `docs/NOVELTY_AND_LITERATURE_POSITIONING.md` | PASS |
-| 2019 references separated from later best-known solutions | `results/literature_bks_provenance.json` | PASS |
+| Reference file audited against Table 13 | All 60 CSV values match Froger et al. (2022) Table 13; 18 of 20 n=10 values also match 2019 Table 9 | PASS |
 | Related-work table with non-identical variants | `paper_draft.md` Section 2 | PASS |
 | Reproducible commands and library versions | `results/tables/final/reproducibility_manifest.json`, `requirements.txt` | PASS |
-| Existing test suite, 109 tests | `results/raw/final_test_transcript.txt` | PASS |
+| Existing test suite, 110 tests | `results/raw/final_test_transcript.txt` | PASS |
 | Ruin-and-repair kept out of the proposed method | Section 8 and Section 12 | PASS |
 | Five-seed linear intervention on the final weights | Not run; Cycle-3 evidence remains labeled as Cycle-3 | NOT COMPLETED |
 | Current best-known gaps against Wang et al. (2025) or Froger et al. (2022) | Instance-level later solutions were not verified into a new gap file | NOT COMPLETED |

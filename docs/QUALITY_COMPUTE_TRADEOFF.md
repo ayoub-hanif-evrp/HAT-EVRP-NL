@@ -6,11 +6,11 @@ Best-of-four returns one route, the shortest of the four, and it spends the time
 
 Greedy returns one route from one decode.
 
-Numbers below are means over seeds 42–46. Every recorded route is feasible. Gaps use \(Z_{\mathrm{lit}}\) against the 2019 Froger reference file, not against later best-known solutions. Source: `results/tables/final/deployment_options.csv`, computed from `results/raw/bc_rl_full_v1/eval_stochastic/official_samples.csv`. Figure: `results/final/figures/fig_quality_vs_compute.png`.
+Numbers below are means over seeds 42–46. Every recorded route is feasible. Gaps use \(Z_{\mathrm{lit}}\) against the BKS column of Table 13 in Froger et al. (2022). That column is not a best-known set verified against later papers. Source: `results/tables/final/deployment_options.csv`, computed from `results/raw/bc_rl_full_v1/eval_stochastic/official_samples.csv`. Figure: `results/final/figures/fig_quality_vs_compute.png`.
 
 ## Route Transformer, n=10
 
-| Option | Duration (h) | Time (s) | Executions | Requests | Cache hits | 2019 gap |
+| Option | Duration (h) | Time (s) | Executions | Requests | Cache hits | Reference gap |
 |---|---:|---:|---:|---:|---:|---:|
 | BC greedy | 22.379 | 1.18 | 1,100 | 1,236 | 136 | 23.4% |
 | RL greedy | 22.287 | 1.18 | 1,100 | 1,238 | 138 | 22.7% |

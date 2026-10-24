@@ -48,7 +48,9 @@ Instance counts in `results/tables/final/nonlinear_instance_audit.csv` were comp
 
 ## Best-known solutions
 
-`results/literature_bks_froger2021.csv` keeps its historical source string, “Froger et al. 2021 Table 13,” on every row. That string is not a correct uniform citation. Checked values match Froger, Mendoza, Jabali, and Laporte, *Computers & Operations Research* 104 (2019), doi:10.1016/j.cor.2018.12.013: `tc0c10s2cf1` = 19.75 h is in Table 9, and `tc0c20s3ct2` = 17.08 h is in Table 13. Froger, Jabali, Mendoza, and Laporte, *Transportation Science* 56 (2022), doi:10.1287/trsc.2021.1111, reports later best-known solutions. Those later values are not this file. The CSV was not rewritten.
+`results/literature_bks_froger2021.csv` keeps its filename and its historical source string, “Froger et al. 2021 Table 13,” on every row. All 60 values match the BKS column of Table 13 in Froger, Jabali, Mendoza, and Laporte, *Transportation Science* 56 (2022), doi:10.1287/trsc.2021.1111, HAL manuscript dated 31 December 2021. The year in the historical string is wrong. The table number is right. Eighteen of the twenty 10-customer values also match Table 9 of Froger et al. (2019). `tc2c10s2cf0` and `tc2c10s3cf0` match Table 10 of that article at 21.77 h, where Table 9 reports 22.12 h. The row-level audit is `results/literature_bks_provenance.json`. The CSV values were not rewritten. Wang et al. (2025) is not this file.
+
+Tested library pins are in `requirements.txt`: `frvcpy` 0.1.1, torch 2.14.0, NumPy 2.5.3, Matplotlib 3.11.2, pandas 3.0.6, and SciPy 1.18.1. The machine that produced the reviewer statistics ran torch `2.14.0+cpu` with Python 3.12.10 on Windows 11.
 
 ## Tests
 

@@ -147,6 +147,20 @@ class PublicationFigureTests(unittest.TestCase):
             self.assertAlmostEqual(float(row["sign_p_holm"]), 0.125, places=4)
             self.assertLess(float(row["t_p_holm"]), 0.05)
 
+    def test_reference_file_matches_froger_2022_table13(self):
+        import json
+
+        paper = (ROOT / "paper_draft.md").read_text(encoding="utf-8")
+        provenance = json.loads(
+            (ROOT / "results" / "literature_bks_provenance.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(provenance["verified_source"]["exact_matches"], 60)
+        self.assertEqual(provenance["verified_source"]["mismatches"], [])
+        self.assertIn("Table 13", paper)
+        self.assertIn("21.77", paper)
+        self.assertIn("2.72%", paper)
+        self.assertIn("1.33%", paper)
+
     def test_official_sample_file_has_12000_unique_rows(self):
         import sys
 

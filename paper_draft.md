@@ -2,7 +2,7 @@
 
 **HAT-EVRP-NL**
 
-The locked evaluation is commit `7671f6411a37666212656121d02a7c3af41ce1f7`. This manuscript’s charging decomposition is the following commit, on both `main` and `bc-rl-v1`. Raw tables: `results/tables/final/`. Figures: `results/final/figures/`. The fixed-route charging optimizer is `frvcpy` (Kullman et al., 2021). This paper does not claim to have invented it.
+The locked evaluation is commit `7671f6411a37666212656121d02a7c3af41ce1f7`. The manuscript revision that records the statistical audit is `57361318da2fbfd5f50e359c5625ced766723be3`, on both `main` and `bc-rl-v1`. Raw tables: `results/tables/final/`. Figures: `results/final/figures/`. The fixed-route charging optimizer is `frvcpy` (Kullman et al., 2021). This paper does not claim to have invented it.
 
 ---
 
@@ -12,7 +12,7 @@ HAT-EVRP-NL is a neural constructor for the electric vehicle routing problem wit
 
 On the shared synthetic validation set, REINFORCE does not improve greedy construction. Every paired 95% Student-t interval for greedy duration includes zero. For the original Route Transformer, the mean duration of four independent samples falls by 0.344 h, interval [−0.528, −0.160], on 5 of 5 seeds. That mean estimates one stochastic draw. The best of those four samples falls by 0.189 h, interval [−0.267, −0.112], also on 5 of 5 seeds. Every sampled trajectory in this comparison is feasible. The same five-seed sign-test limit applies to the validation comparison: 5 of 5 has two-sided sign-test p = 0.0625.
 
-That split survives the official Montoya instances when the inference protocol is frozen before looking at them. Greedy construction remains inconclusive: the Route Transformer changes by −0.091 h at n=10, interval [−0.336, +0.154]. The mean of four independent draws is shorter for the Route Transformer by 0.714 h at n=10 and 0.566 h at n=20. Those two numbers estimate the expected duration of one stochastic draw. They are not the duration of a route that was returned to a user. The paired Student-t intervals lie below zero, and the two-sided t-tests stay below 0.05 after Holm correction for these two comparisons. The exact two-sided sign test and the exact Wilcoxon signed-rank test both give p = 0.0625. Holm adjustment of those two nonparametric tests gives 0.125. Five improvements out of five therefore do not, by themselves, establish two-sided significance at 5%. Best-of-four is a different object: it returns one selected route and spends four decodes. It is not a better deployment policy than greedy construction. A separate slow-charger holdout, fixed before evaluation, does not reproduce the sampled-mean reduction.
+That split survives the official Montoya instances when the inference protocol is frozen before looking at them. Greedy construction remains inconclusive: the Route Transformer changes by −0.091 h at n=10, interval [−0.336, +0.154]. The mean of four independent draws is shorter for the Route Transformer by 0.714 h at n=10 (2.72%) and 0.566 h at n=20 (1.33%). All five training seeds improve on both comparisons. Those two numbers estimate the expected duration of one stochastic draw. They are not the duration of a route that was returned to a user. The paired Student-t intervals lie below zero, and the two-sided t-tests stay below 0.05 after Holm correction for these two comparisons. The exact two-sided sign test and the exact Wilcoxon signed-rank test both give p = 0.0625. Holm adjustment of those two nonparametric tests gives 0.125. Five improvements out of five therefore do not, by themselves, establish two-sided significance at 5%. Best-of-four is a different object: it returns one selected route and spends four decodes. It is not a better deployment policy than greedy construction. A separate holdout, fixed before evaluation, uses slow chargers, clustered customers, and p-median stations together. It does not reproduce the sampled-mean reduction. Because those three changes are applied at once, the result does not isolate charger speed.
 
 The same routes are scored with the original station curves. On fixed customer sequences, exact nonlinear plans stay feasible on 20 of 20 official instances at n=10, 20, and 40. Linear early-rate and linear secant plans, checked on those same curves, stay feasible on 16, 12, and 11 of 20. A saved early-rate plan for `tc0c10s2cf1` finishes in 9.971 h under its own estimate and in 10.117 h under the true curve, above the 10 h limit. The difference is charging time, 0.488 h versus 0.634 h. The early-rate line keeps the steep first segment, while the true curve is slower near a full battery, so the same energy increment takes longer.
 
@@ -45,8 +45,8 @@ The comparison below separates problem variants. A shared phrase, nonlinear char
 | Study | Variant | Charging | Routing | Charging decision | Learning | What this paper takes from it |
 |---|---|---|---|---|---|---|
 | Montoya et al. (2017) | E-VRP-NL, no time windows, homogeneous fleet | Piecewise-linear station curves | Classical heuristic | Charging decisions inside the search | None | Problem, instances, and curves |
-| Froger et al. (2019) | Same E-VRP-NL | Same curves | Formulations and labeling | Exact fixed-route charging | None | 2019 reference objectives, not a current best-known claim |
-| Froger et al. (2022) | Uncapacitated E-VRP-NL and a capacitated variant | Same family of curves | Iterated local search | Reoptimized charging | None | Later reference values, not used as our gap file |
+| Froger et al. (2019) | Same E-VRP-NL | Same curves | Formulations and labeling | Exact fixed-route charging | None | Formulations; 18 of 20 n=10 reference values also match Table 9 |
+| Froger et al. (2022) | Uncapacitated E-VRP-NL and a capacitated variant | Same family of curves | Iterated local search | Reoptimized charging | None | Table 13 BKS column is the gap file; not a current best-known claim |
 | Kullman et al. (2021) | Fixed route, not the global routing problem | Nonlinear curves | Route is an input | `frvcpy` labeling | None | The charging subproblem solver |
 | Kool et al. (2019) | TSP and CVRP | None | Attention construction | None | REINFORCE | Training pattern, not the EV model |
 | Kwon et al. (2020) | TSP and CVRP | None | Multiple optima | None | REINFORCE | Budget comparison, not an implementation of POMO |
@@ -54,7 +54,7 @@ The comparison below separates problem variants. A shared phrase, nonlinear char
 | Wang et al. (2025) | Heterogeneous fleet, waiting times; E-VRP-NL as a special case | Nonlinear | Iterated local search and set partitioning | Route evaluation | None | Not a matched neural comparison; their newer E-VRP-NL values are not our gap file |
 | This paper | Montoya E-VRP-NL | Exact station curves at evaluation | Hierarchical pointer | `frvcpy` given the customer sequence | Behavior cloning, then REINFORCE | Learned routing plus exact charging, with the interaction measured |
 
-Montoya et al. (2017) introduced the benchmark. Froger et al. (2019) showed that charging decisions change solution quality on a fixed route and published the objectives stored in this repository. The file still labels every row “Froger et al. 2021 Table 13.” Checked n=10 values match Table 9 of the 2019 article, and checked n=20 values match Table 13 of that article. Froger et al. (2022) and Wang et al. (2025) report later improvements on E-VRP-NL. Gaps in this paper are gaps to the 2019 reference objectives. They are not gaps to a verified current best-known set. Kullman et al. (2021) solve the fixed-route charging problem. The neural policy does not replace that solver, and this paper does not claim to have invented it or to have discovered that nonlinear charging matters.
+Montoya et al. (2017) introduced the benchmark. Froger et al. (2019) showed that charging decisions change solution quality on a fixed route. The 60 reference values in `results/literature_bks_froger2021.csv` were checked against the BKS column of Table 13 in Froger, Jabali, Mendoza, and Laporte (2022), using the HAL manuscript dated 31 December 2021. All 60 agree. That column is the best objective among Montoya et al. (2017), Koç et al. (2018), and the iterated local search in the 2022 paper. The file’s own source string, “Froger et al. 2021 Table 13,” names the right table and the wrong year. Eighteen of the twenty 10-customer values also equal the arc-based objective in Table 9 of Froger et al. (2019). The other two, `tc2c10s2cf0` and `tc2c10s3cf0`, are 21.77 h in Table 10 of that article, where Table 9 reports 22.12 h. The 40-customer values were not found in the 2019 tables for 10 and 20 customers. Wang et al. (2025) report later E-VRP-NL solutions. Those later values are not this file, and the gaps below are not a current best-known claim. Kullman et al. (2021) solve the fixed-route charging problem. The neural policy does not replace that solver, and this paper does not claim to have invented it or to have discovered that nonlinear charging matters.
 
 Nafstad, Desaulniers, and Stålhane (2025) solve an electric routing problem with time windows and heterogeneous recharging technologies. Wang, Adulyasak, Cordeau, and He (2025) route a heterogeneous electric fleet and include station waiting times. Both use nonlinear charging. Neither is the homogeneous, time-window-free Montoya problem solved here, so their runtimes and objectives are not placed next to ours.
 
@@ -64,23 +64,63 @@ Kool, van Hoof, and Welling (2019) train routing policies with REINFORCE. Kwon e
 
 ## 3. Problem and charging
 
-An instance has a depot, a customer set \(C\), and charging stations. One homogeneous vehicle type has battery capacity \(Q\), consumption on each arc, travel time, and a route limit \(T_{\max}\). A solution is a set of routes. Each route starts and ends at the depot, and the routes together cover each customer once. Stations may be visited more than once, including more than once on the same route. The depot is not an interior stop. Along a route the battery falls by the arc energy. At a station of technology \(s\), a partial charge from \(q_{\mathrm{in}}\) to \(q_{\mathrm{out}}\le Q\) takes
+### Sets and parameters
+
+An instance has node set \(V=\{0\}\cup C\cup S\). Node 0 is the depot, \(C\) is the customer set, and \(S\) is the set of charging stations. One homogeneous vehicle type has battery capacity \(Q\), constant speed, and constant energy consumption per kilometre. Arc \((i,j)\) has travel time \(t_{ij}\) and energy \(e_{ij}\). Customer \(i\) has service time \(s_i\). Every route has duration limit \(T_{\max}\). Station \(i\in S\) has technology \(\sigma(i)\) and a piecewise-linear cumulative charging curve \(F_{\sigma(i)}\), given by breakpoints \((E_{\sigma,b}, T_{\sigma,b})\) with \(E_{\sigma,0}=0\) and \(E_{\sigma,B}=Q\). On the segment containing energy \(q\),
 
 \[
-T_{\mathrm{charge}}=F_s(q_{\mathrm{out}})-F_s(q_{\mathrm{in}}),
+F_{\sigma}(q)=T_{\sigma,b}+\frac{q-E_{\sigma,b}}{E_{\sigma,b+1}-E_{\sigma,b}}\bigl(T_{\sigma,b+1}-T_{\sigma,b}\bigr).
 \]
 
-where \(F_s\) is the original piecewise-linear cumulative curve, interpolated between its breakpoints. Route duration is travel plus customer service plus that charging time, and it must be at most \(T_{\max}\). The full objective \(Z_{\mathrm{full}}\) is the sum of route durations. The 2019 reference comparison uses \(Z_{\mathrm{lit}}=Z_{\mathrm{full}}-\sum_{i\in C}s_i\), which is valid only when every customer is served once. The two objectives are not mixed in one ranking.
+The implementation stores energy in watt-hours. The figures display kilowatt-hours. The recorded curves are concave: the last segment is slower than the first. The benchmark has no time windows, no station capacity, and no heterogeneous fleet.
 
-Three layers are separate. The policy chooses which route to extend and which customer to append. Infeasible customer insertions are masked. `frvcpy` then chooses station visits and charge amounts for that fixed customer sequence. It does not search the global routing problem. An independent checker recomputes coverage, battery, duration, and \(F_s(q_{\mathrm{out}})-F_s(q_{\mathrm{in}})\), and it rejects a stored duration that disagrees. The assumptions inherited from the benchmark are a constant speed, a constant energy rate, no time windows, no station capacity, and a homogeneous fleet. The curves are concave in the recorded instances: the last segment is slower than the first.
+### Routes, battery, and feasibility
 
-The full duration is
+A solution is a set of routes. Route \(r\) is a stop sequence \(v_{r0},v_{r1},\ldots,v_{r,L_r}\) with \(v_{r0}=v_{r,L_r}=0\). The depot is not an interior stop. The customer sequences partition \(C\): each customer appears on exactly one route and exactly once. A station may appear more than once, including more than once on the same route. A charge amount \(\delta_{r\ell}\ge 0\) may be attached to a station stop.
+
+The vehicle arrives at the depot with a full battery, \(q_{r0}=Q\). Let \(q_{r\ell}\) be the arrival energy at stop \(\ell\). If that stop is a station and the plan charges \(\delta_{r\ell}\ge 0\) there, the departure energy and the charging time are
 
 \[
-Z_{\mathrm{full}} = \text{travel} + \text{service} + \text{nonlinear charging}.
+q^{\mathrm{dep}}_{r\ell}=q_{r\ell}+\delta_{r\ell},
+\qquad
+q_{r\ell}\le q^{\mathrm{dep}}_{r\ell}\le Q,
+\qquad
+T^{\mathrm{charge}}_{r\ell}=F_{\sigma(v_{r\ell})}(q^{\mathrm{dep}}_{r\ell})-F_{\sigma(v_{r\ell})}(q_{r\ell}).
 \]
 
-The literature objective used for the 2019 reference gaps removes service time. Charging time on a station curve \(F_s\) between incoming energy \(q_{\mathrm{in}}\) and outgoing energy \(q_{\mathrm{out}}\) is the difference of cumulative times above. Linear early-rate and linear secant planners appear only in the sensitivity study. They are not the reward or the reported constructor.
+At every other stop the departure energy equals the arrival energy and the charging time is zero. Travel to the next stop then consumes the arc energy,
+
+\[
+q_{r,\ell+1}=q^{\mathrm{dep}}_{r\ell}-e_{v_{r\ell},v_{r,\ell+1}},
+\qquad
+0\le q_{r,\ell+1}\le Q.
+\]
+
+Service time is added at a customer and does not change the battery. The checker rejects an arc whose energy exceeds the departure energy, a charge above \(Q\), a negative charge, a repeated customer, a missing customer, an interior depot visit, and a stored duration that disagrees with this simulation.
+
+Route duration is travel, customer service, and charging,
+
+\[
+D_r=\sum_{\ell=0}^{L_r-1}t_{v_{r\ell},v_{r,\ell+1}}+\sum_{i\in C(r)}s_i+\sum_{\ell}T^{\mathrm{charge}}_{r\ell}.
+\]
+
+Physical feasibility requires \(D_r\le T_{\max}\) for every route. The training and evaluation objective is the sum of those durations,
+
+\[
+Z_{\mathrm{full}}=\sum_r D_r.
+\]
+
+The reference gaps use the literature objective
+
+\[
+Z_{\mathrm{lit}}=Z_{\mathrm{full}}-\sum_{i\in C}s_i,
+\]
+
+which equals travel plus nonlinear charging when every customer is served once. Service remains inside the duration limit. \(Z_{\mathrm{full}}\) and \(Z_{\mathrm{lit}}\) are kept in separate comparisons. On the Montoya instances each customer has service 0.5 h, so the subtracted total is \(0.5|C|\).
+
+### What the network decides
+
+The network does not choose \(\delta_{r\ell}\) or the station stops. It chooses a customer sequence for each route. Given that sequence, `frvcpy` chooses the station visits and the charge amounts. The independent checker then recomputes coverage, battery, duration, and \(F_{\sigma}(q^{\mathrm{dep}})-F_{\sigma}(q)\). Linear early-rate and linear secant planners appear only in the sensitivity study. They are not the reward and they are not the reported constructor.
 
 ---
 
@@ -96,25 +136,51 @@ The constructor is a hierarchical pointer. It does not output a charge. At each 
 
 ## 5. Training
 
-Behavior cloning imitates feasible customer sequences from randomized greedy construction and local search. For a teacher trajectory \(\tau\),
+Behavior cloning imitates feasible customer sequences from randomized greedy construction and local search. At a state \(s\), the policy factorizes into a route choice and a customer or close choice,
 
 \[
-L_{\mathrm{BC}} = -\frac{1}{|\tau|}\sum_{t\in\tau}\log\pi_\theta(a_t\mid s_t),
+\pi_\theta(a\mid s)=\pi_\theta(\rho\mid s)\,\pi_\theta(u\mid \rho,s).
 \]
 
-where \(a_t\) is a route choice followed by a customer or close choice,
+Both factors are softmax distributions on the masked logits. The locked runs set the duration bonuses to zero, so the mask is the only change applied to the logits. A customer append is masked unless `frvcpy` returns a feasible charging plan for that extended customer sequence. Closing an already open route stays available. Opening a new route is available when at least one unserved customer has a feasible one-customer plan. The locked behavior-cloning loss is single-action cross-entropy. When several actions remain consistent with the teacher routes, one is drawn uniformly, the loss uses that action, and the state follows it. With \(N\) decisions on the resulting teacher path,
 
 \[
-\pi_\theta(a\mid s)=\pi_\theta(r\mid s)\,\pi_\theta(c\mid r,s).
+L_{\mathrm{BC}}=-\frac{1}{N}\sum_{t=1}^{N}\log\pi_\theta(a_t\mid s_t).
 \]
 
-REINFORCE then draws \(K=4\) trajectories from the live policy on a training instance. The normalized reward of a feasible trajectory is
+The batch loss averages this quantity over the instances in the batch. The locked flags `multi_target` and `fleet_counterfactual` are false.
+
+REINFORCE then draws \(K=4\) trajectories from the live policy on a training instance. A trajectory log-probability is the sum of its decision log-probabilities,
 
 \[
-R = -Z_{\mathrm{full}}/(n\,T_{\max}).
+\log\pi_\theta(\tau)=\sum_t\bigl(\log\pi_\theta(\rho_t\mid s_t)+\log\pi_\theta(u_t\mid \rho_t,s_t)\bigr).
 \]
 
-An infeasible trajectory scores below \(-1\). In the recorded runs the infeasible penalty does not fire: the audited samples are feasible. The advantage of a sample is its reward minus the mean reward of the other three samples. The baseline is a Python float, so it does not carry a gradient. The loss is the mean of \(-\,A\log\pi_\theta(\tau)\) over the four samples. Entropy regularization is zero. Gradients are clipped at norm 1. The learning rate is \(5\times 10^{-5}\). Checkpoint selection, during training, is greedy validation duration. It is not the sampled objective.
+The normalized reward of a feasible trajectory is
+
+\[
+R=-Z_{\mathrm{full}}/(n\,T_{\max}).
+\]
+
+An infeasible trajectory scores
+
+\[
+R=-1-\varepsilon-\alpha\frac{n_{\mathrm{unserved}}}{n}-\beta\max(v,0),
+\]
+
+with \(\varepsilon=0.05\) and \(\alpha=\beta=1\). The violation term is included only when the decode result already carries a finite normalized violation. In the recorded runs this penalty does not fire: the audited samples are feasible. The advantage of sample \(k\) is its reward minus the mean reward of the other three samples,
+
+\[
+A_k=R_k-\frac{1}{K-1}\sum_{j\ne k}R_j.
+\]
+
+\(A_k\) is built as a Python float and detached before it multiplies the log-probability, so the baseline does not carry a policy gradient. With entropy coefficient zero, the loss is
+
+\[
+L_{\mathrm{RL}}=\frac{1}{K}\sum_{k=1}^{K}\bigl(-A_k\log\pi_\theta(\tau_k)\bigr).
+\]
+
+Gradients are clipped at norm 1. The learning rate is \(5\times 10^{-5}\). Checkpoint selection, during training, is greedy validation duration. It is not the sampled objective.
 
 A distribution penalty toward the frozen behavior-cloning policy was studied separately. The customer term in that penalty is conditional on the route the live policy already selected. It is not the expectation of the customer KL under the route distribution, so it is a sampled-conditional regularizer rather than the exact KL of the hierarchical policy. Those runs are not the locked comparison. The locked checkpoints are the original leave-one-out runs.
 
@@ -142,7 +208,7 @@ Official evaluation uses the 20 Montoya instances at each size. Greedy numbers a
 
 On the original checkpoints, greedy validation differences are +0.036 h (State Pointer), +0.040 h (Route Transformer), +0.009 h (Fleet DeepSets), and +0.070 h (Route Transformer + DeepSets). Seeds better than behavior cloning are 2, 3, 1, and 1 of 5. Every interval includes zero. Feasibility is 1.0.
 
-Official greedy construction agrees. At n=10 the Route Transformer moves from 22.379 h to 22.287 h, a paired difference of −0.091 h, interval [−0.336, +0.154], better on 3 of 5 seeds. Route Transformer + DeepSets moves from 22.065 h to 22.282 h, interval [−0.241, +0.676]. No greedy interval at n=10, 20, 40, or 80 excludes zero. Feasibility is 1.0 at every size. The n=10 literature gaps of the Route Transformer, against the 2019 Froger objectives, are 23.4% after behavior cloning and 22.7% after REINFORCE. That is not a state-of-the-art claim. The stored file labels every row “Froger et al. 2021 Table 13.” Checked values do not support that single label: 19.75 h for `tc0c10s2cf1` matches Table 9 of Froger et al. (2019), and 17.08 h for `tc0c20s3ct2` matches Table 13 of the same article.
+Official greedy construction agrees. At n=10 the Route Transformer moves from 22.379 h to 22.287 h, a paired difference of −0.091 h, interval [−0.336, +0.154], better on 3 of 5 seeds. Route Transformer + DeepSets moves from 22.065 h to 22.282 h, interval [−0.241, +0.676]. No greedy interval at n=10, 20, 40, or 80 excludes zero. Feasibility is 1.0 at every size. The n=10 gaps of the Route Transformer, against the Table 13 reference values, are 23.4% after behavior cloning and 22.7% after REINFORCE. That is not a state-of-the-art claim. Eighteen of those twenty reference values also equal Table 9 of Froger et al. (2019). `tc2c10s2cf0` and `tc2c10s3cf0` equal 21.77 h in Table 10 of that article. The provenance is `results/literature_bks_provenance.json`.
 
 **RQ1.** Not established. Greedy construction does not reliably improve.
 
@@ -160,7 +226,7 @@ The same checkpoints, the same instances, and the same four seeds give a differe
 
 **Figure 5.** One point is one seed. The diamond is the five-seed mean. Original checkpoints only.
 
-The central comparisons are the Route Transformer sampled-mean differences at n=10 and n=20. Each difference is one training seed: the mean, over the 20 official instances, of the mean of four draws. The five n=10 differences, RL minus BC, are −0.574, −0.929, −0.900, −0.545, and −0.622 h. The five n=20 differences are −0.183, −0.927, −0.683, −0.761, and −0.274 h. All ten are negative. The sample standard deviations are 0.185 h and 0.322 h. The Student-t intervals are [−0.944, −0.484] and [−0.965, −0.166]. The two-sided paired t p-values are 0.00100 and 0.0171. Holm adjustment for these two t-tests gives 0.00200 and 0.0171.
+The central comparisons are the Route Transformer sampled-mean differences at n=10 and n=20. Each difference is one training seed: the mean, over the 20 official instances, of the mean of four draws. The five n=10 differences, RL minus BC, are −0.574, −0.929, −0.900, −0.545, and −0.622 h. Their mean is −0.714 h, which is −2.72% of the behavior-cloning mean. The five n=20 differences are −0.183, −0.927, −0.683, −0.761, and −0.274 h. Their mean is −0.566 h, which is −1.33% of the behavior-cloning mean. All ten are negative. The sample standard deviations are 0.185 h and 0.322 h. The Student-t intervals are [−0.944, −0.484] and [−0.965, −0.166]. The two-sided paired t p-values are 0.00100 and 0.0171. Holm adjustment for these two t-tests gives 0.00200 and 0.0171.
 
 The t-test treats the five differences as normal. Five points cannot check that assumption. The exact two-sided sign test uses only the signs. With five negative differences and no zeros, its p-value is \(2/32=0.0625\). The exact Wilcoxon signed-rank test, which ranks the absolute differences and then enumerates the \(2^5\) sign assignments, gives the same p-value because every difference has the same sign and there is no tie in absolute value. Its extra assumption is that the paired differences are symmetric about zero under the null. Holm adjustment of the two sign tests, and separately of the two Wilcoxon tests, gives 0.125. A one-sided test was not used. Five out of five therefore does not establish two-sided 5% significance once the magnitudes are set aside.
 
@@ -183,14 +249,14 @@ At n=10 the Route Transformer t-interval for best-of-four is [−0.794, −0.318
 
 For the 20 official n=10 instances, mean over seeds, the returned routes and their cost are:
 
-| Option | Duration (h) | Feasible | Time (s) | frvcpy executions | Requests | Cache hits | 2019 gap |
+| Option | Duration (h) | Feasible | Time (s) | frvcpy executions | Requests | Cache hits | Reference gap |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | BC greedy | 22.379 | 20/20 | 1.18 | 1,100 | 1,236 | 136 | 23.4% |
 | RL greedy | 22.287 | 20/20 | 1.18 | 1,100 | 1,238 | 138 | 22.7% |
 | BC best of 4 | 23.085 | 20/20 | 4.90 | 3,875 | 4,370 | 495 | 29.3% |
 | RL best of 4 | 22.529 | 20/20 | 4.90 | 3,971 | 4,486 | 515 | 25.3% |
 
-The same ordering holds at n=20 and n=40: both greedy routes are shorter than both best-of-four routes, and best-of-four costs roughly four times the executions. RL greedy is not reliably shorter than BC greedy. RL best-of-four is shorter than BC best-of-four and still longer than BC greedy. The 2019 gaps use \(Z_{\mathrm{lit}}\) against Froger et al. (2019). They are not gaps to the later solutions in Froger et al. (2022) or Wang et al. (2025). Timings are from `official_samples.csv`, where greedy and samples were recorded together. An earlier construction-only timing of the same greedy objectives is within a few tenths of a second and is not mixed into this table.
+The same ordering holds at n=20 and n=40: both greedy routes are shorter than both best-of-four routes, and best-of-four costs roughly four times the executions. RL greedy is not reliably shorter than BC greedy. RL best-of-four is shorter than BC best-of-four and still longer than BC greedy. The reference gaps use \(Z_{\mathrm{lit}}\) against the BKS column of Table 13 in Froger et al. (2022). They are not gaps to Wang et al. (2025). Timings are from `official_samples.csv`, where greedy and samples were recorded together. An earlier construction-only timing of the same greedy objectives is within a few tenths of a second and is not mixed into this table.
 
 A previously recorded execution-matched classical comparison is supplementary and is not part of the neural pipeline. At the n=10 construction budget, classical greedy-plus-local-search is feasible on 12 of 20 instances, while Route Transformer behavior cloning is feasible on 20 of 20. Feasible-only classical means are not ranked against the neural means. Under a wall-clock cap at n=10, classical ruin-and-repair can match or beat the neural construction. At n=20 and above in that same file, the neural construction remains shorter. Those rows are in `results/tables/classical_matched_v1_summary.csv`. Ruin-and-repair is not added to the proposed method.
 
@@ -200,7 +266,7 @@ A previously recorded execution-matched classical comparison is supplementary an
 
 **RQ2.** The Route Transformer mean of four draws is shorter at official n=10 and n=20 under the paired t model, including Holm correction of those two t-tests. The sign test and the Wilcoxon test do not reject at 5%. The quantity is an expected draw, not a deployed route. Best-of-four does not beat one greedy behavior-cloning route. Greedy decoding remains the stronger single construction.
 
-The same sampled-mean reduction does not appear on a frozen slow-charger holdout. Before any decode, the protocol fixed 20 synthetic n=10 instances, seeds \(21300000\) through \(21300019\), clustered customers, p-median stations, and slow chargers only. Those seeds are disjoint from the training and validation seeds. The saved H2 checkpoints were not reselected. Every decode was feasible. Greedy RL minus BC is +0.136 h, interval [−0.060, +0.331], lower on 1 of 5 seeds. The mean of four draws is +0.063 h, interval [−0.177, +0.304], lower on 2 of 5 seeds. The sign-test p-values are 0.375 and 1. The holdout took 39 s, inside a 480 s budget. It is evidence against unrestricted transfer, not a tuning signal.
+The same sampled-mean reduction does not appear on a frozen holdout. Before any decode, the protocol fixed 20 synthetic n=10 instances, seeds \(21300000\) through \(21300019\), clustered customers, p-median stations, and slow chargers only. Those three changes are applied together, so the outcome is not attributed to charger speed alone. The seeds are disjoint from the training and validation seeds, and the geography is not the official Montoya geography, so the absolute hours are not compared with the official 22 h mean. The saved H2 checkpoints were not reselected. Every decode was feasible. Greedy RL minus BC is +0.136 h, interval [−0.060, +0.331], lower on 1 of 5 seeds. The mean of four draws is +0.063 h, interval [−0.177, +0.304], lower on 2 of 5 seeds. The sign-test p-values are 0.375 and 1. The holdout took 39 s, inside a 480 s budget. It is evidence against unrestricted transfer of the official sampled-mean reduction. It was not used to tune the policy.
 
 Checkpoint selection did not look at the official sampled numbers or the holdout. The REINFORCE file is the best greedy-validation checkpoint.
 
@@ -277,13 +343,13 @@ Greedy construction does not show the same split. For RT + DeepSets at official 
 
 The five seeds share one synthetic training set. Intervals are not a confidence statement about a new training distribution, and the sign test on five seeds cannot reach a two-sided p-value below 0.0625. Several architectures, protocols, and sizes were inspected after the validation rule selected both greedy and sampled reporting. The central cells are the Route Transformer mean of four draws at official n=10 and n=20. RT + DeepSets, best-of-four, the other architectures, and n=40 are exploratory relative to that pair. The twenty instances and the four samples are not extra training seeds. Checkpoint selection used greedy validation, so a checkpoint that was better under sampling could have been discarded. Checkpoints were not reselected on the official test or on the slow-charger holdout.
 
-Picking the best of four samples and reporting it as one greedy decode would misstate the inference budget; this paper keeps them separate. The mean of four draws is an expected duration, not a returned route. The mean-sample t-interval includes zero at n=40. The customer KL used in an earlier penalty is conditional on the selected route, and that penalty is not the result in Sections 7 and 8. n=80 was not evaluated under four-sample decoding. The slow-charger holdout does not reproduce the official sampled-mean reduction. The fixed-route and end-to-end charging comparisons use the Cycle-3 Route Transformer, not the final behavior-cloning and REINFORCE weights. No five-seed linear-planner intervention was run on those final weights. Classical ruin-and-repair and hybrid insertion can lower duration further. Their files remain in `results/raw/bc_rl_full_v1/eval` under protocols P1 and P2, and they are not used as evidence that REINFORCE improved the constructor.
+Picking the best of four samples and reporting it as one greedy decode would misstate the inference budget; this paper keeps them separate. The mean of four draws is an expected duration, not a returned route. The mean-sample t-interval includes zero at n=40. The customer KL used in an earlier penalty is conditional on the selected route, and that penalty is not the result in Sections 7 and 8. n=80 was not evaluated under four-sample decoding. The slow-charger holdout changes technology, geometry, and station placement together. It does not reproduce the official sampled-mean reduction, and it does not isolate charger speed. The reference file matches Table 13 of Froger et al. (2022) on all 60 rows. It is not a best-known set verified against Wang et al. (2025). The fixed-route and end-to-end charging comparisons use the Cycle-3 Route Transformer, not the final behavior-cloning and REINFORCE weights. No five-seed linear-planner intervention was run on those final weights. Classical ruin-and-repair and hybrid insertion can lower duration further. Their files remain in `results/raw/bc_rl_full_v1/eval` under protocols P1 and P2, and they are not used as evidence that REINFORCE improved the constructor.
 
 ---
 
 ## 13. Conclusion
 
-Behavior cloning learns a feasible neural constructor. The network chooses routes and customer order. `frvcpy` chooses stations and charge amounts for that order, and an independent checker accepts the route only when the original charging curves, the battery, the coverage, and the duration limit all hold. REINFORCE does not reliably improve the greedy route. On the official n=10 and n=20 instances, the expected duration of one Route Transformer sample is shorter after REINFORCE under a paired t model, by 0.714 h and 0.566 h, with Holm-adjusted t p-values 0.0020 and 0.017. The exact sign test and Wilcoxon test give p = 0.0625, and Holm adjustment gives 0.125. That expected-draw result is not a returned route, it does not beat greedy behavior cloning when the shortest of four samples is selected, and it does not reappear on the frozen slow-charger holdout. On the original station curves, the recorded linear planners lose feasibility that the exact planner keeps. A saved early-rate plan at 9.971 h becomes 10.117 h because the true late-battery segment is slower. The study adds a learned routing layer, a two-stage training procedure, and a controlled measurement of how those routes change travel and charging under the exact subproblem solver. It does not add a new charging algorithm, and it does not claim a current best-known routing gap.
+Behavior cloning learns a feasible neural constructor. The network chooses routes and customer order. `frvcpy` chooses stations and charge amounts for that order, and an independent checker accepts the route only when the original charging curves, the battery, the coverage, and the duration limit all hold. REINFORCE does not reliably improve the greedy route. On the official n=10 and n=20 instances, the expected duration of one Route Transformer sample is shorter after REINFORCE under a paired t model, by 0.714 h (2.72%) and 0.566 h (1.33%), on five of five seeds, with Holm-adjusted t p-values 0.0020 and 0.017. The exact sign test and Wilcoxon test give p = 0.0625, and Holm adjustment gives 0.125. That expected-draw result is not a returned route, it does not beat greedy behavior cloning when the shortest of four samples is selected, and it does not reappear on the frozen holdout. Adding DeepSets is not an established improvement. On the original station curves, exact nonlinear plans remain feasible on 20 of 20 fixed n=40 sequences, while the recorded linear secant and early-rate plans remain feasible on 11 of 20. A saved early-rate plan at 9.971 h becomes 10.117 h because the true late-battery segment is slower. The sampled gain on the final checkpoints is shorter travel. The study adds a learned routing layer, a two-stage training procedure, exact charging on the sequences that layer produces, and a controlled measurement of that interaction. It does not add a new charging algorithm, and it does not claim a current best-known routing gap.
 
 ---
 
@@ -296,6 +362,8 @@ Froger, A., Mendoza, J. E., Jabali, O., and Laporte, G. (2019). Improved formula
 Froger, A., Jabali, O., Mendoza, J. E., and Laporte, G. (2022). The electric vehicle routing problem with capacitated charging stations. *Transportation Science*, 56(2), 460–482. doi:10.1287/trsc.2021.1111.
 
 Kool, W., van Hoof, H., and Welling, M. (2019). Attention, learn to solve routing problems! *International Conference on Learning Representations*. arXiv:1803.08475.
+
+Koç, Ç., Jabali, O., Mendoza, J. E., and Laporte, G. (2018). The electric vehicle routing problem with shared charging stations. *International Transactions in Operational Research*, 26(4), 1211–1243.
 
 Kullman, N. D., Froger, A., Mendoza, J. E., and Goodson, J. C. (2021). frvcpy: An open-source solver for the fixed route vehicle charging problem. *INFORMS Journal on Computing*, 33(4). doi:10.1287/ijoc.2020.1035.
 

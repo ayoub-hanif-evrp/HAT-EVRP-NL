@@ -18,4 +18,4 @@ Nafstad et al. (2025) include time windows. Wang et al. (2025) include a heterog
 
 ## Reference objectives
 
-`results/literature_bks_froger2021.csv` keeps its filename and its historical source string. `results/literature_bks_provenance.json` records the 2019 article, the checked tables, the objective \(Z_{\mathrm{lit}}\), and the later papers that are not this file. Gaps in the manuscript are 2019 reference gaps.
+`results/literature_bks_froger2021.csv` keeps its filename and its historical source string. All 60 values match the BKS column of Table 13 in Froger et al. (2022), doi:10.1287/trsc.2021.1111. That column is the best value among the methods compared in the table. It is not a best-known set checked against Wang et al. (2025). Eighteen n=10 values also match Table 9 of Froger et al. (2019). Two n=10 values, 21.77 h, match Table 10 of that article rather than its Table 9 value of 22.12 h. The audit is `results/literature_bks_provenance.json`. Gaps in the manuscript use this file through \(Z_{\mathrm{lit}}\).

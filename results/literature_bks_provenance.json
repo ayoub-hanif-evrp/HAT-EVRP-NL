@@ -1,33 +1,49 @@
 {
   "filename": "results/literature_bks_froger2021.csv",
+  "values_changed": false,
   "historical_source_column": "Froger et al. 2021 Table 13",
-  "historical_label_status": "incorrect as a uniform citation; values and filename retained",
-  "objective": "Z_lit = travel + nonlinear charging, with customer service excluded from the objective and included in the route-duration limit",
   "verified_source": {
-    "authors": "Froger, Mendoza, Jabali, and Laporte",
-    "year": 2019,
-    "venue": "Computers & Operations Research",
-    "volume": 104,
-    "pages": "256-294",
+    "authors": "Froger, Jabali, Mendoza, and Laporte",
+    "year": 2022,
+    "venue": "Transportation Science",
+    "volume": 56,
+    "issue": 2,
+    "pages": "460-482",
+    "doi": "10.1287/trsc.2021.1111",
+    "manuscript": "HAL hal-02386167v3, submitted 31 December 2021",
+    "table": 13,
+    "column": "BKS",
+    "table_title": "Detailed comparison of the results obtained by ILS with the results of Montoya et al. (2017) and Koc et al. (2018) for the E-VRP-NL (instances with 10, 20, or 40 customers)",
+    "exact_matches": 60,
+    "csv_rows": 60,
+    "mismatches": []
+  },
+  "column_meaning": "Best objective among the methods compared in that table: Montoya et al. (2017) ILS+HC, Koc et al. (2018) LNS, and the ILS of Froger et al. (2022). It is the reference used for gaps in this repository. It is not a best-known set verified against later papers.",
+  "objective": "Z_lit = travel + nonlinear charging. Customer service is excluded from this objective and included in the route-duration limit. The implementation subtracts total customer service from Z_full only after every customer is served once.",
+  "froger_2019": {
     "doi": "10.1016/j.cor.2018.12.013",
-    "checked_rows": {
-      "tc0c10s2cf1": {"value_h": 19.75, "table": 9},
-      "tc0c10s2ct1": {"value_h": 12.30, "table": 9},
-      "tc0c10s3ct1": {"value_h": 10.80, "table": 9},
-      "tc0c20s3ct2": {"value_h": 17.08, "table": 13},
-      "tc0c20s4cf2": {"value_h": 27.47, "table": 13}
-    }
+    "n10_table9_arc_objective_matches": 18,
+    "n10_table9_differs": {
+      "tc2c10s2cf0": {"csv_h": 21.77, "table9_h": 22.12, "also_in": "Table 10 arc objective, 21.77 h"},
+      "tc2c10s3cf0": {"csv_h": 21.77, "table9_h": 22.12, "also_in": "Table 10 arc objective, 21.77 h"}
+    },
+    "n20_first_objective_column_matches": 14,
+    "n20_not_recovered_from_parsed_replication_tables": [
+      "tc0c20s3cf2",
+      "tc0c20s4cf2",
+      "tc1c20s4ct1",
+      "tc2c20s3cf0",
+      "tc2c20s4cf0",
+      "tc2c20s4ct0"
+    ],
+    "n20_rounding_note": "tc1c20s4ct1 is 17.80 h in the 2022 Table 13 BKS column and 17.81 h in the 2019 Table 14 arc objective.",
+    "n40_in_2019_10_and_20_customer_tables": 0
   },
   "not_this_file": [
     {
-      "year": 2022,
-      "doi": "10.1287/trsc.2021.1111",
-      "note": "Later uncapacitated E-VRP-NL solutions and a capacitated variant."
-    },
-    {
       "year": 2025,
       "doi": "10.1016/j.trc.2024.104932",
-      "note": "Heterogeneous-fleet paper reporting further E-VRP-NL solutions. Not entered as gaps."
+      "note": "Wang, Adulyasak, Cordeau, and He report later E-VRP-NL solutions. Those values were not entered as gaps."
     }
   ]
 }
