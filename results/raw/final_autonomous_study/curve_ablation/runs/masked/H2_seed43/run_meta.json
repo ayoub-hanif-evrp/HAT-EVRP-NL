@@ -1,0 +1,845 @@
+{
+  "run_id": "H2_seed43",
+  "pipeline": [
+    "bc",
+    "rl"
+  ],
+  "instance_order": "shuffled",
+  "bc_source_checkpoint": "",
+  "model": "H2",
+  "seed": 43,
+  "device": "cpu",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "data_seed": 3700,
+  "train_seed_start": 38100000,
+  "val_seed_start": 38200000,
+  "n_train": 40,
+  "n_val": 20,
+  "bc_lr": 0.0005,
+  "rl_lr": 2e-05,
+  "reward": {
+    "mode": "normalized",
+    "epsilon": 0.05,
+    "alpha": 1.0,
+    "beta": 1.0,
+    "feasible": "-Z_full/(n*T_max)",
+    "infeasible": "-1-epsilon-alpha*unserved_fraction-beta*normalized_violation"
+  },
+  "rollouts": 4,
+  "baseline": "loo",
+  "selection": "greedy",
+  "selection_sample_seed0": "",
+  "score_function": "loo",
+  "entropy_coef": 0.0,
+  "entropy_regularizer_differentiable": false,
+  "bc_kl": 0.0,
+  "bc_kl_gradient": "none",
+  "bc_kl_scope": "none",
+  "bc_score": [
+    1.0,
+    -23.557860639876644
+  ],
+  "rl_start_score": [
+    1.0,
+    -23.557860639876644
+  ],
+  "rl_best_score": [
+    1.0,
+    -23.41378010819234
+  ],
+  "rl_improved_on_validation": true,
+  "rl_best_source": "best_post_rl_validation",
+  "completed_bc_updates": 40,
+  "completed_rl_updates": 40,
+  "requested_bc_updates": 40,
+  "requested_rl_updates": 40,
+  "deployed_from": "rl",
+  "checkpoints": {
+    "bc_best": "C:\\Users\\AYOUB\\OneDrive - EMSI\\Bureau\\PHD_WORK\\HAT-EVRP-NL\\results\\raw\\final_autonomous_study\\curve_ablation\\runs\\masked\\H2_seed43\\bc_best.pt",
+    "rl_best": "C:\\Users\\AYOUB\\OneDrive - EMSI\\Bureau\\PHD_WORK\\HAT-EVRP-NL\\results\\raw\\final_autonomous_study\\curve_ablation\\runs\\masked\\H2_seed43\\rl_best.pt",
+    "deployed_best": "C:\\Users\\AYOUB\\OneDrive - EMSI\\Bureau\\PHD_WORK\\HAT-EVRP-NL\\results\\raw\\final_autonomous_study\\curve_ablation\\runs\\masked\\H2_seed43\\deployed_best.pt"
+  },
+  "profiles": [
+    {
+      "seed": 38100000,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fns_s37000001_curved",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 1,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100001,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_f_s37000003_curved",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100002,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fs_s37000005_curved",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100003,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_ns_s37000006_curved",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100004,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_ns_s37000007_curved",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100005,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_f_s37000008_curved",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100006,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_fs_s37000009_curved",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100007,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_ns_s37000010_curved",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100008,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fs_s37000012_curved",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100009,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_ns_s37000013_curved",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100010,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_fs_s37000015_curved",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 3,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100011,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fn_s37000016_curved",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100012,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_f_s37000018_curved",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100013,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d20_ns_s37000019_curved",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100014,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_ns_s37000020_curved",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100015,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d30_fn_s37000021_curved",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100016,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fs_s37000022_curved",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100017,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_ns_s37000023_curved",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100018,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fs_s37000024_curved",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100019,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fs_s37000025_curved",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100020,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_ns_s37000027_curved",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100021,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fns_s37000028_curved",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 1,
+        "normal": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100022,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fns_s37000029_curved",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100023,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d40_f_s37000031_curved",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100024,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_fs_s37000032_curved",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100025,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_fs_s37000033_curved",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100026,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d40_fs_s37000034_curved",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100027,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d30_ns_s37000035_curved",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100028,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d20_ns_s37000037_curved",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100029,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fs_s37000038_curved",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100030,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d40_fs_s37000039_curved",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100031,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d40_ns_s37000041_curved",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 3,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100032,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fn_s37000043_curved",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100033,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_f_s37000044_curved",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100034,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_ns_s37000045_curved",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100035,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d40_fns_s37000046_curved",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100036,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fs_s37000047_curved",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100037,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d30_fns_s37000049_curved",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "normal": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100038,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_fs_s37000050_curved",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38100039,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d40_f_s37000051_curved",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 4
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0
+    },
+    {
+      "seed": 38200000,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_fn_s37100000_curved",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "normal": 1,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 38200001,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d20_fs_s37100001_curved",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 38200002,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_uniform_d40_fs_s37100002_curved",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 1,
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 38200003,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fs_s37100003_curved",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 2,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 38200004,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_fs_s37100004_curved",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 38200005,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fs_s37100005_curved",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 38200006,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d20_ns_s37100006_curved",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 38200007,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d40_fn_s37100009_curved",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "fast": 3,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 38200008,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fs_s37100011_curved",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 38200009,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d20_ns_s37100012_curved",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "slow": 1,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 38200010,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d30_fs_s37100013_curved",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 38200011,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_f_s37100014_curved",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 38200012,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d40_ns_s37100015_curved",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 3,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 38200013,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_uniform_d30_fs_s37100016_curved",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 38200014,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d40_fns_s37100017_curved",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "slow": 2,
+        "fast": 2
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 38200015,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_pmedian-region_d30_s_s37100018_curved",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 38200016,
+      "generator": "v2",
+      "name": "syn_v2_mixed_mixed_n10_uniform_d40_ns_s37100021_curved",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 1,
+        "slow": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 38200017,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d40_fns_s37100022_curved",
+      "n_customers": 10,
+      "n_stations": 4,
+      "tech_counts": {
+        "normal": 3,
+        "slow": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 38200018,
+      "generator": "v2",
+      "name": "syn_v2_mixed_random_n10_pmedian-region_d30_fs_s37100023_curved",
+      "n_customers": 10,
+      "n_stations": 3,
+      "tech_counts": {
+        "fast": 3
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    },
+    {
+      "seed": 38200019,
+      "generator": "v2",
+      "name": "syn_v2_mixed_clustered_n10_pmedian-region_d20_fn_s37100025_curved",
+      "n_customers": 10,
+      "n_stations": 2,
+      "tech_counts": {
+        "fast": 1,
+        "normal": 1
+      },
+      "battery_wh": 16000.0,
+      "max_route_hours": 10.0,
+      "split": "validation"
+    }
+  ],
+  "official_test_used_for_selection": false
+}

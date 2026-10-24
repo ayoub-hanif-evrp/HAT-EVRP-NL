@@ -23,6 +23,7 @@ class PolicyConfig:
     layers: int = 2
     heads: int = 4
     deepsets_open_only: bool = False
+    mask_curve_features: bool = False
 
 
 def plan_visit_features(instance: Instance, stops) -> list[tuple[int, list[float]]]:
@@ -132,12 +133,13 @@ class HATPolicy(nn.Module):
             curve_features = [0.0] * 4
             if node.kind == 2 and node.station_type is not None:
                 station[station_order[node.station_type]] = 1.0
-                curve = instance.curves[node.station_type]
-                curve_features = [
-                    cumulative_charging_time(curve, fraction * instance.battery_wh)
-                    / max(curve.times[-1], 1e-9)
-                    for fraction in (0.25, 0.5, 0.75, 1.0)
-                ]
+                if not self.config.mask_curve_features:
+                    curve = instance.curves[node.station_type]
+                    curve_features = [
+                        cumulative_charging_time(curve, fraction * instance.battery_wh)
+                        / max(curve.times[-1], 1e-9)
+                        for fraction in (0.25, 0.5, 0.75, 1.0)
+                    ]
             rows.append(
                 [
                     (node.x - x_mid) / scale,

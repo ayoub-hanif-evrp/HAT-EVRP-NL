@@ -1,0 +1,95 @@
+{
+  "name": "unbiased_synthetic_splits_v1",
+  "parent_commit": "789af01b5c338fe814c470a46c31e78e070f39e6",
+  "size": 10,
+  "teacher_filter": false,
+  "feasibility_rule": "independent nonlinear checker at evaluation time; infeasible decodes use penalized duration n*T_max",
+  "penalized_cap": "n_customers * max_route_hours",
+  "not_excluded": "instances on which a teacher fails are retained",
+  "historical_not_used_as_confirmation": [
+    "teacher-cache validation seeds at and after 11200000",
+    "official Montoya instances",
+    "slow holdout seeds 21300000-21300019"
+  ],
+  "splits": [
+    {
+      "name": "dev_v2",
+      "role": "development_validation",
+      "generator": "v2",
+      "seed_start": 31000000,
+      "n": 100,
+      "sample_seed0": 950000
+    },
+    {
+      "name": "confirm_v2",
+      "role": "locked_final_confirmation",
+      "generator": "v2",
+      "seed_start": 32000000,
+      "n": 100,
+      "sample_seed0": 960000
+    },
+    {
+      "name": "shift_v2c",
+      "role": "distribution_shift",
+      "generator": "v2c",
+      "seed_start": 33000000,
+      "n": 40,
+      "sample_seed0": 961000
+    },
+    {
+      "name": "shift_slow",
+      "role": "distribution_shift",
+      "generator": "v2",
+      "seed_start": 34000000,
+      "n": 40,
+      "sample_seed0": 962000,
+      "config": {
+        "geometry": "clustered",
+        "station_placement": "pmedian_region",
+        "density": 0.2,
+        "tech_pool": [
+          "slow"
+        ],
+        "cluster_sigma": 6.0,
+        "n_clusters": 3,
+        "station_count": 2,
+        "depot_bias": "center",
+        "layout_family": "compact",
+        "region_span": 120.0
+      }
+    },
+    {
+      "name": "shift_geo",
+      "role": "distribution_shift",
+      "generator": "v2",
+      "seed_start": 35000000,
+      "n": 40,
+      "sample_seed0": 963000,
+      "config": {
+        "geometry": "clustered",
+        "station_placement": "pmedian_region",
+        "density": 0.3,
+        "tech_pool": [
+          "fast",
+          "normal",
+          "slow"
+        ],
+        "cluster_sigma": 8.0,
+        "n_clusters": 4,
+        "station_count": 3,
+        "depot_bias": "offset",
+        "layout_family": "elongated",
+        "region_span": 140.0
+      }
+    },
+    {
+      "name": "curve_probe",
+      "role": "curve_shape_probe",
+      "generator": "v2",
+      "seed_start": 36000000,
+      "n": 24,
+      "sample_seed0": 964000,
+      "curve_perturbation": true
+    }
+  ]
+}

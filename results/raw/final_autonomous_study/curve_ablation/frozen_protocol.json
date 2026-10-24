@@ -1,0 +1,32 @@
+{
+  "name": "curve_feature_matched_ablation_v1",
+  "hypothesis": "Explicit curve-shape features improve greedy returned-route duration on unseen curve slopes relative to an otherwise identical model whose curve features are zero.",
+  "model": "H2",
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "arms": [
+    "features",
+    "masked"
+  ],
+  "n_train": 40,
+  "n_val": 20,
+  "train_seed_start": 37000000,
+  "val_seed_start": 37100000,
+  "data_seed": 3700,
+  "bc_steps": 40,
+  "rl_steps": 40,
+  "batch_size": 2,
+  "rollouts": 4,
+  "baseline": "loo",
+  "rl_lr": 2e-05,
+  "bc_lr": 0.0005,
+  "selection": "greedy penalized duration on the curve-varied validation split",
+  "evaluation": "greedy decode on the frozen curve_probe pairs, which are not used for selection",
+  "budget_note": "Shorter than the main 1000/300 schedule. The comparison is between the two arms.",
+  "teacher_filter": "Behavior cloning keeps a seed only when the teacher route is feasible. Skipped seeds are recorded. Evaluation does not use that filter."
+}

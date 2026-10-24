@@ -151,6 +151,42 @@ def scale_advantages(advantages: list[float], mode: str = "none") -> list[float]
     return [(a - mean) / std for a in advantages]
 
 
+def best_of_k_advantage(sample_rewards: list[float], greedy_reward: float) -> float:
+    """Advantage of the best detached candidate over the greedy reward.
+
+    The greedy reward is the baseline and is also a candidate. The advantage
+    is therefore nonnegative, and it is zero when no sample reward exceeds it.
+    """
+    best = float(greedy_reward)
+    for reward in sample_rewards:
+        if float(reward) > best:
+            best = float(reward)
+    return best - float(greedy_reward)
+
+
+def best_of_k_score_function_loss(
+    log_probs: list[torch.Tensor],
+    advantage: float,
+) -> torch.Tensor:
+    """Score-function loss for a reward that depends on the whole sample set.
+
+    The estimator is -(R_best - b) * sum_k log π(τ_k), with the advantage
+    detached. Every sample log-probability receives the same coefficient.
+    Restricting the product to the winning sample is a different estimator
+    and is not used here. The sum is not divided by the sample count.
+    """
+    finite = [
+        log_prob
+        for log_prob in log_probs
+        if log_prob is not None and torch.isfinite(log_prob).all()
+    ]
+    if not finite:
+        raise ValueError("best-of-K loss requires at least one finite log-probability")
+    advantage_tensor = torch.tensor(float(advantage), device=finite[0].device, dtype=finite[0].dtype)
+    advantage_tensor = advantage_tensor.detach()
+    return -advantage_tensor * torch.stack(finite).sum()
+
+
 def reinforce_loss(
     log_probs: list[torch.Tensor],
     advantages: list[float],
@@ -269,6 +305,48 @@ def _eval_split(model, split, cost_lambda: float, route_lambda: float) -> dict:
     return summary
 
 
+def anchored_validation(
+    model,
+    instances,
+    *,
+    sample_seed0: int,
+    n_samples: int = 3,
+    temperature: float = 1.0,
+) -> dict:
+    """Returned route is the shortest feasible decode among greedy and samples.
+
+    Infeasible candidates are kept in the penalized mean through validation_summary.
+    Sample seeds are a deterministic function of the instance index.
+    """
+    from train import decode
+
+    model.eval()
+    chosen = []
+    with torch.no_grad():
+        for index, instance in enumerate(instances):
+            greedy = decode(model, instance, sample=False, seed=0, temperature=temperature)
+            samples = [
+                decode(
+                    model,
+                    instance,
+                    sample=True,
+                    seed=int(sample_seed0) + index * 16 + trial,
+                    temperature=temperature,
+                )
+                for trial in range(n_samples)
+            ]
+            feasible = [row for row in (greedy, *samples) if row.get("feasible")]
+            if feasible:
+                chosen.append(min(feasible, key=lambda row: float(row["objective"])))
+            else:
+                chosen.append(greedy)
+    summary = validation_summary(chosen, instances)
+    summary["entropy"] = (
+        sum(float(row["entropy"]) for row in chosen) / len(chosen) if chosen else float("nan")
+    )
+    return summary
+
+
 def _finite_grads(model) -> bool:
     for param in model.parameters():
         if param.grad is None:
@@ -357,7 +435,10 @@ def train_primary(args) -> dict:
     if set(train_seeds) & set(val_seeds):
         raise RuntimeError("train and validation seeds overlap")
 
-    model = HATPolicy(VARIANTS[args.model]).to(device)
+    policy_config = VARIANTS[args.model]
+    if bool(getattr(args, "mask_curve_features", False)):
+        policy_config = dataclasses.replace(policy_config, mask_curve_features=True)
+    model = HATPolicy(policy_config).to(device)
     bc_lr = float(getattr(args, "bc_lr", None) or args.lr)
     rl_lr = float(getattr(args, "rl_lr", None) or min(args.lr, 1e-4))
     grad_clip = float(getattr(args, "grad_clip", 1.0))
@@ -408,8 +489,31 @@ def train_primary(args) -> dict:
     run_root = Path(getattr(args, "run_dir", Path("results/raw/bc_rl_v1")))
     run_root.mkdir(parents=True, exist_ok=True)
 
+    selection_mode = getattr(args, "selection", "greedy")
+    selection_sample_seed0 = int(getattr(args, "selection_sample_seed0", 950_000) or 950_000)
+    anchored_instances = None
+    if selection_mode == "anchored":
+        cache_path = getattr(args, "selection_cache", None)
+        if not cache_path:
+            raise SystemExit("anchored selection requires --selection-cache")
+        selection_blob = pickle.loads(Path(cache_path).read_bytes())
+        anchored_instances = list(selection_blob["instances"])
+        selection_sample_seed0 = int(selection_blob.get("sample_seed0", selection_sample_seed0))
+        if len(anchored_instances) < 1:
+            raise SystemExit("selection cache is empty")
+    elif selection_mode != "greedy":
+        raise SystemExit(f"unknown selection mode {selection_mode}")
+
     def _log_eval(stage: str, step: int, loss: float) -> dict:
-        metrics = _eval_split(model, validation, cost_lambda, route_lambda)
+        if selection_mode == "anchored":
+            metrics = anchored_validation(
+                model,
+                anchored_instances,
+                sample_seed0=selection_sample_seed0,
+                n_samples=rollouts,
+            )
+        else:
+            metrics = _eval_split(model, validation, cost_lambda, route_lambda)
         score = selection_score(metrics["feasible_rate"], metrics["penalized_mean_h"])
         row = {
             "stage": stage,
@@ -422,6 +526,7 @@ def train_primary(args) -> dict:
             "penalized_mean_h": metrics["penalized_mean_h"],
             "validation_objective": metrics["penalized_mean_h"],
             "entropy": metrics["entropy"],
+            "selection": selection_mode,
             "elapsed_s": time.perf_counter() - start,
             "device": str(device),
         }
@@ -546,9 +651,10 @@ def train_primary(args) -> dict:
                 )
                 for row in sampled_rows
             ]
+            joint_loss = None
             if baseline_name == "loo":
                 baselines = leave_one_out_baselines(rewards)
-            elif baseline_name == "greedy":
+            elif baseline_name in {"greedy", "best_of_k"}:
                 model.eval()
                 with torch.no_grad():
                     greedy = decode(
@@ -574,6 +680,14 @@ def train_primary(args) -> dict:
                 greedy_calls = int(greedy.get("oracle_calls") or 0)
                 greedy_oracle_calls += greedy_calls
                 oracle_calls += greedy_calls
+                if baseline_name == "best_of_k":
+                    # Greedy is detached. Its parameter dependence is not in the
+                    # score function. The advantage multiplies every sample
+                    # log-probability, including samples that did not win.
+                    advantage = best_of_k_advantage(rewards, greedy_reward)
+                    sample_logs = [row["log_prob"] for row in sampled_rows]
+                    if abs(advantage) > 1e-12 and any(log_prob is not None for log_prob in sample_logs):
+                        joint_loss = best_of_k_score_function_loss(sample_logs, advantage)
             else:
                 raise ValueError(baseline_name)
             advantages = scale_advantages(
@@ -592,8 +706,8 @@ def train_primary(args) -> dict:
                 for lp, adv, ent in zip(log_probs, advantages, entropy_tensors)
                 if lp is not None
             ]
-            loss = None
-            if paired and not all(abs(adv) <= 1e-12 for _lp, adv, _ent in paired):
+            loss = joint_loss
+            if baseline_name != "best_of_k" and paired and not all(abs(adv) <= 1e-12 for _lp, adv, _ent in paired):
                 loss = reinforce_loss(
                     [p[0] for p in paired],
                     [p[1] for p in paired],
@@ -697,7 +811,7 @@ def train_primary(args) -> dict:
     def _payload(state, role: str) -> dict:
         return {
             "state_dict": state,
-            "config": dataclasses.asdict(VARIANTS[args.model]),
+            "config": dataclasses.asdict(model.config),
             "model": args.model,
             "size": args.size,
             "seed": args.seed,
@@ -765,6 +879,13 @@ def train_primary(args) -> dict:
         },
         "rollouts": rollouts,
         "baseline": baseline_name,
+        "selection": selection_mode,
+        "selection_sample_seed0": selection_sample_seed0 if selection_mode == "anchored" else "",
+        "score_function": (
+            "E[(R_best-b)*sum_k grad log pi(sample_k)]; greedy route and baseline detached"
+            if baseline_name == "best_of_k"
+            else baseline_name
+        ),
         "entropy_coef": entropy_coef,
         "entropy_regularizer_differentiable": entropy_coef > 0,
         "bc_kl": kl_coef,

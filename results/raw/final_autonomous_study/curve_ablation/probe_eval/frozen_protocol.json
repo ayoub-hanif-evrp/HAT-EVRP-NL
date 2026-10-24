@@ -1,0 +1,21 @@
+{
+  "name": "curve_ablation_probe_greedy",
+  "arms": [
+    "features",
+    "masked"
+  ],
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "roles": [
+    "bc_best.pt",
+    "rl_best.pt"
+  ],
+  "probe": "curve_probe",
+  "decode": "greedy",
+  "selection_not_used": "curve_probe was not used to choose these checkpoints"
+}

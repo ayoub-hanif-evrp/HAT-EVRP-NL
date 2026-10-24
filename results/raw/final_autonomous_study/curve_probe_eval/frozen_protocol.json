@@ -1,0 +1,18 @@
+{
+  "name": "curve_probe_greedy_inference",
+  "budget_s": 3600,
+  "split": "curve_probe",
+  "candidates": {
+    "original_bc": "results/raw/bc_rl_full_v1/runs/H2_seed{seed}/bc_best.pt",
+    "original_rl": "results/raw/bc_rl_full_v1/runs/H2_seed{seed}/rl_best.pt"
+  },
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "decode": "greedy",
+  "note": "Paired base Montoya curves versus perturbed slopes with the same labels and coordinates."
+}

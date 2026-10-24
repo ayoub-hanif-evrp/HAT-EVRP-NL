@@ -1,0 +1,30 @@
+{
+  "name": "existing_checkpoints_unbiased_eval",
+  "budget_s": 14400,
+  "instance_source": "results/raw/final_autonomous_study/splits/instances.pkl",
+  "splits": [
+    "dev_v2",
+    "confirm_v2",
+    "shift_v2c",
+    "shift_slow",
+    "shift_geo"
+  ],
+  "candidates": {
+    "original_bc": "results/raw/bc_rl_full_v1/runs/H2_seed{seed}/bc_best.pt",
+    "original_rl": "results/raw/bc_rl_full_v1/runs/H2_seed{seed}/rl_best.pt",
+    "greedy_baseline_rl": "results/raw/bc_rl_final_v1/runs/H2_seed{seed}/rl_best.pt"
+  },
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "n_samples": 3,
+  "temperature": 1.0,
+  "returned_route": "shortest feasible among 1 greedy and 3 samples; ties keep greedy first",
+  "penalized_cap": "n_customers * max_route_hours",
+  "primary_metric": "penalized returned-route duration",
+  "decision_use": "Describe existing checkpoints. Do not select a new checkpoint from confirm_v2 or the shift splits."
+}

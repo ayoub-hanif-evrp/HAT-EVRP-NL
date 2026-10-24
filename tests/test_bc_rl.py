@@ -458,5 +458,42 @@ class SamplingTemperatureTests(unittest.TestCase):
         self.assertTrue(torch.equal(_sampling_logits(logits, True, 1.0), logits))
 
 
+class BestOfKScoreFunctionTests(unittest.TestCase):
+    def test_advantage_is_zero_when_greedy_wins(self):
+        from bc_rl import best_of_k_advantage
+
+        self.assertEqual(best_of_k_advantage([-0.4, -0.2], greedy_reward=0.0), 0.0)
+        self.assertAlmostEqual(best_of_k_advantage([-0.4, 0.15], greedy_reward=0.0), 0.15)
+
+    def test_same_coefficient_reaches_every_sample_log_probability(self):
+        from bc_rl import best_of_k_score_function_loss
+
+        winner = torch.tensor(-1.2, requires_grad=True)
+        loser = torch.tensor(-0.4, requires_grad=True)
+        loss = best_of_k_score_function_loss([winner, loser], advantage=0.3)
+        loss.backward()
+        self.assertAlmostEqual(float(winner.grad), -0.3)
+        self.assertAlmostEqual(float(loser.grad), -0.3)
+
+    def test_masked_curve_features_are_zero_and_station_type_remains(self):
+        from dataclasses import replace
+
+        from data import generate_synthetic
+        from model import HATPolicy, PolicyConfig
+
+        instance = generate_synthetic(6, 11, generator_version="v2")
+        config = PolicyConfig(history=True, deepsets=False, d_model=32, layers=1, heads=4)
+        plain = HATPolicy(config)
+        masked = HATPolicy(replace(config, mask_curve_features=True))
+        masked.load_state_dict(plain.state_dict())
+        full = plain._node_features(instance)
+        hidden = masked._node_features(instance)
+        station_rows = [index for index, node in enumerate(instance.nodes) if node.kind == 2]
+        self.assertTrue(station_rows)
+        self.assertTrue(torch.all(hidden[station_rows, -4:] == 0))
+        self.assertGreater(float(full[station_rows, -4:-1].abs().sum()), 0.0)
+        self.assertTrue(torch.equal(full[station_rows, 6:9], hidden[station_rows, 6:9]))
+
+
 if __name__ == "__main__":
     unittest.main()

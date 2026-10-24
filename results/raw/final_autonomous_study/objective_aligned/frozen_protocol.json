@@ -1,0 +1,34 @@
+{
+  "name": "objective_aligned_h2_v1",
+  "hypothesis": "The score-function gradient of the best reward among one detached greedy construction and three samples lowers development-set penalized returned-route duration relative to the saved H2 behavior-cloning checkpoints.",
+  "model": "H2",
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "rl_steps": 300,
+  "rl_lr": 2e-05,
+  "rollouts": 3,
+  "baseline": "best_of_k",
+  "selection": "anchored",
+  "selection_split": "dev_v2",
+  "selection_cache": "results/raw/final_autonomous_study/splits/selection_dev.pkl",
+  "sample_seed0": 950000,
+  "batch_size": 2,
+  "entropy_coef": 0.0,
+  "bc_kl": 0.0,
+  "reward": "normalized",
+  "estimator": "E[(R_best-b)*sum_k grad log pi(sample_k)]",
+  "estimator_assumptions": [
+    "R_best is the maximum normalized reward among the detached greedy decode and the three samples.",
+    "b is the detached greedy reward. The advantage is nonnegative and is zero when greedy wins.",
+    "The same advantage multiplies every sample log-probability. The winning sample is not the only term.",
+    "The greedy decode is under torch.no_grad. The estimator omits the greedy policy's dependence on the parameters.",
+    "The estimator is the score function for the sampling distribution with the greedy candidate held fixed."
+  ],
+  "decision_rule": "Promising only if at least 4 of 5 seeds have a negative RL-minus-BC penalized anchored duration on dev_v2 and the paired Student-t 95% interval lies entirely below zero. confirm_v2 and the shift splits are not used to choose the checkpoint or the learning rate.",
+  "comparison_control": "results/raw/bc_rl_final_v1 greedy-rollout runs use 4 samples plus 1 greedy decode per instance; this run uses 3 samples plus 1 greedy decode."
+}

@@ -1,0 +1,25 @@
+{
+  "name": "objective_aligned_unbiased_eval",
+  "budget_s": 14400,
+  "splits": [
+    "dev_v2",
+    "confirm_v2",
+    "shift_v2c",
+    "shift_slow",
+    "shift_geo"
+  ],
+  "candidates": {
+    "original_bc": "results/raw/bc_rl_full_v1/runs/H2_seed{seed}/bc_best.pt",
+    "objective_aligned_rl": "results/raw/final_autonomous_study/objective_aligned/runs/H2_seed{seed}/rl_best.pt"
+  },
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "n_samples": 3,
+  "temperature": 1.0,
+  "selection_note": "dev_v2 sample seeds match checkpoint selection. confirm_v2 and shift splits were not used to choose the checkpoint."
+}

@@ -1,0 +1,5 @@
+role,variant,features_minus_masked_h,ci_low_h,ci_high_h,n_negative,route_differences,n_pairs,feasible_features,feasible_masked
+bc_best,base,-0.0015,-0.0213,0.0184,2,4,120,85,85
+bc_best,perturbed_curves,-0.0009,-0.0211,0.0193,2,4,120,85,85
+rl_best,base,0.0004,-0.0075,0.0082,1,4,120,85,85
+rl_best,perturbed_curves,0.0001,-0.0082,0.0084,1,4,120,85,85
