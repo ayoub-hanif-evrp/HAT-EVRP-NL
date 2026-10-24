@@ -1,0 +1,368 @@
+{
+  "validation_traces": {
+    "42": {
+      "loo": [
+        {
+          "step": 50,
+          "greedy_h": 51.17293494735623,
+          "anchored_h": 50.87470483729836,
+          "feasible_mean_h": 24.88143838054805
+        },
+        {
+          "step": 100,
+          "greedy_h": 51.21744253923956,
+          "anchored_h": 50.88730865217718,
+          "feasible_mean_h": 24.949911598830106
+        },
+        {
+          "step": 150,
+          "greedy_h": 51.08918733308106,
+          "anchored_h": 50.81825536470235,
+          "feasible_mean_h": 24.752595897047776
+        }
+      ],
+      "rtg": [
+        {
+          "step": 50,
+          "greedy_h": 51.17293494735623,
+          "anchored_h": 50.87470483729836,
+          "feasible_mean_h": 24.88143838054805
+        },
+        {
+          "step": 100,
+          "greedy_h": 51.21744253923956,
+          "anchored_h": 50.88730865217718,
+          "feasible_mean_h": 24.949911598830106
+        },
+        {
+          "step": 150,
+          "greedy_h": 51.08918733308106,
+          "anchored_h": 50.82304280162583,
+          "feasible_mean_h": 24.752595897047776
+        }
+      ]
+    },
+    "43": {
+      "loo": [
+        {
+          "step": 50,
+          "greedy_h": 50.98384141285308,
+          "anchored_h": 50.69375635990393,
+          "feasible_mean_h": 24.590525250543205
+        },
+        {
+          "step": 100,
+          "greedy_h": 50.987156641817876,
+          "anchored_h": 50.632411381806826,
+          "feasible_mean_h": 24.595625602796737
+        },
+        {
+          "step": 150,
+          "greedy_h": 51.03809683704762,
+          "anchored_h": 50.71681345800236,
+          "feasible_mean_h": 24.673995133919412
+        }
+      ],
+      "rtg": [
+        {
+          "step": 50,
+          "greedy_h": 50.98384141285308,
+          "anchored_h": 50.69375635990393,
+          "feasible_mean_h": 24.590525250543205
+        },
+        {
+          "step": 100,
+          "greedy_h": 50.987156641817876,
+          "anchored_h": 50.67966189161174,
+          "feasible_mean_h": 24.595625602796737
+        },
+        {
+          "step": 150,
+          "greedy_h": 51.03809683704762,
+          "anchored_h": 50.71681345800236,
+          "feasible_mean_h": 24.673995133919412
+        }
+      ]
+    },
+    "44": {
+      "loo": [
+        {
+          "step": 50,
+          "greedy_h": 51.17463054401998,
+          "anchored_h": 50.79581117663493,
+          "feasible_mean_h": 24.884046990799973
+        },
+        {
+          "step": 100,
+          "greedy_h": 51.182246721925274,
+          "anchored_h": 50.868200544610154,
+          "feasible_mean_h": 24.895764187577353
+        },
+        {
+          "step": 150,
+          "greedy_h": 51.182246721925274,
+          "anchored_h": 50.82544075546878,
+          "feasible_mean_h": 24.895764187577353
+        }
+      ],
+      "rtg": [
+        {
+          "step": 50,
+          "greedy_h": 51.17463054401998,
+          "anchored_h": 50.79666537516046,
+          "feasible_mean_h": 24.884046990799973
+        },
+        {
+          "step": 100,
+          "greedy_h": 51.182246721925274,
+          "anchored_h": 50.805495328563644,
+          "feasible_mean_h": 24.895764187577353
+        },
+        {
+          "step": 150,
+          "greedy_h": 51.182246721925274,
+          "anchored_h": 50.82544075546878,
+          "feasible_mean_h": 24.895764187577353
+        }
+      ]
+    },
+    "45": {
+      "loo": [
+        {
+          "step": 50,
+          "greedy_h": 51.07538197166847,
+          "anchored_h": 50.79691218429217,
+          "feasible_mean_h": 24.73135687948995
+        },
+        {
+          "step": 100,
+          "greedy_h": 51.07538197166847,
+          "anchored_h": 50.737661497869205,
+          "feasible_mean_h": 24.73135687948995
+        },
+        {
+          "step": 150,
+          "greedy_h": 51.102533401911664,
+          "anchored_h": 50.531713775307466,
+          "feasible_mean_h": 24.77312831063333
+        }
+      ],
+      "rtg": [
+        {
+          "step": 50,
+          "greedy_h": 51.07538197166847,
+          "anchored_h": 50.79691218429217,
+          "feasible_mean_h": 24.73135687948995
+        },
+        {
+          "step": 100,
+          "greedy_h": 51.07538197166847,
+          "anchored_h": 50.82526177224789,
+          "feasible_mean_h": 24.73135687948995
+        },
+        {
+          "step": 150,
+          "greedy_h": 51.07538197166847,
+          "anchored_h": 50.7338100984809,
+          "feasible_mean_h": 24.73135687948995
+        }
+      ]
+    },
+    "46": {
+      "loo": [
+        {
+          "step": 50,
+          "greedy_h": 51.150159855603356,
+          "anchored_h": 50.74782688691901,
+          "feasible_mean_h": 24.846399777851317
+        },
+        {
+          "step": 100,
+          "greedy_h": 51.23421911443786,
+          "anchored_h": 50.831735585675546,
+          "feasible_mean_h": 24.975721714519786
+        },
+        {
+          "step": 150,
+          "greedy_h": 51.23132979180942,
+          "anchored_h": 50.8757743573129,
+          "feasible_mean_h": 24.97127660278374
+        }
+      ],
+      "rtg": [
+        {
+          "step": 50,
+          "greedy_h": 51.155136640531055,
+          "anchored_h": 50.72475385763375,
+          "feasible_mean_h": 24.854056370047775
+        },
+        {
+          "step": 100,
+          "greedy_h": 51.16383567296406,
+          "anchored_h": 50.830398709530996,
+          "feasible_mean_h": 24.86743949686779
+        },
+        {
+          "step": 150,
+          "greedy_h": 51.23421911443786,
+          "anchored_h": 50.81595846389483,
+          "feasible_mean_h": 24.975721714519786
+        }
+      ]
+    }
+  },
+  "logs": {
+    "loo": {
+      "updates": 750,
+      "zero_gradient_updates": 0,
+      "mean_grad_norm": 0.09774850393086672,
+      "entropy_first": 0.8914789219455361,
+      "entropy_last": 0.6646174076751972,
+      "solver_executions": 600470
+    },
+    "rtg": {
+      "updates": 750,
+      "zero_gradient_updates": 0,
+      "mean_grad_norm": 0.10225595903644959,
+      "entropy_first": 0.8914789219455361,
+      "entropy_last": 0.6778986368916294,
+      "solver_executions": 598776
+    }
+  },
+  "credit": {
+    "bc_customer": {
+      "n": 370,
+      "chosen_mean": -1.0864043316526992,
+      "better_mean": -1.5189991693238953,
+      "better_below_exp_neg2": 0.07027027027027027
+    },
+    "bc_route": {
+      "n": 132,
+      "chosen_mean": -0.38248554224882164,
+      "better_mean": -1.44254780041449,
+      "better_below_exp_neg2": 0.18181818181818182
+    },
+    "rl_customer": {
+      "n": 368,
+      "chosen_mean": -1.0715195267137303,
+      "better_mean": -1.5539173981093841,
+      "better_below_exp_neg2": 0.10054347826086957
+    },
+    "rl_route": {
+      "n": 146,
+      "chosen_mean": -0.255949115610286,
+      "better_mean": -1.875310043766074,
+      "better_below_exp_neg2": 0.3287671232876712
+    }
+  },
+  "parameter_l2_from_bc": {
+    "42_loo": {
+      "route": 0.21312539862459878,
+      "customer": 0.19666926212420094,
+      "other": 0.6094865234266684,
+      "total": 0.6749630037580568
+    },
+    "42_rtg": {
+      "route": 0.21652464765244792,
+      "customer": 0.18662851382869475,
+      "other": 0.6322601955844388,
+      "total": 0.6938775685489457
+    },
+    "43_loo": {
+      "route": 0.10579363254124109,
+      "customer": 0.16507809958685393,
+      "other": 0.5147569724264202,
+      "total": 0.5508337428944352
+    },
+    "43_rtg": {
+      "route": 0.1036178200839233,
+      "customer": 0.15241213726078245,
+      "other": 0.4729579488761683,
+      "total": 0.5075976099515207
+    },
+    "44_loo": {
+      "route": 0.0758155061621454,
+      "customer": 0.09084324869968526,
+      "other": 0.24459431083780703,
+      "total": 0.2717109929744414
+    },
+    "44_rtg": {
+      "route": 0.08356006818794832,
+      "customer": 0.09615299091182102,
+      "other": 0.2525967588471356,
+      "total": 0.2829006985444562
+    },
+    "45_loo": {
+      "route": 0.22394936478588845,
+      "customer": 0.21601918562602618,
+      "other": 0.5832901839144161,
+      "total": 0.6610938248066215
+    },
+    "45_rtg": {
+      "route": 0.1994044133765349,
+      "customer": 0.2021865368267205,
+      "other": 0.5735520185435097,
+      "total": 0.6400026825907508
+    },
+    "46_loo": {
+      "route": 0.08994929597399942,
+      "customer": 0.083586086379715,
+      "other": 0.28899398622366335,
+      "total": 0.31399846139103654
+    },
+    "46_rtg": {
+      "route": 0.06220099984507584,
+      "customer": 0.059516519310649545,
+      "other": 0.22351454673518836,
+      "total": 0.23952021429269543
+    }
+  },
+  "elapsed_s": {
+    "42_loo": 718.1339552999707,
+    "42_rtg": 362.14526180003304,
+    "43_loo": 666.4167540000053,
+    "43_rtg": 357.9400338999694,
+    "44_loo": 675.4055014000041,
+    "44_rtg": 356.1034676999552,
+    "45_loo": 664.1743920000736,
+    "45_rtg": 359.74432209995575,
+    "46_loo": 677.7496059000259,
+    "46_rtg": 370.73892850009724
+  },
+  "confirmation_operations": {
+    "bc": {
+      "greedy_feasible_rate_all": 0.725,
+      "greedy_feasible_rate_coverable": 1.0,
+      "mean_greedy_runtime_s": 0.05091404899314512,
+      "mean_greedy_solvers": 54.5,
+      "mean_bundle_runtime_s": 0.20796124899759888,
+      "mean_bundle_solvers": 196.785,
+      "coverable_travel_h": 14.763511513947906,
+      "coverable_service_h": 5.0,
+      "coverable_charging_h": 1.3755839204333418
+    },
+    "loo": {
+      "greedy_feasible_rate_all": 0.725,
+      "greedy_feasible_rate_coverable": 1.0,
+      "mean_greedy_runtime_s": 0.051148822004906835,
+      "mean_greedy_solvers": 54.5,
+      "mean_bundle_runtime_s": 0.20982772149553056,
+      "mean_bundle_solvers": 204.815,
+      "coverable_travel_h": 14.771775900124647,
+      "coverable_service_h": 5.0,
+      "coverable_charging_h": 1.3984535054496616
+    },
+    "rtg": {
+      "greedy_feasible_rate_all": 0.725,
+      "greedy_feasible_rate_coverable": 1.0,
+      "mean_greedy_runtime_s": 0.05387540150550194,
+      "mean_greedy_solvers": 54.5,
+      "mean_bundle_runtime_s": 0.22135939400526694,
+      "mean_bundle_solvers": 204.535,
+      "coverable_travel_h": 14.771803820546472,
+      "coverable_service_h": 5.0,
+      "coverable_charging_h": 1.398456687556561
+    }
+  },
+  "coverable_confirmation_instances": 29
+}

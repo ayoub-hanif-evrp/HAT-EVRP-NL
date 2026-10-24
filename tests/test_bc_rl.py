@@ -495,6 +495,119 @@ class BestOfKScoreFunctionTests(unittest.TestCase):
         self.assertTrue(torch.equal(full[station_rows, 6:9], hidden[station_rows, 6:9]))
 
 
+class ReinforceGradientTests(unittest.TestCase):
+    def test_terminal_reinforce_matches_exact_expected_gradient(self):
+        from bc_rl import reinforce_loss
+
+        logits = torch.tensor([0.2, -0.4], requires_grad=True)
+        durations = torch.tensor([1.0, 3.0])
+        probs = torch.softmax(logits, dim=0)
+        expected_reward = -(probs * durations).sum()
+        exact = torch.autograd.grad(expected_reward, logits, retain_graph=True)[0]
+        log_probs = torch.log_softmax(logits, dim=0)
+        loss = sum(
+            probs[index].detach() * reinforce_loss([log_probs[index]], [-float(durations[index])], [None])
+            for index in range(2)
+        )
+        estimated = torch.autograd.grad(loss, logits)[0]
+        self.assertTrue(torch.allclose(estimated, -exact, atol=1e-6))
+
+    def test_constant_baseline_does_not_change_expected_gradient(self):
+        from bc_rl import reinforce_loss
+
+        logits = torch.tensor([0.2, -0.4], requires_grad=True)
+        durations = [1.0, 3.0]
+        probs = torch.softmax(logits, dim=0).detach()
+        log_probs = torch.log_softmax(logits, dim=0)
+        plain = sum(
+            probs[index] * reinforce_loss([log_probs[index]], [-durations[index]], [None])
+            for index in range(2)
+        )
+        shifted = sum(
+            probs[index] * reinforce_loss([log_probs[index]], [-durations[index] - 0.7], [None])
+            for index in range(2)
+        )
+        plain_grad = torch.autograd.grad(plain, logits, retain_graph=True)[0]
+        shifted_grad = torch.autograd.grad(shifted, logits)[0]
+        self.assertTrue(torch.allclose(plain_grad, shifted_grad, atol=1e-6))
+
+    def test_enumerated_objective_matches_central_differences(self):
+        logits = torch.tensor([0.2, -0.4], dtype=torch.float64, requires_grad=True)
+        durations = torch.tensor([1.0, 3.0], dtype=torch.float64)
+        expected = (torch.softmax(logits, dim=0) * durations).sum()
+        exact = torch.autograd.grad(expected, logits)[0]
+        step = 1e-6
+        numerical = []
+        for index in range(2):
+            plus = logits.detach().clone()
+            minus = logits.detach().clone()
+            plus[index] += step
+            minus[index] -= step
+            high = (torch.softmax(plus, dim=0) * durations).sum()
+            low = (torch.softmax(minus, dim=0) * durations).sum()
+            numerical.append((high - low) / (2.0 * step))
+        self.assertTrue(torch.allclose(exact, torch.stack(numerical), atol=1e-8))
+
+    def test_return_to_go_matches_exact_expected_gradient(self):
+        from bc_rl import return_to_go_loss
+
+        logits_1 = torch.tensor([0.1, -0.2], requires_grad=True)
+        logits_2 = torch.tensor([0.3, 0.0], requires_grad=True)
+        costs = {(0, 0): (0.2, 0.5), (0, 1): (0.2, 1.5), (1, 0): (0.8, 0.4), (1, 1): (0.8, 0.9)}
+        probs_1 = torch.softmax(logits_1, dim=0)
+        probs_2 = torch.softmax(logits_2, dim=0)
+        expected = torch.zeros(())
+        for first in range(2):
+            for second in range(2):
+                expected = expected + probs_1[first] * probs_2[second] * (-sum(costs[(first, second)]))
+        exact_1, exact_2 = torch.autograd.grad(expected, (logits_1, logits_2), retain_graph=True)
+        log_1 = torch.log_softmax(logits_1, dim=0)
+        log_2 = torch.log_softmax(logits_2, dim=0)
+        loss = torch.zeros(())
+        for first in range(2):
+            for second in range(2):
+                weight = probs_1[first].detach() * probs_2[second].detach()
+                immediate, later = costs[(first, second)]
+                rollouts = [
+                    {
+                        "feasible": True,
+                        "decision_log_probs": [log_1[first], log_2[second]],
+                        "marginal_hours": [immediate * 20.0, later * 20.0],
+                        "log_prob": log_1[first] + log_2[second],
+                    }
+                ]
+                # One enumerated outcome. The baseline is zero with a single rollout.
+                # Weight by its probability outside the loss, matching the expectation.
+                loss = loss + weight * return_to_go_loss(
+                    rollouts, n_customers=2, max_route_hours=10.0
+                )
+        got_1, got_2 = torch.autograd.grad(loss, (logits_1, logits_2))
+        self.assertTrue(torch.allclose(got_1, -exact_1, atol=1e-6))
+        self.assertTrue(torch.allclose(got_2, -exact_2, atol=1e-6))
+
+    def test_duration_changes_telescope_on_a_real_decode(self):
+        from data import generate_synthetic
+        from model import HATPolicy, PolicyConfig
+        from train import decode
+
+        torch.manual_seed(0)
+        policy = HATPolicy(PolicyConfig(history=True, deepsets=False, d_model=32, layers=1, heads=4))
+        policy.eval()
+        feasible = None
+        for seed in range(30):
+            instance = generate_synthetic(6, 80 + seed, generator_version="v2")
+            with torch.no_grad():
+                result = decode(policy, instance, sample=False, seed=0)
+            built = sum(float(plan.duration_hours) for plan in result["plans"])
+            self.assertAlmostEqual(sum(result["marginal_hours"]), built, places=6)
+            self.assertEqual(len(result["marginal_hours"]), len(result["decision_log_probs"]))
+            if result["feasible"]:
+                feasible = result
+                break
+        if feasible is not None:
+            self.assertAlmostEqual(sum(feasible["marginal_hours"]), feasible["objective"], places=6)
+
+
 class GuidedDecodeTests(unittest.TestCase):
     def test_forced_legal_action_is_taken_and_search_stays_off(self):
         from data import generate_synthetic

@@ -216,6 +216,72 @@ def reinforce_loss(
     return total / used
 
 
+def return_to_go_loss(
+    rollouts: list[dict],
+    *,
+    n_customers: int,
+    max_route_hours: float,
+    reward_mode: str = "normalized",
+    epsilon: float = 0.05,
+    alpha: float = 1.0,
+    beta: float = 1.0,
+) -> torch.Tensor:
+    """Score-function loss for the sum of exact duration changes.
+
+    On a feasible trajectory the per-decision costs are the changes in the
+    total exact nonlinear duration. They telescope to the full objective, so
+    the return equals the normalized feasible reward. An infeasible trajectory
+    keeps that terminal penalty on its last decision and does not pretend the
+    partial durations are the objective. The baseline at a decision is the
+    mean return-to-go of the other rollouts at that index. It is detached.
+    """
+    scale = float(n_customers) * float(max_route_hours)
+    prepared: list[dict] = []
+    for row in rollouts:
+        log_probs = [
+            log_prob
+            for log_prob in row.get("decision_log_probs") or []
+            if log_prob is not None and torch.isfinite(log_prob).all()
+        ]
+        if not log_probs:
+            continue
+        if row.get("feasible") and len(row.get("marginal_hours") or []) == len(row.get("decision_log_probs") or []):
+            rewards = [-float(value) / scale for value in row["marginal_hours"]]
+        else:
+            terminal = reward_value(
+                row,
+                n_customers=n_customers,
+                max_route_hours=max_route_hours,
+                mode=reward_mode,
+                epsilon=epsilon,
+                alpha=alpha,
+                beta=beta,
+            )
+            rewards = [0.0] * (len(log_probs) - 1) + [float(terminal)]
+        returns = []
+        accumulated = 0.0
+        for reward in reversed(rewards[: len(log_probs)]):
+            accumulated += reward
+            returns.append(accumulated)
+        returns.reverse()
+        prepared.append({"log_probs": log_probs, "returns": returns})
+    if not prepared:
+        device = rollouts[0]["log_prob"].device if rollouts and rollouts[0].get("log_prob") is not None else torch.device("cpu")
+        return torch.zeros((), device=device, requires_grad=True)
+    total = torch.zeros((), device=prepared[0]["log_probs"][0].device)
+    for index, row in enumerate(prepared):
+        for step, log_prob in enumerate(row["log_probs"]):
+            others = [
+                other["returns"][step]
+                for other_index, other in enumerate(prepared)
+                if other_index != index and step < len(other["returns"])
+            ]
+            baseline = sum(others) / len(others) if others else 0.0
+            advantage = float(row["returns"][step] - baseline)
+            total = total - advantage * log_prob
+    return total / len(prepared)
+
+
 def selection_score(feasible_rate: float, penalized_mean: float) -> tuple[float, float]:
     """Higher is better. Feasibility first, then lower penalized duration."""
     if not math.isfinite(penalized_mean):
@@ -501,7 +567,7 @@ def train_primary(args) -> dict:
         selection_sample_seed0 = int(selection_blob.get("sample_seed0", selection_sample_seed0))
         if len(anchored_instances) < 1:
             raise SystemExit("selection cache is empty")
-    elif selection_mode != "greedy":
+    elif selection_mode != "greedy" and selection_mode != "returned":
         raise SystemExit(f"unknown selection mode {selection_mode}")
 
     def _log_eval(stage: str, step: int, loss: float) -> dict:
@@ -512,6 +578,20 @@ def train_primary(args) -> dict:
                 sample_seed0=selection_sample_seed0,
                 n_samples=rollouts,
             )
+        elif selection_mode == "returned":
+            greedy_metrics = _eval_split(model, validation, cost_lambda, route_lambda)
+            anchored_metrics = anchored_validation(
+                model,
+                [instance for instance, _routes in validation],
+                sample_seed0=selection_sample_seed0,
+                n_samples=3,
+            )
+            composite = 0.5 * float(greedy_metrics["penalized_mean_h"]) + 0.5 * float(anchored_metrics["penalized_mean_h"])
+            metrics = dict(greedy_metrics)
+            metrics["penalized_mean_h"] = composite
+            metrics["greedy_penalized_mean_h"] = greedy_metrics["penalized_mean_h"]
+            metrics["anchored_penalized_mean_h"] = anchored_metrics["penalized_mean_h"]
+            metrics["anchored_feasible_rate"] = anchored_metrics["feasible_rate"]
         else:
             metrics = _eval_split(model, validation, cost_lambda, route_lambda)
         score = selection_score(metrics["feasible_rate"], metrics["penalized_mean_h"])
@@ -526,6 +606,8 @@ def train_primary(args) -> dict:
             "penalized_mean_h": metrics["penalized_mean_h"],
             "validation_objective": metrics["penalized_mean_h"],
             "entropy": metrics["entropy"],
+            "greedy_penalized_mean_h": metrics.get("greedy_penalized_mean_h", metrics["penalized_mean_h"]),
+            "anchored_penalized_mean_h": metrics.get("anchored_penalized_mean_h", ""),
             "selection": selection_mode,
             "elapsed_s": time.perf_counter() - start,
             "device": str(device),
@@ -654,6 +736,17 @@ def train_primary(args) -> dict:
             joint_loss = None
             if baseline_name == "loo":
                 baselines = leave_one_out_baselines(rewards)
+            elif baseline_name == "rtg":
+                joint_loss = return_to_go_loss(
+                    sampled_rows,
+                    n_customers=len(instance.customers),
+                    max_route_hours=instance.max_route_hours,
+                    reward_mode=reward_mode,
+                    epsilon=epsilon,
+                    alpha=alpha,
+                    beta=beta,
+                )
+                baselines = [0.0] * len(rewards)
             elif baseline_name in {"greedy", "best_of_k"}:
                 model.eval()
                 with torch.no_grad():
@@ -707,7 +800,7 @@ def train_primary(args) -> dict:
                 if lp is not None
             ]
             loss = joint_loss
-            if baseline_name != "best_of_k" and paired and not all(abs(adv) <= 1e-12 for _lp, adv, _ent in paired):
+            if baseline_name not in {"best_of_k", "rtg"} and paired and not all(abs(adv) <= 1e-12 for _lp, adv, _ent in paired):
                 loss = reinforce_loss(
                     [p[0] for p in paired],
                     [p[1] for p in paired],

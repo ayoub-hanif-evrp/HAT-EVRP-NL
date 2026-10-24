@@ -1511,6 +1511,8 @@ def decode(
         served = {c for route in routes for c in route["customers"]}
         unserved = set(instance.customers) - served
     log_probs: list[torch.Tensor] = []
+    decision_log_probs: list[torch.Tensor] = []
+    marginal_hours: list[float] = []
     distribution_kls: list[torch.Tensor] = []
     entropy_terms: list[torch.Tensor] = []
     ref_cache: dict = {}
@@ -1775,13 +1777,24 @@ def decode(
                     "customer_chosen": action,
                     "customer_entropy": float(customer_entropy.detach()),
                     "customer_log_prob": float(log_probs[-1].detach()),
+                    "route_ranked_log_prob": [
+                        float(torch.log_softmax(route_scores, dim=0)[index].detach())
+                        for index in route_ranked
+                    ],
+                    "customer_ranked_log_prob": [
+                        float(torch.log_softmax(customer_scores, dim=0)[index].detach())
+                        for index in customer_ranked
+                    ],
                     "is_new": bool(is_new),
                     "n_unserved_before": len(unserved),
                     "closed_route": (not is_new) and action == len(order),
                 }
             )
+        phi_before = sum(float(route["duration"]) for route in routes)
         if not is_new and action == len(order):
             routes[selected_index]["closed"] = True
+            marginal_hours.append(0.0)
+            decision_log_probs.append(log_probs[-2] + log_probs[-1])
             continue
         customer = order[action]
         if is_new:
@@ -1812,6 +1825,9 @@ def decode(
                 instance, (*prefix, customer), plan
             )
         unserved.remove(customer)
+        phi_after = sum(float(route["duration"]) for route in routes)
+        marginal_hours.append(phi_after - phi_before)
+        decision_log_probs.append(log_probs[-2] + log_probs[-1])
     else:
         reason = "decision budget exceeded"
 
@@ -1870,6 +1886,8 @@ def decode(
         "oracle_solver_executions": oracle_stats["oracle_solver_executions"],
         "reason": reason,
         "log_prob": torch.stack(log_probs).sum() if log_probs else None,
+        "decision_log_probs": decision_log_probs,
+        "marginal_hours": marginal_hours,
         "distribution_kl": torch.stack(distribution_kls).sum() if distribution_kls else None,
         "entropy": entropy / max(1, len(log_probs)),
         "entropy_tensor": torch.stack(entropy_terms).sum() if entropy_terms else None,
@@ -2353,8 +2371,8 @@ def main() -> None:
     parser.add_argument("--bc-patience", type=int, default=0)
     parser.add_argument("--rl-patience", type=int, default=0)
     parser.add_argument("--rollouts", type=int, default=4)
-    parser.add_argument("--baseline", choices=("greedy", "loo", "best_of_k"), default="loo")
-    parser.add_argument("--selection", choices=("greedy", "anchored"), default="greedy")
+    parser.add_argument("--baseline", choices=("greedy", "loo", "best_of_k", "rtg"), default="loo")
+    parser.add_argument("--selection", choices=("greedy", "anchored", "returned"), default="greedy")
     parser.add_argument("--selection-cache", type=Path, default=None)
     parser.add_argument("--selection-sample-seed0", type=int, default=950_000)
     parser.add_argument("--mask-curve-features", action="store_true")
