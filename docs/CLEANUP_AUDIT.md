@@ -35,7 +35,6 @@ Machine-readable move list: [`CLEANUP_MOVE_MANIFEST.csv`](CLEANUP_MOVE_MANIFEST.
 scripts/
   experiments/     # run_* experiment drivers
   reporting/       # build_results.py, summarize_perf.py
-  tools/           # organize_results.py
 results/
   README.md        # definitive index
   figures/         # publication PNGs only
@@ -63,7 +62,7 @@ Cycle-3 primary checkpoints, or authoritative CSVs were destroyed.
 |---|---|---|
 | `results/figures/fig_architecture.svg` | Archived → `results/archive/figures_legacy/` | Replaced by `fig01_architecture.png` |
 | Legacy `results/figures/fig_*.png` (pre-cleanup) | Archived → `results/archive/figures_legacy/` | Superseded by numbered publication PNGs |
-| `HAT_EVRP_NL_AGENT_PROMPT.md` | Moved → `docs/archive/` | Not required for numerical reproduction |
+| `HAT_EVRP_NL_AGENT_PROMPT.md` | Deleted from `docs/archive/` | Old instruction file, not used for reproduction |
 | Category G hard deletes | **None** | Ambiguous files archived under `results/raw/` or `results/archive/` |
 
 No checkpoint `.pt` files were deleted (59 retained; roles in
